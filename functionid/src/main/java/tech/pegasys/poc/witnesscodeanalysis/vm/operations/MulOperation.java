@@ -28,12 +28,14 @@ public class MulOperation extends AbstractOperation {
   }
 
   @Override
-  public void execute(final MessageFrame frame) {
+  public UInt256 execute(final MessageFrame frame) {
     final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
     final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
 
     final UInt256 result = value0.multiply(value1);
 
     frame.pushStackItem(result.toBytes());
+
+    return UInt256.ZERO;
   }
 }

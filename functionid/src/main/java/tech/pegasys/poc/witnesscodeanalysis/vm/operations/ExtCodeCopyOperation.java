@@ -31,7 +31,7 @@ public class ExtCodeCopyOperation extends AbstractOperation {
   }
 
   @Override
-  public void execute(final MessageFrame frame) {
+  public UInt256 execute(final MessageFrame frame) {
     final Address address = Words.toAddress(frame.popStackItem());
 //    final Account account = frame.getWorldState().get(address);
 //    final Bytes code = account != null ? account.getCode() : Bytes.EMPTY;
@@ -41,5 +41,6 @@ public class ExtCodeCopyOperation extends AbstractOperation {
     final UInt256 numBytes = UInt256.fromBytes(frame.popStackItem());
 
 //    frame.writeMemory(memOffset, sourceOffset, numBytes, code);
+    return UInt256.ZERO;
   }
 }

@@ -24,19 +24,12 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class JumpOperation extends AbstractOperation {
   public static final int OPCODE = 0x56;
 
-  public UInt256 jumpDestination;
-
   public JumpOperation() {
     super(OPCODE, "JUMP", 1, 0, 1);
   }
 
   @Override
-  public void execute(final MessageFrame frame) {
-    this.jumpDestination = UInt256.fromBytes(frame.popStackItem());
-  }
-
-  @Override
-  public UInt256 jumpDest() {
-    return this.jumpDestination;
+  public UInt256 execute(final MessageFrame frame) {
+    return UInt256.fromBytes(frame.popStackItem());
   }
 }

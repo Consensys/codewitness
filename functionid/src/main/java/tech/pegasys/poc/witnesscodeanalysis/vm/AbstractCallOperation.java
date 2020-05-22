@@ -87,7 +87,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
   protected abstract boolean isStatic(MessageFrame frame);
 
   @Override
-  public void execute(final MessageFrame frame) {
+  public UInt256 execute(final MessageFrame frame) {
     throw new Error("Not implemented yet");
 
 //

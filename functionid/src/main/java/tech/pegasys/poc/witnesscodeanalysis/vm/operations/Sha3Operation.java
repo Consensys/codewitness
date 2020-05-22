@@ -29,12 +29,14 @@ public class Sha3Operation extends AbstractOperation {
   }
 
   @Override
-  public void execute(final MessageFrame frame) {
+  public UInt256 execute(final MessageFrame frame) {
     final UInt256 from = UInt256.fromBytes(frame.popStackItem());
     final UInt256 length = UInt256.fromBytes(frame.popStackItem());
 
 //    final Bytes bytes = frame.readMemory(from, length);
 
     frame.pushStackItem(Bytes32.ZERO);
+
+    return UInt256.ZERO;
   }
 }

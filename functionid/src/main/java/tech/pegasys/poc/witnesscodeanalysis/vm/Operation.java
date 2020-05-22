@@ -23,7 +23,7 @@ public interface Operation {
    *
    * @param frame The frame for execution of this operation.
    */
-  void execute(MessageFrame frame);
+  UInt256 execute(MessageFrame frame);
 
   int getOpcode();
 
@@ -38,6 +38,4 @@ public interface Operation {
   }
 
   int getOpSize();
-
-  UInt256 jumpDest();
 }

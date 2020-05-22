@@ -16,6 +16,7 @@ package tech.pegasys.poc.witnesscodeanalysis.vm.operations;
 
 import org.apache.tuweni.bytes.Bytes32;
 
+import org.apache.tuweni.units.bigints.UInt256;
 import tech.pegasys.poc.witnesscodeanalysis.vm.AbstractOperation;
 
 import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
@@ -27,7 +28,8 @@ public class DifficultyOperation extends AbstractOperation {
   }
 
   @Override
-  public void execute(final MessageFrame frame) {
+  public UInt256 execute(final MessageFrame frame) {
     frame.pushStackItem(Bytes32.ZERO);
+    return UInt256.ZERO;
   }
 }

@@ -31,7 +31,7 @@ public class SGtOperation extends AbstractOperation {
   }
 
   @Override
-  public void execute(final MessageFrame frame) {
+  public UInt256 execute(final MessageFrame frame) {
     final Bytes32 value0 = frame.popStackItem();
     final Bytes32 value1 = frame.popStackItem();
 
@@ -41,5 +41,7 @@ public class SGtOperation extends AbstractOperation {
     final Bytes32 result = b0.compareTo(b1) > 0 ? UInt256.ONE.toBytes() : UInt256.ZERO.toBytes();
 
     frame.pushStackItem(result);
+
+    return UInt256.ZERO;
   }
 }

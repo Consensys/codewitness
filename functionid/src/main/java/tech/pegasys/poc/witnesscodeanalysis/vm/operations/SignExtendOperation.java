@@ -29,7 +29,7 @@ public class SignExtendOperation extends AbstractOperation {
   }
 
   @Override
-  public void execute(final MessageFrame frame) {
+  public UInt256 execute(final MessageFrame frame) {
     final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
     final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
 
@@ -37,6 +37,8 @@ public class SignExtendOperation extends AbstractOperation {
     final UInt256 result = signExtend(value1, value0);
 
     frame.pushStackItem(result.toBytes());
+
+    return UInt256.ZERO;
   }
 
   private static UInt256 signExtend(final UInt256 v1, final UInt256 v2) {

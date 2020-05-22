@@ -32,7 +32,7 @@ public class SarOperation extends AbstractOperation {
   }
 
   @Override
-  public void execute(final MessageFrame frame) {
+  public UInt256 execute(final MessageFrame frame) {
     final UInt256 shiftAmount = UInt256.fromBytes(frame.popStackItem());
     Bytes32 value = frame.popStackItem();
 
@@ -42,7 +42,7 @@ public class SarOperation extends AbstractOperation {
     if (!shiftAmount.fitsInt() || shiftAmount.intValue() >= 256) {
       final Bytes32 overflow = negativeNumber ? ALL_BITS : Bytes32.ZERO;
       frame.pushStackItem(overflow);
-      return;
+      return  UInt256.ZERO;
     }
 
     // first perform standard shift right.
@@ -54,5 +54,8 @@ public class SarOperation extends AbstractOperation {
       value = value.or(significantBits);
     }
     frame.pushStackItem(value);
+
+    return UInt256.ZERO;
+
   }
 }

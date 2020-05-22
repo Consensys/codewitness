@@ -37,7 +37,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
   }
 
   @Override
-  public void execute(final MessageFrame frame) {
+  public UInt256 execute(final MessageFrame frame) {
     throw new Error("Not implemented yet");
 //    final Wei value = Wei.wrap(frame.getStackItem(0));
 //

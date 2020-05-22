@@ -30,9 +30,10 @@ public class RevertOperation extends AbstractOperation {
   }
 
   @Override
-  public void execute(final MessageFrame frame) {
+  public UInt256 execute(final MessageFrame frame) {
     frame.popStackItem();
     frame.popStackItem();
     frame.setState(MessageFrame.State.REVERT);
+    return UInt256.ZERO;
   }
 }

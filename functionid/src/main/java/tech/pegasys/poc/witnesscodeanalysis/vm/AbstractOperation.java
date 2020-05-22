@@ -71,11 +71,6 @@ public abstract class AbstractOperation implements Operation, Cloneable {
   }
 
   @Override
-  public UInt256 jumpDest() {
-    return UInt256.ZERO;
-  }
-
-  @Override
   protected Object clone() throws CloneNotSupportedException {
     return super.clone();
   }

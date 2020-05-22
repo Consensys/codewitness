@@ -12,6 +12,7 @@
  */
 pragma solidity >=0.4.23;
 
+// The simplest contract that does something?
 contract Simple2 {
     function whoami() external view returns (address) {
       return msg.sender;

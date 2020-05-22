@@ -12,15 +12,23 @@
  */
 pragma solidity >=0.4.23;
 
-// Loop inside a function
-contract Simple3 {
+// One function calling another function in the same contract.
+contract Simple5 {
+    address public owner;
     uint256 public val1;
-    uint256 public val2;
 
-    function run() external {
-      uint256 counter = val1 + val2;
-      for (uint256 i = 0; i < counter; i++) {
-         val1++;
-      }
+    function set1(uint256 _val) external {
+        require(msg.sender == owner);
+        set2(_val);
     }
+
+    function set2(uint256 _val) public {
+        require(msg.sender == owner);
+        set3(_val + 2);
+    }
+
+    function set3(uint256 _val) private {
+        val1 = _val + 3;
+    }
+
 }

@@ -30,12 +30,13 @@ public class EqOperation extends AbstractOperation {
   }
 
   @Override
-  public void execute(final MessageFrame frame) {
+  public UInt256 execute(final MessageFrame frame) {
     final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
     final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
 
     final Bytes32 result = (value0.equals(value1) ? UInt256.valueOf(1) : UInt256.ZERO).toBytes();
 
     frame.pushStackItem(result);
+    return UInt256.ZERO;
   }
 }

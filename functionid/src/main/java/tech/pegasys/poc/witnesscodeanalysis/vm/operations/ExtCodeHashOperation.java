@@ -14,6 +14,7 @@
  */
 package tech.pegasys.poc.witnesscodeanalysis.vm.operations;
 
+import org.apache.tuweni.units.bigints.UInt256;
 import tech.pegasys.poc.witnesscodeanalysis.vm.Address;
 
 import tech.pegasys.poc.witnesscodeanalysis.vm.AbstractOperation;
@@ -30,8 +31,10 @@ public class ExtCodeHashOperation extends AbstractOperation {
   }
 
   @Override
-  public void execute(final MessageFrame frame) {
+  public UInt256 execute(final MessageFrame frame) {
     final Address address = Words.toAddress(frame.popStackItem());
     frame.pushStackItem(Bytes32.ZERO);
+
+    return UInt256.ZERO;
   }
 }

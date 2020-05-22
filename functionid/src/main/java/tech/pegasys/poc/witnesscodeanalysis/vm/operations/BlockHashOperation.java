@@ -26,9 +26,11 @@ public class BlockHashOperation extends AbstractOperation {
   }
 
   @Override
-  public void execute(final MessageFrame frame) {
+  public UInt256 execute(final MessageFrame frame) {
     final UInt256 blockArg = UInt256.fromBytes(frame.popStackItem());
     // Always push zero as the blockhash.
     frame.pushStackItem(Bytes32.ZERO);
+
+    return UInt256.ZERO;
   }
 }

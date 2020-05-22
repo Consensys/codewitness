@@ -29,7 +29,7 @@ public class ShlOperation extends AbstractOperation {
   }
 
   @Override
-  public void execute(final MessageFrame frame) {
+  public UInt256 execute(final MessageFrame frame) {
     final UInt256 shiftAmount = UInt256.fromBytes(frame.popStackItem());
     final Bytes32 value = frame.popStackItem();
 
@@ -38,5 +38,6 @@ public class ShlOperation extends AbstractOperation {
     } else {
       frame.pushStackItem(value.shiftLeft(shiftAmount.intValue()));
     }
+    return UInt256.ZERO;
   }
 }

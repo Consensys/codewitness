@@ -14,6 +14,7 @@
  */
 package tech.pegasys.poc.witnesscodeanalysis.vm.operations;
 
+import org.apache.tuweni.units.bigints.UInt256;
 import tech.pegasys.poc.witnesscodeanalysis.vm.Address;
 import tech.pegasys.poc.witnesscodeanalysis.vm.AbstractOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
@@ -28,9 +29,11 @@ public class BalanceOperation extends AbstractOperation {
   }
 
   @Override
-  public void execute(final MessageFrame frame) {
+  public UInt256 execute(final MessageFrame frame) {
     final Address accountAddress = Words.toAddress(frame.popStackItem());
     // Always push zero as the balance.
     frame.pushStackItem(Bytes32.ZERO);
+
+    return UInt256.ZERO;
   }
 }

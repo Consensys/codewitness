@@ -29,11 +29,10 @@ public class CodeCopyOperation extends AbstractOperation {
   }
 
   @Override
-  public void execute(final MessageFrame frame) {
-    final Code code = frame.getCode();
-
+  public UInt256 execute(final MessageFrame frame) {
     final UInt256 memOffset = UInt256.fromBytes(frame.popStackItem());
     final UInt256 sourceOffset = UInt256.fromBytes(frame.popStackItem());
     final UInt256 numBytes = UInt256.fromBytes(frame.popStackItem());
+    return UInt256.ZERO;
   }
 }

@@ -11,10 +11,14 @@ PACKAGE=tech.pegasys.poc.witness1.soliditywrappers
 solc $CONTRACTSDIR/Simple1.sol --allow-paths . --asm --asm-json --hashes --userdoc  --devdoc  --metadata --opcodes --bin --abi --optimize -o $BUILDDIRO --overwrite
 solc $CONTRACTSDIR/Simple2.sol --allow-paths . --asm --asm-json --hashes --userdoc  --devdoc  --metadata --opcodes --bin --abi --optimize -o $BUILDDIRO --overwrite
 solc $CONTRACTSDIR/Simple3.sol --allow-paths . --asm --asm-json --hashes --userdoc  --devdoc  --metadata --opcodes --bin --abi --optimize -o $BUILDDIRO --overwrite
+solc $CONTRACTSDIR/Simple4.sol --allow-paths . --asm --asm-json --hashes --userdoc  --devdoc  --metadata --opcodes --bin --abi --optimize -o $BUILDDIRO --overwrite
+solc $CONTRACTSDIR/Simple5.sol --allow-paths . --asm --asm-json --hashes --userdoc  --devdoc  --metadata --opcodes --bin --abi --optimize -o $BUILDDIRO --overwrite
 solc $CONTRACTSDIR/ERC20.sol --allow-paths . --asm --asm-json --hashes --userdoc  --devdoc  --metadata --opcodes --bin --abi --optimize -o $BUILDDIRO --overwrite
 solc $CONTRACTSDIR/Simple1.sol --allow-paths . --asm --asm-json --hashes --userdoc  --devdoc  --metadata --opcodes --bin --abi -o $BUILDDIRN --overwrite
 solc $CONTRACTSDIR/Simple2.sol --allow-paths . --asm --asm-json --hashes --userdoc  --devdoc  --metadata --opcodes --bin --abi -o $BUILDDIRN --overwrite
 solc $CONTRACTSDIR/Simple3.sol --allow-paths . --asm --asm-json --hashes --userdoc  --devdoc  --metadata --opcodes --bin --abi -o $BUILDDIRN --overwrite
+solc $CONTRACTSDIR/Simple4.sol --allow-paths . --asm --asm-json --hashes --userdoc  --devdoc  --metadata --opcodes --bin --abi -o $BUILDDIRN --overwrite
+solc $CONTRACTSDIR/Simple5.sol --allow-paths . --asm --asm-json --hashes --userdoc  --devdoc  --metadata --opcodes --bin --abi -o $BUILDDIRN --overwrite
 solc $CONTRACTSDIR/ERC20.sol --allow-paths . --asm --asm-json --hashes --userdoc  --devdoc  --metadata --opcodes --bin --abi -o $BUILDDIRN --overwrite
 
 # TODO try out:

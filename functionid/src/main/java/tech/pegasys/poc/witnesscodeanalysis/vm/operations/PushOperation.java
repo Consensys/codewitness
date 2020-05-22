@@ -17,6 +17,7 @@ package tech.pegasys.poc.witnesscodeanalysis.vm.operations;
 import static java.lang.Math.min;
 
 
+import org.apache.tuweni.units.bigints.UInt256;
 import tech.pegasys.poc.witnesscodeanalysis.vm.AbstractOperation;
 
 import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
@@ -37,7 +38,7 @@ public class PushOperation extends AbstractOperation {
   }
 
   @Override
-  public void execute(final MessageFrame frame) {
+  public UInt256 execute(final MessageFrame frame) {
     final int pc = frame.getPC();
     final Bytes code = frame.getCode().getBytes();
 
@@ -45,5 +46,6 @@ public class PushOperation extends AbstractOperation {
     final MutableBytes32 bytes = MutableBytes32.create();
     code.slice(pc + 1, copyLength).copyTo(bytes, bytes.size() - length);
     frame.pushStackItem(bytes);
+    return UInt256.ZERO;
   }
 }

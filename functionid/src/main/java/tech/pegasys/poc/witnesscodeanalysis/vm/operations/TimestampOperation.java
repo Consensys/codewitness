@@ -26,9 +26,10 @@ public class TimestampOperation extends AbstractOperation {
   }
 
   @Override
-  public void execute(final MessageFrame frame) {
+  public UInt256 execute(final MessageFrame frame) {
     // Return 0 always.
     final long timestamp = 0;
     frame.pushStackItem(UInt256.valueOf(timestamp).toBytes());
+    return UInt256.ZERO;
   }
 }

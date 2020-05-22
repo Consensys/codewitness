@@ -29,8 +29,9 @@ public class CodeSizeOperation extends AbstractOperation {
   }
 
   @Override
-  public void execute(final MessageFrame frame) {
+  public UInt256 execute(final MessageFrame frame) {
     final Code code = frame.getCode();
     frame.pushStackItem(UInt256.valueOf(code.getSize()).toBytes());
+    return UInt256.ZERO;
   }
 }

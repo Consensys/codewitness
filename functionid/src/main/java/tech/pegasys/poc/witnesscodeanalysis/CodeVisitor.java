@@ -55,7 +55,7 @@ public class CodeVisitor {
       final Operation curOp = registry.get(code.get(pc), 0);
       int opCode = curOp.getOpcode();
       frame.setCurrentOperation(curOp);
-      curOp.execute(frame);
+      int jumpDest = curOp.execute(frame).intValue();
 
       // Find function entry points. Look for code matching the pattern shown below:
       // PUSH4 0x95CACBE0
@@ -88,9 +88,12 @@ public class CodeVisitor {
 
 
       // Process jumps.
-      int jumpDest = curOp.jumpDest().intValue();
       if (opCode == JumpiOperation.OPCODE || opCode == JumpOperation.OPCODE) {
         LOG.info("PC1: {}, Operation {}, Jump Destination: {}", pc, curOp.getName(), jumpDest);
+        dumpStack(frame);
+        if (jumpDest == startingPc) {
+          LOG.error("*******************Jump Dest == Starting PC: {}, 0x{}", jumpDest, Integer.toHexString(jumpDest));
+        }
         if (this.codeSegments.get(jumpDest) == null) {
           // Not visited yet.
           MessageFrame newMessageFrame = (MessageFrame) frame.clone();
@@ -103,6 +106,7 @@ public class CodeVisitor {
       }
       else {
         LOG.info("PC1: {}, Operation {}", pc, curOp.getName());
+        dumpStack(frame);
       }
 
       final int opSize = curOp.getOpSize();
@@ -171,6 +175,20 @@ public class CodeVisitor {
     }
     CodeSegment codeSegment = new CodeSegment(startingPc, callingSegmentPc);
     this.codeSegments.put(startingPc, codeSegment);
+  }
+
+  private void dumpStack(MessageFrame frame) {
+    StringBuffer buf = new StringBuffer();
+    buf.append(" Stack:");
+    int stackSize = frame.stackSize();
+    for (int i = 0; i < stackSize; i++) {
+      buf.append(" [");
+      buf.append(i);
+      buf.append(" ]: ");
+      buf.append(frame.getStackItem(i));
+      buf.append(", ");
+    }
+    LOG.info(buf.toString());
   }
 
 }

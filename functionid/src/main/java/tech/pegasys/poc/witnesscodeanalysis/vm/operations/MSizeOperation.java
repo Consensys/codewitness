@@ -29,7 +29,8 @@ public class MSizeOperation extends AbstractOperation {
   }
 
   @Override
-  public void execute(final MessageFrame frame) {
+  public UInt256 execute(final MessageFrame frame) {
     frame.pushStackItem(Bytes32.ZERO);
+    return UInt256.ZERO;
   }
 }

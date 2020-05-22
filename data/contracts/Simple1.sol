@@ -12,6 +12,7 @@
  */
 pragma solidity >=0.4.23;
 
+// Multiple functions in the one contract.
 contract Simple1 {
     uint256 private aValue;
 

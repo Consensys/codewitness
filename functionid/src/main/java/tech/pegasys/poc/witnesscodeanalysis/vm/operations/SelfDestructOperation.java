@@ -15,6 +15,7 @@
 package tech.pegasys.poc.witnesscodeanalysis.vm.operations;
 
 
+import org.apache.tuweni.units.bigints.UInt256;
 import tech.pegasys.poc.witnesscodeanalysis.vm.AbstractOperation;
 
 import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
@@ -28,7 +29,7 @@ public class SelfDestructOperation extends AbstractOperation {
 
 
   @Override
-  public void execute(final MessageFrame frame) {
+  public UInt256 execute(final MessageFrame frame) {
 //    final Address address = frame.getRecipientAddress();
 //    final MutableAccount account = frame.getWorldState().getAccount(address).getMutable();
 //
@@ -47,6 +48,8 @@ public class SelfDestructOperation extends AbstractOperation {
 //    account.setBalance(Wei.ZERO);
 
     frame.setState(MessageFrame.State.CODE_SUCCESS);
+
+    return UInt256.ZERO;
   }
 
 }

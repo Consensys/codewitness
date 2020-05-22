@@ -29,7 +29,7 @@ public class LtOperation extends AbstractOperation {
   }
 
   @Override
-  public void execute(final MessageFrame frame) {
+  public UInt256 execute(final MessageFrame frame) {
     final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
     final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
 
@@ -37,5 +37,7 @@ public class LtOperation extends AbstractOperation {
         value0.compareTo(value1) < 0 ? UInt256.ONE.toBytes() : UInt256.ZERO.toBytes();
 
     frame.pushStackItem(result);
+
+    return UInt256.ZERO;
   }
 }
