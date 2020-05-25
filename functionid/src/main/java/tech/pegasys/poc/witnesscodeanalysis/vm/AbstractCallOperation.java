@@ -88,7 +88,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
-    throw new Error("Not implemented yet");
+    throw new Error("TODO Not implemented yet");
 
 //
 //    frame.clearReturnData();

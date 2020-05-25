@@ -21,7 +21,7 @@ import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class JumpOperation extends AbstractOperation {
+public class JumpOperation extends AbstractJump {
   public static final int OPCODE = 0x56;
 
   public JumpOperation() {
@@ -30,6 +30,8 @@ public class JumpOperation extends AbstractOperation {
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
-    return UInt256.fromBytes(frame.popStackItem());
+    UInt256 jumpDestination = UInt256.fromBytes(frame.popStackItem());
+    checkJumpDest(jumpDestination);
+    return jumpDestination;
   }
 }

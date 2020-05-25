@@ -27,29 +27,18 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class SDivOperation extends AbstractOperation {
+  public static final int OPCODE = 0x05;
+  public static Bytes32 MARKER_AND_OPCODE = UInt256.valueOf(DYNAMIC_MARKER + OPCODE).toBytes();
 
   public SDivOperation() {
-    super(0x05, "SDIV", 2, 1, 1);
+    super(OPCODE, "SDIV", 2, 1, 1);
   }
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
-    final Bytes32 value0 = frame.popStackItem();
-    final Bytes32 value1 = frame.popStackItem();
-    if (value1.isZero()) {
-      frame.pushStackItem(Bytes32.ZERO);
-    } else {
-      BigInteger result = value0.toBigInteger().divide(value1.toBigInteger());
-      Bytes resultBytes = Bytes.wrap(result.toByteArray());
-      if (resultBytes.size() > 32) {
-        resultBytes = resultBytes.slice(resultBytes.size() - 32, 32);
-      }
-
-      byte[] padding = new byte[32 - resultBytes.size()];
-      Arrays.fill(padding, result.signum() < 0 ? (byte) 0xFF : 0x00);
-
-      frame.pushStackItem(Bytes32.wrap(Bytes.concatenate(Bytes.wrap(padding), resultBytes)));
-    }
+    frame.popStackItem();
+    frame.popStackItem();
+    frame.pushStackItem(MARKER_AND_OPCODE);
     return UInt256.ZERO;
 
   }

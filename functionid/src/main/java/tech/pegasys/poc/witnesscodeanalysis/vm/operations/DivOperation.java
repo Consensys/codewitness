@@ -23,22 +23,18 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class DivOperation extends AbstractOperation {
+  public static int OPCODE = 0x04;
+  public static Bytes32 MARKER_AND_OPCODE = UInt256.valueOf(DYNAMIC_MARKER + OPCODE).toBytes();
 
   public DivOperation() {
-    super(0x04, "DIV", 2, 1, 1);
+    super(OPCODE, "DIV", 2, 1, 1);
   }
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
-    final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
-    final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
-
-    if (value1.isZero()) {
-      frame.pushStackItem(Bytes32.ZERO);
-    } else {
-      final UInt256 result = value0.divide(value1);
-      frame.pushStackItem(result.toBytes());
-    }
+    frame.popStackItem();
+    frame.popStackItem();
+    frame.pushStackItem(MARKER_AND_OPCODE);
     return UInt256.ZERO;
   }
 }

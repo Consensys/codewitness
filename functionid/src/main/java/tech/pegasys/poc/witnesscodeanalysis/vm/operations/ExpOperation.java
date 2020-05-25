@@ -15,6 +15,7 @@
 package tech.pegasys.poc.witnesscodeanalysis.vm.operations;
 
 
+import org.apache.tuweni.bytes.Bytes32;
 import tech.pegasys.poc.witnesscodeanalysis.vm.AbstractOperation;
 
 import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
@@ -22,9 +23,11 @@ import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class ExpOperation extends AbstractOperation {
+  public static int OPCODE = 0x0A;
+  public static Bytes32 MARKER_AND_OPCODE = UInt256.valueOf(DYNAMIC_MARKER + OPCODE).toBytes();
 
   public ExpOperation() {
-    super(0x0A, "EXP", 2, 1, 1);
+    super(OPCODE, "EXP", 2, 1, 1);
   }
 
   @Override
@@ -32,7 +35,7 @@ public class ExpOperation extends AbstractOperation {
     frame.popStackItem();
     frame.popStackItem();
 
-    frame.pushStackItem(UInt256.ZERO.toBytes());
+    frame.pushStackItem(MARKER_AND_OPCODE);
 
     return UInt256.ZERO;
   }

@@ -22,14 +22,16 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class CallDataSizeOperation extends AbstractOperation {
+  public static int OPCODE = 0x36;
+  public static Bytes32 MARKER_AND_OPCODE = UInt256.valueOf(DYNAMIC_MARKER + OPCODE).toBytes();
 
   public CallDataSizeOperation() {
-    super(0x36, "CALLDATASIZE", 0, 1, 1);
+    super(OPCODE, "CALLDATASIZE", 0, 1, 1);
   }
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
-    frame.pushStackItem(Bytes32.ZERO);
+    frame.pushStackItem(MARKER_AND_OPCODE);
     return UInt256.ZERO;
   }
 }

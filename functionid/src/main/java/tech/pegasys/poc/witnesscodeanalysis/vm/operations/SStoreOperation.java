@@ -14,16 +14,17 @@
  */
 package tech.pegasys.poc.witnesscodeanalysis.vm.operations;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import tech.pegasys.poc.witnesscodeanalysis.vm.AbstractOperation;
 
 import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
 
 public class SStoreOperation extends AbstractOperation {
-
+  public static final int OPCODE = 0x55;
 
   public SStoreOperation() {
-    super(0x55, "SSTORE", 2, 0, 1);
+    super(OPCODE, "SSTORE", 2, 0, 1);
   }
 
   @Override

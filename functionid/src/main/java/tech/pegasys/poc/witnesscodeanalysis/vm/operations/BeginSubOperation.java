@@ -19,7 +19,6 @@ import tech.pegasys.poc.witnesscodeanalysis.vm.AbstractOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
 
 public class BeginSubOperation extends AbstractOperation {
-
   public static final int OPCODE = 0xb2;
 
   public BeginSubOperation() {

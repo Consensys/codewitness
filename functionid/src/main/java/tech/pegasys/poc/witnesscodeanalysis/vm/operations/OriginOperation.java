@@ -24,14 +24,16 @@ import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
 import tech.pegasys.poc.witnesscodeanalysis.vm.Words;
 
 public class OriginOperation extends AbstractOperation {
+  public static final int OPCODE = 0x32;
+  public static Bytes32 MARKER_AND_OPCODE = UInt256.valueOf(DYNAMIC_MARKER + OPCODE).toBytes();
 
   public OriginOperation() {
-    super(0x32, "ORIGIN", 0, 1, 1);
+    super(OPCODE, "ORIGIN", 0, 1, 1);
   }
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
-    frame.pushStackItem(Bytes32.ZERO);
+    frame.pushStackItem(MARKER_AND_OPCODE);
     return UInt256.ZERO;
   }
 }

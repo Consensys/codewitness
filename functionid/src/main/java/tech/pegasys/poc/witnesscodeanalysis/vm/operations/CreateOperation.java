@@ -15,16 +15,14 @@
 package tech.pegasys.poc.witnesscodeanalysis.vm.operations;
 
 
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
+
 public class CreateOperation extends AbstractCreateOperation {
+  public static int OPCODE = 0xF0;
+  public static Bytes32 MARKER_AND_OPCODE = UInt256.valueOf(DYNAMIC_MARKER + OPCODE).toBytes();
 
   public CreateOperation() {
-    super(0xF0, "CREATE", 3, 1, 1);
+    super(OPCODE, "CREATE", 3, 1, 1);
   }
-
-//  @Override
-//  protected Address targetContractAddress(final MessageFrame frame) {
-//    final Account sender = frame.getWorldState().get(frame.getRecipientAddress());
-//    // Decrement nonce by 1 to normalize the effect of transaction execution
-//    return Address.contractAddress(frame.getRecipientAddress(), sender.getNonce() - 1L);
-//  }
 }

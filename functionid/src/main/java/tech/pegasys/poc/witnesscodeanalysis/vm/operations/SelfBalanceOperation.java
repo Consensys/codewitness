@@ -22,14 +22,16 @@ import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class SelfBalanceOperation extends AbstractOperation {
+  public static final int OPCODE = 0x47;
+  public static Bytes32 MARKER_AND_OPCODE = UInt256.valueOf(DYNAMIC_MARKER + OPCODE).toBytes();
 
   public SelfBalanceOperation() {
-    super(0x47, "SELFBALANCE", 0, 1, 1);
+    super(OPCODE, "SELFBALANCE", 0, 1, 1);
   }
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
-    frame.pushStackItem(Bytes32.ZERO);
+    frame.pushStackItem(MARKER_AND_OPCODE);
     return UInt256.ZERO;
   }
 }

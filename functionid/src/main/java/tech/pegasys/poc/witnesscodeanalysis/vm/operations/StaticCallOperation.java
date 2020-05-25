@@ -14,6 +14,7 @@
  */
 package tech.pegasys.poc.witnesscodeanalysis.vm.operations;
 
+import org.apache.tuweni.bytes.Bytes32;
 import tech.pegasys.poc.witnesscodeanalysis.vm.Address;
 import tech.pegasys.poc.witnesscodeanalysis.vm.AbstractCallOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
@@ -22,9 +23,10 @@ import tech.pegasys.poc.witnesscodeanalysis.vm.Words;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class StaticCallOperation extends AbstractCallOperation {
+  public static final int OPCODE = 0xFA;
 
   public StaticCallOperation() {
-    super(0xFA, "STATICCALL", 6, 1, 1);
+    super(OPCODE, "STATICCALL", 6, 1, 1);
   }
 
   @Override

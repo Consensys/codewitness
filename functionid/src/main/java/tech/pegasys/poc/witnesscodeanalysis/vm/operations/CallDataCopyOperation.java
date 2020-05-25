@@ -14,6 +14,7 @@
  */
 package tech.pegasys.poc.witnesscodeanalysis.vm.operations;
 
+import org.apache.tuweni.bytes.Bytes32;
 import tech.pegasys.poc.witnesscodeanalysis.vm.AbstractOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
 
@@ -21,9 +22,10 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class CallDataCopyOperation extends AbstractOperation {
+  public static int OPCODE = 0x37;
 
   public CallDataCopyOperation() {
-    super(0x37, "CALLDATACOPY", 3, 0, 1);
+    super(OPCODE, "CALLDATACOPY", 3, 0, 1);
   }
 
   @Override

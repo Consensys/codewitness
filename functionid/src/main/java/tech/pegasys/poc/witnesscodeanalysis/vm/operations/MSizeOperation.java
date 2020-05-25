@@ -23,14 +23,16 @@ import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class MSizeOperation extends AbstractOperation {
+  public static final int OPCODE = 0x59;
+  public static Bytes32 MARKER_AND_OPCODE = UInt256.valueOf(DYNAMIC_MARKER + OPCODE).toBytes();
 
   public MSizeOperation() {
-    super(0x59, "MSIZE", 0, 1, 1);
+    super(OPCODE, "MSIZE", 0, 1, 1);
   }
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
-    frame.pushStackItem(Bytes32.ZERO);
+    frame.pushStackItem(MARKER_AND_OPCODE);
     return UInt256.ZERO;
   }
 }

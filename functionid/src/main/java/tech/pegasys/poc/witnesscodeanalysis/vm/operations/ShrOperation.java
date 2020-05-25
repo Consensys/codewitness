@@ -23,21 +23,18 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class ShrOperation extends AbstractOperation {
+  public static final int OPCODE = 0x1C;
+  public static Bytes32 MARKER_AND_OPCODE = UInt256.valueOf(DYNAMIC_MARKER + OPCODE).toBytes();
 
   public ShrOperation() {
-    super(0x1c, "SHR", 2, 1, 1);
+    super(OPCODE, "SHR", 2, 1, 1);
   }
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
-    final UInt256 shiftAmount = UInt256.fromBytes(frame.popStackItem());
-    final Bytes32 value = frame.popStackItem();
-
-    if (!shiftAmount.fitsInt() || shiftAmount.intValue() >= 256) {
-      frame.pushStackItem(Bytes32.ZERO);
-    } else {
-      frame.pushStackItem(value.shiftRight(shiftAmount.intValue()));
-    }
+    frame.popStackItem();
+    frame.popStackItem();
+    frame.pushStackItem(MARKER_AND_OPCODE);
     return UInt256.ZERO;
   }
 }

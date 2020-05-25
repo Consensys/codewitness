@@ -15,6 +15,7 @@
 package tech.pegasys.poc.witnesscodeanalysis.vm.operations;
 
 
+import org.apache.tuweni.bytes.Bytes32;
 import tech.pegasys.poc.witnesscodeanalysis.vm.AbstractOperation;
 
 import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
@@ -22,6 +23,8 @@ import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class IsZeroOperation extends AbstractOperation {
+  public static int OPCODE = 0x15;
+  public static Bytes32 MARKER_AND_OPCODE = UInt256.valueOf(DYNAMIC_MARKER + OPCODE).toBytes();
 
   public IsZeroOperation() {
     super(0x15, "ISZERO", 1, 1, 1);
@@ -29,9 +32,8 @@ public class IsZeroOperation extends AbstractOperation {
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
-    final UInt256 value = UInt256.fromBytes(frame.popStackItem());
-
-    frame.pushStackItem(value.isZero() ? UInt256.ONE.toBytes() : UInt256.ZERO.toBytes());
+    frame.popStackItem();
+    frame.pushStackItem(MARKER_AND_OPCODE);
     return UInt256.ZERO;
   }
 }

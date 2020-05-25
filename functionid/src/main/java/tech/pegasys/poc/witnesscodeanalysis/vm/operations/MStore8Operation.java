@@ -23,17 +23,17 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class MStore8Operation extends AbstractOperation {
+  public static final int OPCODE = 0x53;
 
   public MStore8Operation() {
-    super(0x53, "MSTORE8", 2, 0, 1);
+    super(OPCODE, "MSTORE8", 2, 0, 1);
   }
 
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
-    final UInt256 location = UInt256.fromBytes(frame.popStackItem());
-    final Bytes32 value = frame.popStackItem();
-//    frame.writeMemory(location, value.get(Bytes32.SIZE - 1), true);
+    frame.popStackItem();
+    frame.popStackItem();
     return UInt256.ZERO;
   }
 }

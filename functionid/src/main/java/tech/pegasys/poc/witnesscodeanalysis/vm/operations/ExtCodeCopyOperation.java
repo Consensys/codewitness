@@ -14,6 +14,7 @@
  */
 package tech.pegasys.poc.witnesscodeanalysis.vm.operations;
 
+import org.apache.tuweni.bytes.Bytes32;
 import tech.pegasys.poc.witnesscodeanalysis.vm.Address;
 
 import tech.pegasys.poc.witnesscodeanalysis.vm.AbstractOperation;
@@ -25,22 +26,19 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class ExtCodeCopyOperation extends AbstractOperation {
+  public static int OPCODE = 0x3C;
 
   public ExtCodeCopyOperation() {
-    super(0x3C, "EXTCODECOPY", 4, 0, 1);
+    super(OPCODE, "EXTCODECOPY", 4, 0, 1);
   }
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
-    final Address address = Words.toAddress(frame.popStackItem());
-//    final Account account = frame.getWorldState().get(address);
-//    final Bytes code = account != null ? account.getCode() : Bytes.EMPTY;
+    frame.popStackItem();
+    frame.popStackItem();
+    frame.popStackItem();
+    frame.popStackItem();
 
-    final UInt256 memOffset = UInt256.fromBytes(frame.popStackItem());
-    final UInt256 sourceOffset = UInt256.fromBytes(frame.popStackItem());
-    final UInt256 numBytes = UInt256.fromBytes(frame.popStackItem());
-
-//    frame.writeMemory(memOffset, sourceOffset, numBytes, code);
     return UInt256.ZERO;
   }
 }

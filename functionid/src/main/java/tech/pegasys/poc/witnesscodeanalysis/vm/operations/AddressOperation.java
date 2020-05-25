@@ -22,6 +22,8 @@ import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
 import tech.pegasys.poc.witnesscodeanalysis.vm.Words;
 
 public class AddressOperation extends AbstractOperation {
+  public static int OPCODE = 0x30;
+  public static Bytes32 MARKER_AND_OPCODE = UInt256.valueOf(DYNAMIC_MARKER + OPCODE).toBytes();
 
   public AddressOperation() {
     super(0x30, "ADDRESS", 0, 1, 1);
@@ -29,7 +31,7 @@ public class AddressOperation extends AbstractOperation {
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
-    frame.pushStackItem(Bytes32.ZERO);
+    frame.pushStackItem(MARKER_AND_OPCODE);
     return UInt256.ZERO;
   }
 }

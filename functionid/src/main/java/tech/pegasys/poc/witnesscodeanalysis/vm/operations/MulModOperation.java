@@ -23,23 +23,19 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class MulModOperation extends AbstractOperation {
+  public static final int OPCODE = 0x09;
+  public static Bytes32 MARKER_AND_OPCODE = UInt256.valueOf(DYNAMIC_MARKER + OPCODE).toBytes();
 
   public MulModOperation() {
-    super(0x09, "MULMOD", 3, 1, 1);
+    super(OPCODE, "MULMOD", 3, 1, 1);
   }
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
-    final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
-    final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
-    final UInt256 value2 = UInt256.fromBytes(frame.popStackItem());
-
-    if (value2.isZero()) {
-      frame.pushStackItem(Bytes32.ZERO);
-    } else {
-      final UInt256 result = value0.multiplyMod(value1, value2);
-      frame.pushStackItem(result.toBytes());
-    }
+    frame.popStackItem();
+    frame.popStackItem();
+    frame.popStackItem();
+    frame.pushStackItem(MARKER_AND_OPCODE);
     return UInt256.ZERO;
   }
 }

@@ -14,6 +14,7 @@
  */
 package tech.pegasys.poc.witnesscodeanalysis.vm.operations;
 
+import org.apache.tuweni.bytes.Bytes32;
 import tech.pegasys.poc.witnesscodeanalysis.vm.Address;
 
 import tech.pegasys.poc.witnesscodeanalysis.vm.AbstractCallOperation;
@@ -24,9 +25,11 @@ import tech.pegasys.poc.witnesscodeanalysis.vm.Words;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class CallOperation extends AbstractCallOperation {
+  public static int OPCODE = 0xF1;
+  public static Bytes32 MARKER_AND_OPCODE = UInt256.valueOf(DYNAMIC_MARKER + OPCODE).toBytes();
 
   public CallOperation() {
-    super(0xF1, "CALL", 7, 1, 1);
+    super(OPCODE, "CALL", 7, 1, 1);
   }
 
   @Override

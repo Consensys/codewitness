@@ -23,17 +23,19 @@ import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class ChainIdOperation extends AbstractOperation {
+  public static int OPCODE = 0x46;
+  public static Bytes32 MARKER_AND_OPCODE = UInt256.valueOf(DYNAMIC_MARKER + OPCODE).toBytes();
 
   private final Bytes32 chainId;
 
   public ChainIdOperation(final Bytes32 chainId) {
-    super(0x46, "CHAINID", 0, 1, 1);
+    super(OPCODE, "CHAINID", 0, 1, 1);
     this.chainId = chainId;
   }
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
-    frame.pushStackItem(chainId);
+    frame.pushStackItem(MARKER_AND_OPCODE);
     return UInt256.ZERO;
   }
 }

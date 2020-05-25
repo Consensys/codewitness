@@ -15,15 +15,17 @@
 package tech.pegasys.poc.witnesscodeanalysis.vm.operations;
 
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import tech.pegasys.poc.witnesscodeanalysis.vm.AbstractOperation;
 
 import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
 
 public class ReturnDataCopyOperation extends AbstractOperation {
+  public static final int OPCODE = 0x3E;
 
   public ReturnDataCopyOperation() {
-    super(0x3E, "RETURNDATACOPY", 3, 0, 1);
+    super(OPCODE, "RETURNDATACOPY", 3, 0, 1);
   }
 
   @Override

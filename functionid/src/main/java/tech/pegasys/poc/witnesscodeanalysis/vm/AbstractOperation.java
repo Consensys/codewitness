@@ -21,6 +21,9 @@ import org.apache.tuweni.units.bigints.UInt256;
  * members for free.
  */
 public abstract class AbstractOperation implements Operation, Cloneable {
+  public static final int DYNAMIC_MARKER = 0x7ACE0000;
+  public static final int DYNAMIC_MARKER_MASK = 0x7FFF0000;
+
   private final int opcode;
   private final String name;
   private final int stackItemsConsumed;

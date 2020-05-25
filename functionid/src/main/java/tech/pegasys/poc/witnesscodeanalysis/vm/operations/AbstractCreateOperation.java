@@ -38,7 +38,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
-    throw new Error("Not implemented yet");
+    throw new Error("TODO Not implemented yet");
 //    final Wei value = Wei.wrap(frame.getStackItem(0));
 //
 //    final Address address = frame.getRecipientAddress();

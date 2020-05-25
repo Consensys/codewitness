@@ -15,6 +15,7 @@
 package tech.pegasys.poc.witnesscodeanalysis.vm.operations;
 
 
+import org.apache.tuweni.bytes.Bytes32;
 import tech.pegasys.poc.witnesscodeanalysis.vm.AbstractOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.Code;
 
@@ -23,16 +24,17 @@ import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class CodeCopyOperation extends AbstractOperation {
+  public static int OPCODE = 0x39;
 
   public CodeCopyOperation() {
-    super(0x39, "CODECOPY", 3, 0, 1);
+    super(OPCODE, "CODECOPY", 3, 0, 1);
   }
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
-    final UInt256 memOffset = UInt256.fromBytes(frame.popStackItem());
-    final UInt256 sourceOffset = UInt256.fromBytes(frame.popStackItem());
-    final UInt256 numBytes = UInt256.fromBytes(frame.popStackItem());
+    frame.popStackItem();
+    frame.popStackItem();
+    frame.popStackItem();
     return UInt256.ZERO;
   }
 }

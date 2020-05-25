@@ -24,14 +24,16 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class GasOperation extends AbstractOperation {
+  public static int OPCODE = 0x5A;
+  public static Bytes32 MARKER_AND_OPCODE = UInt256.valueOf(DYNAMIC_MARKER + OPCODE).toBytes();
 
   public GasOperation() {
-    super(0x5A, "GAS", 0, 1, 1);
+    super(OPCODE, "GAS", 0, 1, 1);
   }
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
-    frame.pushStackItem(Bytes32.ZERO);
+    frame.pushStackItem(MARKER_AND_OPCODE);
     return UInt256.ZERO;
   }
 }

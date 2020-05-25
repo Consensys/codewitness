@@ -23,16 +23,17 @@ import tech.pegasys.poc.witnesscodeanalysis.vm.Words;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class BalanceOperation extends AbstractOperation {
+  public static int OPCODE = 0x31;
+  public static Bytes32 MARKER_AND_OPCODE = UInt256.valueOf(DYNAMIC_MARKER + OPCODE).toBytes();
 
   public BalanceOperation() {
-    super(0x31, "BALANCE", 1, 1, 1);
+    super(OPCODE, "BALANCE", 1, 1, 1);
   }
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
-    final Address accountAddress = Words.toAddress(frame.popStackItem());
-    // Always push zero as the balance.
-    frame.pushStackItem(Bytes32.ZERO);
+    frame.popStackItem();
+    frame.pushStackItem(MARKER_AND_OPCODE);
 
     return UInt256.ZERO;
   }

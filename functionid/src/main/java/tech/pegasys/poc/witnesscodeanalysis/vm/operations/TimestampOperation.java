@@ -14,22 +14,23 @@
  */
 package tech.pegasys.poc.witnesscodeanalysis.vm.operations;
 
+import org.apache.tuweni.bytes.Bytes32;
 import tech.pegasys.poc.witnesscodeanalysis.vm.AbstractOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class TimestampOperation extends AbstractOperation {
+  public static final int OPCODE = 0x42;
+  public static Bytes32 MARKER_AND_OPCODE = UInt256.valueOf(DYNAMIC_MARKER + OPCODE).toBytes();
 
   public TimestampOperation() {
-    super(0x42, "TIMESTAMP", 0, 1, 1);
+    super(OPCODE, "TIMESTAMP", 0, 1, 1);
   }
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
-    // Return 0 always.
-    final long timestamp = 0;
-    frame.pushStackItem(UInt256.valueOf(timestamp).toBytes());
+    frame.pushStackItem(MARKER_AND_OPCODE);
     return UInt256.ZERO;
   }
 }

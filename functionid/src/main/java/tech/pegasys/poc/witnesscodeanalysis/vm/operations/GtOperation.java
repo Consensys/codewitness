@@ -23,20 +23,18 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class GtOperation extends AbstractOperation {
+  public static int OPCODE = 0x11;
+  public static Bytes32 MARKER_AND_OPCODE = UInt256.valueOf(DYNAMIC_MARKER + OPCODE).toBytes();
 
   public GtOperation() {
-    super(0x11, "GT", 2, 1, 1);
+    super(OPCODE, "GT", 2, 1, 1);
   }
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
-    final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
-    final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
-
-    final Bytes32 result =
-        (value0.compareTo(value1) > 0 ? UInt256.valueOf(1) : UInt256.ZERO).toBytes();
-
-    frame.pushStackItem(result);
+    frame.popStackItem();
+    frame.popStackItem();
+    frame.pushStackItem(MARKER_AND_OPCODE);
     return UInt256.ZERO;
   }
 }

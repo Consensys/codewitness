@@ -30,23 +30,7 @@ public class SelfDestructOperation extends AbstractOperation {
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
-//    final Address address = frame.getRecipientAddress();
-//    final MutableAccount account = frame.getWorldState().getAccount(address).getMutable();
-//
-//    frame.addSelfDestruct(address);
-//
-//    final MutableAccount recipient =
-//        frame.getWorldState().getOrCreate(Words.toAddress(frame.popStackItem())).getMutable();
-//
-//    if (!account.getAddress().equals(recipient.getAddress())) {
-//      recipient.incrementBalance(account.getBalance());
-//    }
-//
-//    // add refund in message frame
-//    frame.addRefund(recipient.getAddress(), account.getBalance());
-//
-//    account.setBalance(Wei.ZERO);
-
+    frame.popStackItem();
     frame.setState(MessageFrame.State.CODE_SUCCESS);
 
     return UInt256.ZERO;

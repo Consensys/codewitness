@@ -25,15 +25,17 @@ import tech.pegasys.poc.witnesscodeanalysis.vm.Words;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class ExtCodeHashOperation extends AbstractOperation {
+  public static int OPCODE = 0x3F;
+  public static Bytes32 MARKER_AND_OPCODE = UInt256.valueOf(DYNAMIC_MARKER + OPCODE).toBytes();
 
   public ExtCodeHashOperation() {
-    super(0x3F, "EXTCODEHASH", 1, 1, 1);
+    super(OPCODE, "EXTCODEHASH", 1, 1, 1);
   }
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
-    final Address address = Words.toAddress(frame.popStackItem());
-    frame.pushStackItem(Bytes32.ZERO);
+    frame.popStackItem();
+    frame.pushStackItem(MARKER_AND_OPCODE);
 
     return UInt256.ZERO;
   }

@@ -15,6 +15,7 @@
 package tech.pegasys.poc.witnesscodeanalysis.vm.operations;
 
 
+import org.apache.tuweni.bytes.Bytes32;
 import tech.pegasys.poc.witnesscodeanalysis.vm.AbstractOperation;
 
 import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
@@ -22,14 +23,16 @@ import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class PCOperation extends AbstractOperation {
+  public static final int OPCODE = 0x58;
+  public static Bytes32 MARKER_AND_OPCODE = UInt256.valueOf(DYNAMIC_MARKER + OPCODE).toBytes();
 
   public PCOperation() {
-    super(0x58, "PC", 0, 1, 1);
+    super(OPCODE, "PC", 0, 1, 1);
   }
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
-    frame.pushStackItem(UInt256.valueOf(frame.getPC()).toBytes());
+    frame.pushStackItem(MARKER_AND_OPCODE);
     return UInt256.ZERO;
   }
 }

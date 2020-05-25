@@ -25,23 +25,18 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class SGtOperation extends AbstractOperation {
+  public static final int OPCODE = 0x13;
+  public static Bytes32 MARKER_AND_OPCODE = UInt256.valueOf(DYNAMIC_MARKER + OPCODE).toBytes();
 
   public SGtOperation() {
-    super(0x13, "SGT", 2, 1, 1);
+    super(OPCODE, "SGT", 2, 1, 1);
   }
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
-    final Bytes32 value0 = frame.popStackItem();
-    final Bytes32 value1 = frame.popStackItem();
-
-    BigInteger b0 = value0.toBigInteger();
-    BigInteger b1 = value1.toBigInteger();
-
-    final Bytes32 result = b0.compareTo(b1) > 0 ? UInt256.ONE.toBytes() : UInt256.ZERO.toBytes();
-
-    frame.pushStackItem(result);
-
+    frame.popStackItem();
+    frame.popStackItem();
+    frame.pushStackItem(MARKER_AND_OPCODE);
     return UInt256.ZERO;
   }
 }

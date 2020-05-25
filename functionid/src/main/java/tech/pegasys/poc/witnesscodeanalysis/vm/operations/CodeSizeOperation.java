@@ -15,6 +15,7 @@
 package tech.pegasys.poc.witnesscodeanalysis.vm.operations;
 
 
+import org.apache.tuweni.bytes.Bytes32;
 import tech.pegasys.poc.witnesscodeanalysis.vm.AbstractOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.Code;
 
@@ -23,15 +24,16 @@ import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class CodeSizeOperation extends AbstractOperation {
+  public static int OPCODE = 0x38;
+  public static Bytes32 MARKER_AND_OPCODE = UInt256.valueOf(DYNAMIC_MARKER + OPCODE).toBytes();
 
   public CodeSizeOperation() {
-    super(0x38, "CODESIZE", 0, 1, 1);
+    super(OPCODE, "CODESIZE", 0, 1, 1);
   }
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
-    final Code code = frame.getCode();
-    frame.pushStackItem(UInt256.valueOf(code.getSize()).toBytes());
+    frame.pushStackItem(MARKER_AND_OPCODE);
     return UInt256.ZERO;
   }
 }

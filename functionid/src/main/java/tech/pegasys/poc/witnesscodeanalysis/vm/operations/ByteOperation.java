@@ -14,6 +14,7 @@
  */
 package tech.pegasys.poc.witnesscodeanalysis.vm.operations;
 
+import org.apache.tuweni.bytes.Bytes32;
 import tech.pegasys.poc.witnesscodeanalysis.vm.AbstractOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
 
@@ -21,37 +22,19 @@ import org.apache.tuweni.bytes.MutableBytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class ByteOperation extends AbstractOperation {
+  public static int OPCODE = 0x1A;
+  public static Bytes32 MARKER_AND_OPCODE = UInt256.valueOf(DYNAMIC_MARKER + OPCODE).toBytes();
+
 
   public ByteOperation() {
-    super(0x1A, "BYTE", 2, 1, 1);
-  }
-
-  private UInt256 getByte(final UInt256 seq, final UInt256 offset) {
-    if (!offset.fitsInt()) {
-      return UInt256.ZERO;
-    }
-
-    final int index = offset.intValue();
-    if (index >= 32) {
-      return UInt256.ZERO;
-    }
-
-    final byte b = seq.toBytes().get(index);
-    MutableBytes32 res = MutableBytes32.create();
-    res.set(31, b);
-    return UInt256.fromBytes(res);
+    super(OPCODE, "BYTE", 2, 1, 1);
   }
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
-
-    final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
-    final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
-
-    // Stack items are reversed for the BYTE operation.
-    final UInt256 result = getByte(value1, value0);
-
-    frame.pushStackItem(result.toBytes());
+    frame.popStackItem();
+    frame.popStackItem();
+    frame.pushStackItem(MARKER_AND_OPCODE);
 
     return UInt256.ZERO;
   }

@@ -13,13 +13,17 @@ solc $CONTRACTSDIR/Simple2.sol --allow-paths . --asm --asm-json --hashes --userd
 solc $CONTRACTSDIR/Simple3.sol --allow-paths . --asm --asm-json --hashes --userdoc  --devdoc  --metadata --opcodes --bin --abi --optimize -o $BUILDDIRO --overwrite
 solc $CONTRACTSDIR/Simple4.sol --allow-paths . --asm --asm-json --hashes --userdoc  --devdoc  --metadata --opcodes --bin --abi --optimize -o $BUILDDIRO --overwrite
 solc $CONTRACTSDIR/Simple5.sol --allow-paths . --asm --asm-json --hashes --userdoc  --devdoc  --metadata --opcodes --bin --abi --optimize -o $BUILDDIRO --overwrite
+solc $CONTRACTSDIR/Simple6.sol --allow-paths . --asm --asm-json --hashes --userdoc  --devdoc  --metadata --opcodes --bin --abi --optimize -o $BUILDDIRO --overwrite
 solc $CONTRACTSDIR/ERC20.sol --allow-paths . --asm --asm-json --hashes --userdoc  --devdoc  --metadata --opcodes --bin --abi --optimize -o $BUILDDIRO --overwrite
-solc $CONTRACTSDIR/Simple1.sol --allow-paths . --asm --asm-json --hashes --userdoc  --devdoc  --metadata --opcodes --bin --abi -o $BUILDDIRN --overwrite
-solc $CONTRACTSDIR/Simple2.sol --allow-paths . --asm --asm-json --hashes --userdoc  --devdoc  --metadata --opcodes --bin --abi -o $BUILDDIRN --overwrite
-solc $CONTRACTSDIR/Simple3.sol --allow-paths . --asm --asm-json --hashes --userdoc  --devdoc  --metadata --opcodes --bin --abi -o $BUILDDIRN --overwrite
-solc $CONTRACTSDIR/Simple4.sol --allow-paths . --asm --asm-json --hashes --userdoc  --devdoc  --metadata --opcodes --bin --abi -o $BUILDDIRN --overwrite
-solc $CONTRACTSDIR/Simple5.sol --allow-paths . --asm --asm-json --hashes --userdoc  --devdoc  --metadata --opcodes --bin --abi -o $BUILDDIRN --overwrite
-solc $CONTRACTSDIR/ERC20.sol --allow-paths . --asm --asm-json --hashes --userdoc  --devdoc  --metadata --opcodes --bin --abi -o $BUILDDIRN --overwrite
+
+
+
+#solc $CONTRACTSDIR/Simple1.sol --allow-paths . --asm --asm-json --hashes --userdoc  --devdoc  --metadata --opcodes --bin --abi -o $BUILDDIRN --overwrite
+#solc $CONTRACTSDIR/Simple2.sol --allow-paths . --asm --asm-json --hashes --userdoc  --devdoc  --metadata --opcodes --bin --abi -o $BUILDDIRN --overwrite
+#solc $CONTRACTSDIR/Simple3.sol --allow-paths . --asm --asm-json --hashes --userdoc  --devdoc  --metadata --opcodes --bin --abi -o $BUILDDIRN --overwrite
+#solc $CONTRACTSDIR/Simple4.sol --allow-paths . --asm --asm-json --hashes --userdoc  --devdoc  --metadata --opcodes --bin --abi -o $BUILDDIRN --overwrite
+#solc $CONTRACTSDIR/Simple5.sol --allow-paths . --asm --asm-json --hashes --userdoc  --devdoc  --metadata --opcodes --bin --abi -o $BUILDDIRN --overwrite
+#solc $CONTRACTSDIR/ERC20.sol --allow-paths . --asm --asm-json --hashes --userdoc  --devdoc  --metadata --opcodes --bin --abi -o $BUILDDIRN --overwrite
 
 # TODO try out:
 # solc --ir <file> and solc --ir-optimized <file> to get the yul output. That then needs to be manually assembled via solc --strict-assembly <file>. 

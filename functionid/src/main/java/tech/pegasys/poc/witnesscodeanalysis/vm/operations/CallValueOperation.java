@@ -22,14 +22,16 @@ import tech.pegasys.poc.witnesscodeanalysis.vm.AbstractOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
 
 public class CallValueOperation extends AbstractOperation {
+  public static int OPCODE = 0x34;
+  public static Bytes32 MARKER_AND_OPCODE = UInt256.valueOf(DYNAMIC_MARKER + OPCODE).toBytes();
 
   public CallValueOperation() {
-    super(0x34, "CALLVALUE", 0, 1, 1);
+    super(OPCODE, "CALLVALUE", 0, 1, 1);
   }
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
-    frame.pushStackItem(Bytes32.ZERO);
+    frame.pushStackItem(MARKER_AND_OPCODE);
     return UInt256.ZERO;
 
   }

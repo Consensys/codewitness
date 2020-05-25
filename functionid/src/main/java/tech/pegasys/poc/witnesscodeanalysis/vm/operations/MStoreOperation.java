@@ -32,10 +32,8 @@ public class MStoreOperation extends AbstractOperation {
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
-    final UInt256 location = UInt256.fromBytes(frame.popStackItem());
-    final Bytes32 value = frame.popStackItem();
-
-//    frame.writeMemory(location, UInt256.valueOf(32), value, true);
+    frame.popStackItem();
+    frame.popStackItem();
     return UInt256.ZERO;
   }
 }

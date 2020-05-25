@@ -15,15 +15,17 @@
 package tech.pegasys.poc.witnesscodeanalysis.vm.operations;
 
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import tech.pegasys.poc.witnesscodeanalysis.vm.AbstractOperation;
 
 import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
 
 public class PopOperation extends AbstractOperation {
+  public static final int OPCODE = 0x50;
 
   public PopOperation() {
-    super(0x50, "POP", 1, 0, 1);
+    super(OPCODE, "POP", 1, 0, 1);
   }
 
   @Override

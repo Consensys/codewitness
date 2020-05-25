@@ -25,16 +25,18 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class SLtOperation extends AbstractOperation {
+  public static final int OPCODE = 0x12;
+  public static Bytes32 MARKER_AND_OPCODE = UInt256.valueOf(DYNAMIC_MARKER + OPCODE).toBytes();
 
   public SLtOperation() {
-    super(0x12, "SLT", 2, 1, 1);
+    super(OPCODE, "SLT", 2, 1, 1);
   }
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
     frame.popStackItem();
     frame.popStackItem();
-    frame.pushStackItem(UInt256.ZERO.toBytes());
+    frame.pushStackItem(MARKER_AND_OPCODE);
 
     return UInt256.ZERO;
   }

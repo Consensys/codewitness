@@ -23,15 +23,16 @@ import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class NumberOperation extends AbstractOperation {
+  public static final int OPCODE = 0x43;
+  public static Bytes32 MARKER_AND_OPCODE = UInt256.valueOf(DYNAMIC_MARKER + OPCODE).toBytes();
 
   public NumberOperation() {
-    super(0x43, "NUMBER", 0, 1, 1);
+    super(OPCODE, "NUMBER", 0, 1, 1);
   }
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
-    //final long number = frame.getBlockHeader().getNumber();
-    frame.pushStackItem(Bytes32.ZERO);
+    frame.pushStackItem(MARKER_AND_OPCODE);
     return UInt256.ZERO;
   }
 }

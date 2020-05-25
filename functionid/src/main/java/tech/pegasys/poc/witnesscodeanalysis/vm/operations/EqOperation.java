@@ -24,6 +24,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class EqOperation extends AbstractOperation {
   public static final int OPCODE = 0x14;
+  public static Bytes32 MARKER_AND_OPCODE = UInt256.valueOf(DYNAMIC_MARKER + OPCODE).toBytes();
 
   public EqOperation() {
     super(OPCODE, "EQ", 2, 1, 1);
@@ -31,12 +32,9 @@ public class EqOperation extends AbstractOperation {
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
-    final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
-    final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
-
-    final Bytes32 result = (value0.equals(value1) ? UInt256.valueOf(1) : UInt256.ZERO).toBytes();
-
-    frame.pushStackItem(result);
+    frame.popStackItem();
+    frame.popStackItem();
+    frame.pushStackItem(MARKER_AND_OPCODE);
     return UInt256.ZERO;
   }
 }

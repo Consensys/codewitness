@@ -23,39 +23,18 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class SarOperation extends AbstractOperation {
-
-  private static final Bytes32 ALL_BITS =
-      Bytes32.fromHexString("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+  public static final int OPCODE = 0x1D;
+  public static Bytes32 MARKER_AND_OPCODE = UInt256.valueOf(DYNAMIC_MARKER + OPCODE).toBytes();
 
   public SarOperation() {
-    super(0x1d, "SAR", 2, 1, 1);
+    super(OPCODE, "SAR", 2, 1, 1);
   }
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
-    final UInt256 shiftAmount = UInt256.fromBytes(frame.popStackItem());
-    Bytes32 value = frame.popStackItem();
-
-    final boolean negativeNumber = value.get(0) < 0;
-
-    // short circuit result if we are shifting more than the width of the data.
-    if (!shiftAmount.fitsInt() || shiftAmount.intValue() >= 256) {
-      final Bytes32 overflow = negativeNumber ? ALL_BITS : Bytes32.ZERO;
-      frame.pushStackItem(overflow);
-      return  UInt256.ZERO;
-    }
-
-    // first perform standard shift right.
-    value = value.shiftRight(shiftAmount.intValue());
-
-    // if a negative number, carry through the sign.
-    if (negativeNumber) {
-      final Bytes32 significantBits = ALL_BITS.shiftLeft(256 - shiftAmount.intValue());
-      value = value.or(significantBits);
-    }
-    frame.pushStackItem(value);
-
-    return UInt256.ZERO;
-
+    frame.popStackItem();
+    frame.popStackItem();
+    frame.pushStackItem(MARKER_AND_OPCODE);
+    return  UInt256.ZERO;
   }
 }

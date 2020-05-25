@@ -23,20 +23,18 @@ import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class Sha3Operation extends AbstractOperation {
+  public static final int OPCODE = 0x20;
+  public static Bytes32 MARKER_AND_OPCODE = UInt256.valueOf(DYNAMIC_MARKER + OPCODE).toBytes();
 
   public Sha3Operation() {
-    super(0x20, "SHA3", 2, 1, 1);
+    super(OPCODE, "SHA3", 2, 1, 1);
   }
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
-    final UInt256 from = UInt256.fromBytes(frame.popStackItem());
-    final UInt256 length = UInt256.fromBytes(frame.popStackItem());
-
-//    final Bytes bytes = frame.readMemory(from, length);
-
-    frame.pushStackItem(Bytes32.ZERO);
-
+    frame.popStackItem();
+    frame.popStackItem();
+    frame.pushStackItem(MARKER_AND_OPCODE);
     return UInt256.ZERO;
   }
 }

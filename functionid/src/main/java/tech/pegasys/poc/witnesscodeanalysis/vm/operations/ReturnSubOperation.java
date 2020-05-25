@@ -29,7 +29,7 @@ public class ReturnSubOperation extends AbstractOperation {
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
-    throw new Error("Not handled yet: RETURN SUB");
+    throw new Error("TODO Not handled yet: RETURN SUB");
     //frame.setPC(frame.popReturnStackItem());
     //return UInt256.ZERO;
   }

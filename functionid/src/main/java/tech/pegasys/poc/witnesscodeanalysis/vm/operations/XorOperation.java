@@ -14,26 +14,26 @@
  */
 package tech.pegasys.poc.witnesscodeanalysis.vm.operations;
 
+import org.apache.tuweni.bytes.Bytes32;
 import tech.pegasys.poc.witnesscodeanalysis.vm.AbstractOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class XorOperation extends AbstractOperation {
+  public static final int OPCODE = 0x18;
+  public static Bytes32 MARKER_AND_OPCODE = UInt256.valueOf(DYNAMIC_MARKER + OPCODE).toBytes();
 
   public XorOperation() {
-    super(0x18, "XOR", 2, 1, 1);
+    super(OPCODE, "XOR", 2, 1, 1);
   }
 
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
-    final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
-    final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
-
-    final UInt256 result = value0.xor(value1);
-
-    frame.pushStackItem(result.toBytes());
+    frame.popStackItem();
+    frame.popStackItem();
+    frame.pushStackItem(MARKER_AND_OPCODE);
     return UInt256.ZERO;
   }
 }
