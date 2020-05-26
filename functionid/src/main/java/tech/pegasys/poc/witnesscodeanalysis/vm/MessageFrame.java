@@ -14,27 +14,12 @@
  */
 package tech.pegasys.poc.witnesscodeanalysis.vm;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
-
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.ReturnStack;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Deque;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.Consumer;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.bytes.MutableBytes;
-import org.apache.tuweni.units.bigints.UInt256;
 
 /**
  * A container object for all of the state associated with a message.
@@ -192,9 +177,6 @@ public class MessageFrame implements Cloneable {
   private ReturnStack returnStack;
 
 
-  // Miscellaneous fields.
-  private final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons =
-      EnumSet.noneOf(ExceptionalHaltReason.class);
   private Operation currentOperation;
 
   public static Builder builder() {
@@ -402,10 +384,6 @@ public class MessageFrame implements Cloneable {
    */
   public Deque<MessageFrame> getMessageFrameStack() {
     return messageFrameStack;
-  }
-
-  public EnumSet<ExceptionalHaltReason> getExceptionalHaltReasons() {
-    return exceptionalHaltReasons;
   }
 
   public Operation getCurrentOperation() {

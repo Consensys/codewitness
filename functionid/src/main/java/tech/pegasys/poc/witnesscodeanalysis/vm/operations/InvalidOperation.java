@@ -17,7 +17,6 @@ package tech.pegasys.poc.witnesscodeanalysis.vm.operations;
 
 import org.apache.tuweni.units.bigints.UInt256;
 import tech.pegasys.poc.witnesscodeanalysis.vm.AbstractOperation;
-import tech.pegasys.poc.witnesscodeanalysis.vm.ExceptionalHaltReason;
 
 import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
 
@@ -31,7 +30,6 @@ public class InvalidOperation extends AbstractOperation {
   @Override
   public UInt256 execute(final MessageFrame frame) {
     frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
-    frame.getExceptionalHaltReasons().add(ExceptionalHaltReason.INVALID_OPERATION);
     return UInt256.ZERO;
 
   }
