@@ -14,7 +14,7 @@ public class WitnessCodeDump extends WitnessCodeAnalysis {
 
   public void dumpContract() {
     ByteCodePrinter printer = new ByteCodePrinter(this.code);
-    printer.print(0, this.simple.getEndOfCode()+100);
+    printer.print(0, this.simple.getEndOfCode() + 1);
   }
 
 

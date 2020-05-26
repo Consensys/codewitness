@@ -49,6 +49,7 @@ public class ByteCodePrinter {
       }
       if (pc > end) {
         LOG.error(" PC {} is past end {}", pc, end);
+        done = true;
       }
     }
   }
