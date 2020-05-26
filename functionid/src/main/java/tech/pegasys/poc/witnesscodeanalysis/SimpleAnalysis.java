@@ -23,15 +23,9 @@ public class SimpleAnalysis {
   public SimpleAnalysis(Bytes code, int startOfAuxData) {
     this.code = code;
     this.startOfAuxData = startOfAuxData;
-  }
-
-
-  public void analyse() {
     this.isProbablySolidity = probablySolidity();
     scanCode();
   }
-
-
 
 
   public Set<Bytes> determineFunctionIds(int probableEndOfCode) {
