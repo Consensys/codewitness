@@ -35,8 +35,6 @@ public class WitnessCodeAnalysis {
 
 
   public static void main(String[] args) throws Exception {
-    LOG.info("TODO: compare against the size of the contract.");
-    LOG.info("TODO: add size of proofs to overall calculation");
     LOG.info("TODO: add support for calls.");
     LOG.info("TODO: add support for contract data.");
 
@@ -45,23 +43,31 @@ public class WitnessCodeAnalysis {
   }
 
   public void doStuff() throws Exception {
-//    Bytes code = Bytes.fromHexString(contract_0xd94ea6e43b7bffc9e4cba93f3ca49a191dc06d90);
+    Bytes code = Bytes.fromHexString(contract_0xd94ea6e43b7bffc9e4cba93f3ca49a191dc06d90);
 //    Bytes code = Bytes.fromHexString(simple3);
-    Bytes code = Bytes.fromHexString(simple6);
+//    Bytes code = Bytes.fromHexString(simple5);
     runAllAnalyses(code);
   }
 
   public void runAllAnalyses(Bytes code) {
-    int ofsAuxData = AuxData.offsetOfAuxData(code);
-    LOG.info("Offset Aux Data: {}", ofsAuxData);
+    AuxData auxData = new AuxData(code);
+    int possibleEndOfCode = code.size();
+    if (auxData.hasAuxData()) {
+      possibleEndOfCode = auxData.getStartOfAuxData();
+    }
+    SimpleAnalysis simple = new SimpleAnalysis(code, possibleEndOfCode);
+    simple.analyse();
+    LOG.info("Probably Solidity: {}", simple.isProbablySolidity());
+    LOG.info("End of Function ID block: {}", simple.getEndOfFunctionIdBlock());
+    LOG.info("End of Code: {}", simple.getEndOfCode());
+    LOG.info("Offset Aux Data: {}", simple.getStartOfAuxData());
+    LOG.info("Code Length: {}", code.size());
+    if (auxData.hasAuxData()) {
+      LOG.info("Compiler {} version {}", auxData.getCompilerName(), auxData.getCompilerVersion());
+      LOG.info("Source Code stored in {}, message disgest of source code: {}", auxData.getSourceCodeStorageService(), auxData.getSourceCodeHash());
+    }
 
-    SimpleAnalysis simple = new SimpleAnalysis(code);
-    boolean probablySolidity = simple.probablySolidity();
-    LOG.info("Probably Solidity: {}", probablySolidity);
-
-    int probableEndOfCode = (ofsAuxData == 0) ? code.size() : ofsAuxData;
-
-    Set<Bytes> functionIds = simple.determineFunctionIds(probableEndOfCode);
+    Set<Bytes> functionIds = simple.determineFunctionIds(simple.getEndOfCode());
     if (functionIds.size() == 0) {
       LOG.info("No functions found");
     }
@@ -69,28 +75,17 @@ public class WitnessCodeAnalysis {
       LOG.info("Function Id: {}", functionId);
     }
 
-
     // Find all of the code segments in a contract.
     CodePaths codePaths = new CodePaths(code);
-    codePaths.findAllCodePaths();
-    for (CodeSegment codeSegment: codePaths.codeSegments.values()) {
-      LOG.info(codeSegment);
-    }
-    boolean codePathsValid = codePaths.validateCodeSegments(probableEndOfCode);
+    codePaths.findFunctionBlockCodePaths(simple.getEndOfFunctionIdBlock());
+    codePaths.findCodeSegmentsForFunctions();
+    codePaths.showAllCodePaths();
+    boolean codePathsValid = codePaths.validateCodeSegments(simple.getEndOfCode());
     LOG.info("Code Paths Valid: {}", codePathsValid);
     if (!codePathsValid) {
       return;
     }
 
-    // Find which code segments belong to which function.
-    for (Bytes functionId: codePaths.foundFunctions.keySet()) {
-      codePaths.findCodeSegmentsForFunction(functionId, codePaths.foundFunctions.get(functionId));
-    }
-    boolean noUnusedCodePaths = codePaths.checkForUnusedCodeSegments();
-    LOG.info("All Code Paths Used: {}", noUnusedCodePaths);
-    if (!noUnusedCodePaths) {
-      return;
-    }
 
     int COMBINATION_GAP = 4;
     LOG.info("Combining Code Segments using bytes between segments: {}", COMBINATION_GAP);
@@ -99,8 +94,5 @@ public class WitnessCodeAnalysis {
     codePaths.showCombinedCodeSegments();
 
     codePaths.estimateWitnessSize();
-
-
-
   }
 }

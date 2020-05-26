@@ -102,6 +102,8 @@ import org.apache.tuweni.bytes.Bytes32;
 
 /** Provides EVMs supporting the appropriate operations for mainnet hard forks. */
 public abstract class MainnetEvmRegistries {
+  public static final OperationRegistry REGISTRY = berlin(BigInteger.ONE);
+
 
 //  static EVM frontier() {
 //    final OperationRegistry registry = new OperationRegistry();

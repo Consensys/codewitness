@@ -30,9 +30,17 @@ public class AndOperation extends AbstractOperation {
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
-    frame.popStackItem();
-    frame.popStackItem();
-    frame.pushStackItem(MARKER_AND_OPCODE);
+    final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
+
+    final UInt256 result = value0.and(value1);
+
+    frame.pushStackItem(result.toBytes());
+//
+//
+//    frame.popStackItem();
+//    frame.popStackItem();
+//    frame.pushStackItem(MARKER_AND_OPCODE);
 
     return UInt256.ZERO;
   }

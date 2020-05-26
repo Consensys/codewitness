@@ -14,14 +14,12 @@
  */
 package tech.pegasys.poc.witnesscodeanalysis.vm.operations;
 
-
 import tech.pegasys.poc.witnesscodeanalysis.vm.AbstractOperation;
-
 import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class JumpOperation extends AbstractJump {
+public class JumpOperation extends AbstractOperation {
   public static final int OPCODE = 0x56;
 
   public JumpOperation() {
@@ -30,8 +28,6 @@ public class JumpOperation extends AbstractJump {
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
-    UInt256 jumpDestination = UInt256.fromBytes(frame.popStackItem());
-    checkJumpDest(jumpDestination);
-    return jumpDestination;
+    return UInt256.fromBytes(frame.popStackItem());
   }
 }

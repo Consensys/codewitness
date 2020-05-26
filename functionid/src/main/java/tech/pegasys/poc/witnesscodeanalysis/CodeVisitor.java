@@ -2,6 +2,7 @@ package tech.pegasys.poc.witnesscodeanalysis;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import tech.pegasys.poc.witnesscodeanalysis.vm.MainnetEvmRegistries;
 import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
 import tech.pegasys.poc.witnesscodeanalysis.vm.Operation;
@@ -23,21 +24,54 @@ import java.math.BigInteger;
 import java.util.Map;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
+import static tech.pegasys.poc.witnesscodeanalysis.vm.AbstractOperation.DYNAMIC_MARKER;
+import static tech.pegasys.poc.witnesscodeanalysis.vm.AbstractOperation.DYNAMIC_MARKER_MASK;
 
 
+/**
+ * Code Visitor can be used in two modes:
+ * - Find Functions Mode: find the functions that exist in the code, the code segments they are in, and all
+ *  code segments from teh start of code to the functions.
+ * - Reachable code mode: find all code that is reachable from a function entry point.
+ */
 public class CodeVisitor {
   private static final Logger LOG = getLogger();
-  public static OperationRegistry registry = MainnetEvmRegistries.berlin(BigInteger.ONE);
 
-  Bytes code;
-  Map<Integer, CodeSegment> codeSegments;
-  Map<Bytes, Integer> foundFunctions;
+  private Bytes code;
+  public Map<Integer, CodeSegment> codeSegments;
+  private Map<Bytes, Integer> foundFunctions;
+  private int pcEndOfFunctionBlock;
+  private boolean findFunctionsMode;
 
-  public CodeVisitor(Bytes code, Map<Integer, CodeSegment> codeSegments, Map<Bytes, Integer> foundFunctions) {
+
+  /**
+   * Constructor used for finding the list of functions that exist in the code, the code segments they are in, and all
+   * code segments from the start of code to the functions.
+   *
+   * @param code
+   * @param codeSegments
+   * @param foundFunctions
+   * @param pcEndOfFunctionBlock
+   */
+  public CodeVisitor(Bytes code, Map<Integer, CodeSegment> codeSegments, Map<Bytes, Integer> foundFunctions, int pcEndOfFunctionBlock) {
     this.code = code;
     this.codeSegments = codeSegments;
     this.foundFunctions = foundFunctions;
+    this.pcEndOfFunctionBlock = pcEndOfFunctionBlock;
+    this.findFunctionsMode = true;
   }
+
+  /**
+   * Constructor to use for reachable code mode.
+   * @param code
+   * @param codeSegments
+   */
+  public CodeVisitor(Bytes code, Map<Integer, CodeSegment> codeSegments) {
+    this.code = code;
+    this.codeSegments = codeSegments;
+    this.findFunctionsMode = false;
+  }
+
 
   public void visit(MessageFrame frame, int callingSegmentPc) {
     int pc = frame.getPC();
@@ -46,66 +80,49 @@ public class CodeVisitor {
     CodeSegment codeSegment = this.codeSegments.get(startingPc);
     boolean done = false;
 
-    boolean foundPush4OpCode = false;
-    boolean foundEqOpCode = false;
-    boolean foundPushDestAddress = false;
-    Bytes functionId = null;
-
     while (!done) {
-      final Operation curOp = registry.get(code.get(pc), 0);
+      final Operation curOp = MainnetEvmRegistries.REGISTRY.get(code.get(pc), 0);
       int opCode = curOp.getOpcode();
       frame.setCurrentOperation(curOp);
       int jumpDest = curOp.execute(frame).intValue();
 
-      // Find function entry points. Look for code matching the pattern shown below:
-      // PUSH4 0x95CACBE0
-      // EQ
-      // PUSH1 0x41
-      // JUMPI
-      if (foundPushDestAddress) {
-        foundPushDestAddress = false;
-        if (opCode == JumpiOperation.OPCODE) {
-          LOG.info("****Found function {} in code segment {}", functionId, startingPc);
-          foundFunctions.put(functionId, startingPc);
-        }
+      if (this.findFunctionsMode) {
+        findFunctionStateMachine(frame, startingPc, opCode);
       }
-      if (foundEqOpCode) {
-        foundEqOpCode = false;
-        if (opCode == PushOperation.PUSH1_OPCODE || opCode == PushOperation.PUSH2_OPCODE) {
-          foundPushDestAddress = true;
-        }
-      }
-      if (foundPush4OpCode) {
-        foundPush4OpCode = false;
-        if (opCode == EqOperation.OPCODE) {
-          foundEqOpCode = true;
-        }
-      }
-      if (opCode == PushOperation.PUSH4_OPCODE) {
-        functionId = frame.getStackItem(0).slice(28, 4);
-        foundPush4OpCode = true;
-      }
-
 
       // Process jumps.
       if (opCode == JumpiOperation.OPCODE || opCode == JumpOperation.OPCODE) {
-        LOG.info("PC1: {}, Operation {}, Jump Destination: {}", pc, curOp.getName(), jumpDest);
+        LOG.trace("PC1: {}, Operation {}, Jump Destination: {}, 0x{}", pc, curOp.getName(), jumpDest, Integer.toHexString(jumpDest));
         dumpStack(frame);
         if (jumpDest == startingPc) {
           LOG.error("*******************Jump Dest == Starting PC: {}, 0x{}", jumpDest, Integer.toHexString(jumpDest));
         }
-        if (this.codeSegments.get(jumpDest) == null) {
-          // Not visited yet.
-          MessageFrame newMessageFrame = (MessageFrame) frame.clone();
-          newMessageFrame.setPC(jumpDest);
-          visit(newMessageFrame, startingPc);
+        if ((jumpDest & DYNAMIC_MARKER_MASK) == DYNAMIC_MARKER) {
+          int opCodeCausingJumpDest = jumpDest & 0xff;
+          Operation op = MainnetEvmRegistries.REGISTRY.get(opCodeCausingJumpDest, 0);
+          LOG.error("********Dynamic Jump Found. Stack generated by opcode: {}", op.getName());
+          // Set the jump dest to a valid value so the analysis can continue.
+          jumpDest = 0;
+
+          throw new Error("****");
+        }
+
+        if (this.findFunctionsMode && (jumpDest > this.pcEndOfFunctionBlock)) {
+          LOG.trace("Find Function Mode: Ignoring jump");
         }
         else {
-          LOG.info("**I have been to {} before!", jumpDest);
+          if (this.codeSegments.get(jumpDest) == null) {
+            // Not visited yet.
+            MessageFrame newMessageFrame = (MessageFrame) frame.clone();
+            newMessageFrame.setPC(jumpDest);
+            visit(newMessageFrame, startingPc);
+          } else {
+            LOG.trace("**I have been to {} before!", jumpDest);
+          }
         }
       }
       else {
-        LOG.info("PC1: {}, Operation {}", pc, curOp.getName());
+        LOG.trace("PC1: {}, Operation {}", pc, curOp.getName());
         dumpStack(frame);
       }
 
@@ -121,7 +138,7 @@ public class CodeVisitor {
           callingSegmentPc = startingPc;
           startingPc = pc;
           if (this.codeSegments.get(startingPc) != null) {
-            LOG.info("**Falling through to existing segment: {}", pc);
+            LOG.trace("**Falling through to existing segment: {}", pc);
             return;
           }
           addCodeSegment(startingPc, callingSegmentPc);
@@ -135,7 +152,7 @@ public class CodeVisitor {
             callingSegmentPc = startingPc;
             startingPc = pc - opSize;
             if (this.codeSegments.get(startingPc) != null) {
-              LOG.info("**Falling through to existing segment: {}", pc);
+              LOG.trace("**Falling through to existing segment: {}", pc);
               return;
             }
             addCodeSegment(startingPc, callingSegmentPc);
@@ -167,6 +184,49 @@ public class CodeVisitor {
     }
   }
 
+  private boolean foundPush4OpCode = false;
+  private boolean foundEqOpCode = false;
+  private boolean foundPushDestAddress = false;
+  private Bytes functionId = null;
+
+  /**
+   * Find function entry points. Look for code matching the pattern shown below:
+   * PUSH4 0x95CACBE0
+   * EQ
+   * PUSH1 0x41
+   * JUMPI
+   *
+   * @param frame
+   * @param startingPc
+   * @param opCode
+   */
+  private void findFunctionStateMachine(MessageFrame frame, int startingPc, int opCode) {
+    if (this.foundPushDestAddress) {
+      this.foundPushDestAddress = false;
+      if (opCode == JumpiOperation.OPCODE) {
+        LOG.info("****Found function {} in code segment {}", this.functionId, startingPc);
+        this.foundFunctions.put(this.functionId, startingPc);
+      }
+    }
+    if (this.foundEqOpCode) {
+      this.foundEqOpCode = false;
+      if (opCode == PushOperation.PUSH1_OPCODE || opCode == PushOperation.PUSH2_OPCODE) {
+        this.foundPushDestAddress = true;
+      }
+    }
+    if (this.foundPush4OpCode) {
+      this.foundPush4OpCode = false;
+      if (opCode == EqOperation.OPCODE) {
+        this.foundEqOpCode = true;
+      }
+    }
+    if (opCode == PushOperation.PUSH4_OPCODE) {
+      this.functionId = frame.getStackItem(0).slice(28, 4);
+      this.foundPush4OpCode = true;
+    }
+  }
+
+
   private void addCodeSegment(int startingPc, int callingSegmentPc) {
     CodeSegment existingCodeSegent = this.codeSegments.get(startingPc);
     if (existingCodeSegent != null) {
@@ -184,11 +244,11 @@ public class CodeVisitor {
     for (int i = 0; i < stackSize; i++) {
       buf.append(" [");
       buf.append(i);
-      buf.append(" ]: ");
+      buf.append("]: ");
       buf.append(frame.getStackItem(i));
       buf.append(", ");
     }
-    LOG.info(buf.toString());
+    LOG.trace(buf.toString());
   }
 
 }
