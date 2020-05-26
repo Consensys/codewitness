@@ -34,15 +34,27 @@ public class WitnessCodeAnalysis {
   public final static String simple6 = "6080604052348015600f57600080fd5b5060043610603c5760003560e01c80639bc39d3c146041578063c82fdf3614605d578063ce01e1ec146075575b600080fd5b605b60048036036020811015605557600080fd5b5035608f565b005b6063609f565b60408051918252519081900360200190f35b605b60048036036020811015608957600080fd5b503560a5565b609c8163123456780160a5565b50565b60005481565b60005556fea265627a7a723058204d6870272cfd10a2f531d922cb7887d4b6e55a198a8ac353bfa03f569b33138064736f6c634300050a0032";
 
 
-  public static void main(String[] args) throws Exception {
+  public static void main(String[] args)  {
     LOG.info("TODO: add support for calls.");
     LOG.info("TODO: add support for contract data.");
 
-
+    LOG.info("\nJumpDest Analysis for contract_0xd94ea6e43b7bffc9e4cba93f3ca49a191dc06d90 started");
+    new JumpDestAnalysis().analyse(128, Bytes.fromHexString(contract_0xd94ea6e43b7bffc9e4cba93f3ca49a191dc06d90));
+    LOG.info("\nJumpDest Analysis for simple2 started");
+    new JumpDestAnalysis().analyse(128, Bytes.fromHexString(simple2));
+    LOG.info("\nJumpDest Analysis for simple3 started");
+    new JumpDestAnalysis().analyse(128, Bytes.fromHexString(simple3));
+    LOG.info("\nJumpDest Analysis for simple4 started");
+    new JumpDestAnalysis().analyse(128, Bytes.fromHexString(simple4));
+    LOG.info("\nJumpDest Analysis for simple5 started");
+    new JumpDestAnalysis().analyse(128, Bytes.fromHexString(simple5));
+    LOG.info("\nJumpDest Analysis for simple6 started");
+    new JumpDestAnalysis().analyse(128, Bytes.fromHexString(simple6));
+    LOG.info("JumpDest Analysis Ended");
     new WitnessCodeAnalysis().doStuff();
   }
 
-  public void doStuff() throws Exception {
+  public void doStuff()  {
     Bytes code = Bytes.fromHexString(contract_0xd94ea6e43b7bffc9e4cba93f3ca49a191dc06d90);
 //    Bytes code = Bytes.fromHexString(simple3);
 //    Bytes code = Bytes.fromHexString(simple5);
