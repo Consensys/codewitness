@@ -51,7 +51,22 @@ public class WitnessCodeAnalysis {
     LOG.info("\nJumpDest Analysis for simple6 started");
     new JumpDestAnalysis().analyse(128, Bytes.fromHexString(simple6));
     LOG.info("JumpDest Analysis Ended");
-    new WitnessCodeAnalysis().doStuff();
+
+    LOG.info("\nFixedSize Analysis for contract_0xd94ea6e43b7bffc9e4cba93f3ca49a191dc06d90 started");
+    new FixedSizeAnalysis().analyse(128, Bytes.fromHexString(contract_0xd94ea6e43b7bffc9e4cba93f3ca49a191dc06d90));
+    LOG.info("\nFixedSize Analysis for simple2 started");
+    new FixedSizeAnalysis().analyse(128, Bytes.fromHexString(simple2));
+    LOG.info("\nFixedSize Analysis for simple3 started");
+    new FixedSizeAnalysis().analyse(128, Bytes.fromHexString(simple3));
+    LOG.info("\nFixedSize Analysis for simple4 started");
+    new FixedSizeAnalysis().analyse(128, Bytes.fromHexString(simple4));
+    LOG.info("\nFixedSize Analysis for simple5 started");
+    new FixedSizeAnalysis().analyse(128, Bytes.fromHexString(simple5));
+    LOG.info("\nFixedSize Analysis for simple6 started");
+    new FixedSizeAnalysis().analyse(128, Bytes.fromHexString(simple6));
+    LOG.info("FixedSize Analysis Ended");
+
+    //new WitnessCodeAnalysis().doStuff();
   }
 
   public void doStuff()  {

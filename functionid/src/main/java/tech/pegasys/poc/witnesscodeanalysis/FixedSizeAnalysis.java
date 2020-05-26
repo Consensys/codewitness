@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
-public class JumpDestAnalysis {
+public class FixedSizeAnalysis {
   private static final Logger LOG = getLogger();
 
   public static OperationRegistry registry = MainnetEvmRegistries.berlin(BigInteger.ONE);
@@ -29,19 +29,16 @@ public class JumpDestAnalysis {
 
       final Operation curOp = registry.get(code.get(pc), 0);
       int opSize = curOp.getOpSize();
-
       int opCode = curOp.getOpcode();
-      if (opCode == JumpDestOperation.OPCODE) {
-        LOG.info("****Found JumpDest at {}", pc);
 
-        if(currentChunkSize + opSize >= threshold) {
-          currentChunkSize = 0;
-          pc += opSize;
-          chunkStartAddresses.add(pc);
-          continue;
-        }
+      if(currentChunkSize + opSize >= threshold) {
+        currentChunkSize = 0;
+        pc += opSize;
+        chunkStartAddresses.add(pc);
+        continue;
+      }
 
-      } else if (opCode == InvalidOperation.OPCODE) {
+      if (opCode == InvalidOperation.OPCODE) {
         LOG.info("Reached END");
         break;
       }
