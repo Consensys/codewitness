@@ -9,7 +9,7 @@ import java.util.Set;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
-public abstract class CodeAnalysisBase {
+public class CodeAnalysisBase {
   private static final Logger LOG = getLogger();
 
   Bytes code;
@@ -21,7 +21,7 @@ public abstract class CodeAnalysisBase {
   public CodeAnalysisBase(Bytes code) {
     this.code = code;
     this.auxData = new AuxData(code);
-    this.possibleEndOfCode = code.size();
+    this.possibleEndOfCode = code.size() - 1;
     if (this.auxData.hasAuxData()) {
       this.possibleEndOfCode = this.auxData.getStartOfAuxData();
     }

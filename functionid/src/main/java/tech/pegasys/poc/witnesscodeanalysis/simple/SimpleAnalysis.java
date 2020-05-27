@@ -1,5 +1,6 @@
 package tech.pegasys.poc.witnesscodeanalysis.simple;
 
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import tech.pegasys.poc.witnesscodeanalysis.vm.MainnetEvmRegistries;
 import tech.pegasys.poc.witnesscodeanalysis.vm.Operation;
@@ -16,12 +17,16 @@ import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.Set;
 
+import static org.apache.logging.log4j.LogManager.getLogger;
+
 public class SimpleAnalysis {
+  private static final Logger LOG = getLogger();
+
   private Bytes code;
-  private boolean isProbablySolidity = false;
+  private boolean isProbablySolidity;
   private int endOfFunctionIdBlock = -1;
-  private int endOfCode = -1;
-  private int startOfAuxData = -1;
+  private int endOfCode;
+  private int startOfAuxData;
 
   public SimpleAnalysis(Bytes code, int startOfAuxData) {
     this.code = code;
@@ -118,12 +123,17 @@ public class SimpleAnalysis {
     boolean done = false;
     while (!done) {
       Operation curOp = MainnetEvmRegistries.REGISTRY.get(code.get(pc), 0);
+      if (curOp == null) {
+        // Unknown opcode.
+        return;
+      }
       if (curOp.getName().equalsIgnoreCase("CALLDATALOAD")) {
         done = true;
       }
       pc = pc + curOp.getOpSize();
-      if (pc > this.startOfAuxData) {
-        throw new Error("No REVERT found in code");
+      if (pc >= this.startOfAuxData) {
+        LOG.error("No CALLDATALOAD found in code: analysis unlikely to work");
+        return;
       }
     }
 
@@ -131,13 +141,18 @@ public class SimpleAnalysis {
     done = false;
     while (!done) {
       Operation curOp = MainnetEvmRegistries.REGISTRY.get(code.get(pc), 0);
+      if (curOp == null) {
+        // Unknown opcode.
+        return;
+      }
       if (curOp.getOpcode() == RevertOperation.OPCODE) {
         done = true;
       }
       else {
         pc = pc + curOp.getOpSize();
-        if (pc > this.startOfAuxData) {
-          throw new Error("No REVERT found in code");
+        if (pc >= this.startOfAuxData) {
+          LOG.error("No REVERT found in code: Code analysis for apparently Solidty file is unlikely to work properly");
+          return;
         }
       }
     }
@@ -148,6 +163,10 @@ public class SimpleAnalysis {
     boolean nextCouldBeEnd = false;
     while (!done) {
       Operation curOp = MainnetEvmRegistries.REGISTRY.get(code.get(pc), 0);
+      if (curOp == null) {
+        // Unknown opcode.
+        return;
+      }
       switch (curOp.getOpcode()) {
         case JumpOperation.OPCODE:
         case ReturnOperation.OPCODE:
@@ -166,8 +185,10 @@ public class SimpleAnalysis {
 
       if (!done) {
         pc = pc + curOp.getOpSize();
-        if (pc > this.startOfAuxData) {
-          throw new Error("No JUMP or RETURN or STOP followed by INVALID operation found in code");
+        if (pc >= this.startOfAuxData) {
+          LOG.error("No JUMP or RETURN or STOP followed by INVALID operation found in code");
+          //LOG.error(this.code);
+          return;
         }
       }
     }

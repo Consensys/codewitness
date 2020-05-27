@@ -48,11 +48,16 @@ public class AuxData {
     analyse();
   }
 
+  // TODO improve this analysis because it is flawed.
   private void analyse() {
     int len = this.code.size();
+    if (len < 32) {
+      this.hasAuxData = false;
+      return;
+    }
     byte b0 = code.get(len-2);
     byte b1 = code.get(len-1);
-    this.hasAuxData = (b0 == 0) && ((b1 == 0x32) || (b1 == 0x33));
+    this.hasAuxData = (b0 == 0) && ((b1 >= 0x29) && (b1 <= 0x33));
     if (!this.hasAuxData) {
       return;
     }
@@ -66,7 +71,7 @@ public class AuxData {
       buffer.append((char)this.code.get(ofs++));
     }
     this.sourceCodeStorageService = buffer.toString();
-    System.out.println(this.sourceCodeStorageService);
+    //System.out.println(this.sourceCodeStorageService);
 
     ofs++;
     int lenOfDigest = this.code.get(ofs++);
@@ -81,6 +86,9 @@ public class AuxData {
     this.compilerName = buffer.toString();
 
     int lenCompilerVersion = this.code.get(ofs++) & 0xf;
+    if (ofs + lenCompilerVersion > len) {
+      return;
+    }
     this.compilerVersion = this.code.slice(ofs, lenCompilerVersion);
   }
 
