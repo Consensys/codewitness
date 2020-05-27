@@ -1,4 +1,4 @@
-package tech.pegasys.poc.witnesscodeanalysis;
+package tech.pegasys.poc.witnesscodeanalysis.simple;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;

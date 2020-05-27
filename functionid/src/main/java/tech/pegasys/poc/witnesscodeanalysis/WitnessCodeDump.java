@@ -2,10 +2,11 @@ package tech.pegasys.poc.witnesscodeanalysis;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import tech.pegasys.poc.witnesscodeanalysis.simple.ByteCodePrinter;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
-public class WitnessCodeDump extends WitnessCodeAnalysis {
+public class WitnessCodeDump extends CodeAnalysisBase {
   private static final Logger LOG = getLogger();
 
   public WitnessCodeDump(Bytes code) {
@@ -19,7 +20,7 @@ public class WitnessCodeDump extends WitnessCodeAnalysis {
 
 
   public static void main(String[] args) {
-    Bytes code = Bytes.fromHexString(WitnessCodeAnalysis.contract_0xd94ea6e43b7bffc9e4cba93f3ca49a191dc06d90);
+    Bytes code = Bytes.fromHexString(ContractByteCode.contract_0xd94ea6e43b7bffc9e4cba93f3ca49a191dc06d90);
 
     WitnessCodeDump dump = new WitnessCodeDump(code);
     dump.showBasicInfo();

@@ -1,4 +1,4 @@
-package tech.pegasys.poc.witnesscodeanalysis;
+package tech.pegasys.poc.witnesscodeanalysis.simple;
 
 import org.apache.tuweni.bytes.Bytes;
 import tech.pegasys.poc.witnesscodeanalysis.vm.MainnetEvmRegistries;
