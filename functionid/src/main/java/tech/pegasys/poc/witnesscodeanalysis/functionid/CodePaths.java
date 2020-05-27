@@ -1,4 +1,4 @@
-package tech.pegasys.poc.witnesscodeanalysis;
+package tech.pegasys.poc.witnesscodeanalysis.functionid;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -6,17 +6,13 @@ import tech.pegasys.poc.witnesscodeanalysis.vm.Code;
 import tech.pegasys.poc.witnesscodeanalysis.vm.MainnetEvmRegistries;
 import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
 import tech.pegasys.poc.witnesscodeanalysis.vm.Operation;
-import tech.pegasys.poc.witnesscodeanalysis.vm.operations.InvalidOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.ReturnStack;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.TreeMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeSet;
 
 import static org.apache.logging.log4j.LogManager.getLogger;

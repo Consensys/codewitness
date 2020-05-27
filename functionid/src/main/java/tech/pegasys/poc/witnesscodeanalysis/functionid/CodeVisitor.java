@@ -1,12 +1,10 @@
-package tech.pegasys.poc.witnesscodeanalysis;
+package tech.pegasys.poc.witnesscodeanalysis.functionid;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 import tech.pegasys.poc.witnesscodeanalysis.vm.MainnetEvmRegistries;
 import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
 import tech.pegasys.poc.witnesscodeanalysis.vm.Operation;
-import tech.pegasys.poc.witnesscodeanalysis.vm.OperationRegistry;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.EqOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.InvalidOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.JumpDestOperation;
@@ -20,7 +18,6 @@ import tech.pegasys.poc.witnesscodeanalysis.vm.operations.RevertOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.SelfDestructOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.StopOperation;
 
-import java.math.BigInteger;
 import java.util.Map;
 
 import static org.apache.logging.log4j.LogManager.getLogger;

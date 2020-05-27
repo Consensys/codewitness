@@ -1,13 +1,16 @@
-package tech.pegasys.poc.witnesscodeanalysis;
+package tech.pegasys.poc.witnesscodeanalysis.simple;
 
 import org.apache.tuweni.bytes.Bytes;
 import tech.pegasys.poc.witnesscodeanalysis.vm.MainnetEvmRegistries;
 import tech.pegasys.poc.witnesscodeanalysis.vm.Operation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.OperationRegistry;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.InvalidOperation;
+import tech.pegasys.poc.witnesscodeanalysis.vm.operations.JumpOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.MStoreOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.PushOperation;
+import tech.pegasys.poc.witnesscodeanalysis.vm.operations.ReturnOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.RevertOperation;
+import tech.pegasys.poc.witnesscodeanalysis.vm.operations.StopOperation;
 
 import java.math.BigInteger;
 import java.util.HashSet;
@@ -23,15 +26,9 @@ public class SimpleAnalysis {
   public SimpleAnalysis(Bytes code, int startOfAuxData) {
     this.code = code;
     this.startOfAuxData = startOfAuxData;
-  }
-
-
-  public void analyse() {
     this.isProbablySolidity = probablySolidity();
     scanCode();
   }
-
-
 
 
   public Set<Bytes> determineFunctionIds(int probableEndOfCode) {
@@ -145,23 +142,32 @@ public class SimpleAnalysis {
 
     // Now search for the Invalid opcode, indicating the end of the code.
     done = false;
+    boolean nextCouldBeEnd = false;
     while (!done) {
       Operation curOp = MainnetEvmRegistries.REGISTRY.get(code.get(pc), 0);
-      if (curOp.getOpcode() == InvalidOperation.OPCODE) {
-        done = true;
+      switch (curOp.getOpcode()) {
+        case JumpOperation.OPCODE:
+        case ReturnOperation.OPCODE:
+        case StopOperation.OPCODE:
+          nextCouldBeEnd = true;
+          break;
+        case InvalidOperation.OPCODE:
+          if (nextCouldBeEnd) {
+            done = true;
+          }
+          break;
+        default:
+          nextCouldBeEnd = false;
+          break;
       }
-      else {
+
+      if (!done) {
         pc = pc + curOp.getOpSize();
         if (pc > this.startOfAuxData) {
-          throw new Error("No INVALID found in code");
+          throw new Error("No JUMP or RETURN or STOP followed by INVALID operation found in code");
         }
       }
     }
     this.endOfCode = pc;
   }
-
-
-
-
-
 }

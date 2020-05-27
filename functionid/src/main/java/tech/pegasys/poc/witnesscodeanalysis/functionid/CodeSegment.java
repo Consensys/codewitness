@@ -1,4 +1,4 @@
-package tech.pegasys.poc.witnesscodeanalysis;
+package tech.pegasys.poc.witnesscodeanalysis.functionid;
 
 import tech.pegasys.poc.witnesscodeanalysis.vm.MainnetEvmRegistries;
 import tech.pegasys.poc.witnesscodeanalysis.vm.OperationRegistry;
