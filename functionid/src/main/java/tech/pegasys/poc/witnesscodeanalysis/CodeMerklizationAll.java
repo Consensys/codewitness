@@ -3,6 +3,7 @@ package tech.pegasys.poc.witnesscodeanalysis;
 import org.apache.logging.log4j.Logger;
 import tech.pegasys.poc.witnesscodeanalysis.datafile.ContractInfo;
 import tech.pegasys.poc.witnesscodeanalysis.datafile.ContractJsonProcessor;
+import tech.pegasys.poc.witnesscodeanalysis.functionid.FunctionIdProcess;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -64,6 +65,16 @@ public class CodeMerklizationAll {
 
       if (analysis.simple.simpleAnalysisCompleted()) {
         simpleAnalysisCompleted++;
+      }
+
+      // Should be able to analyse
+      if (analysis.simple.getEndOfFunctionIdBlock() != -1) {
+//        try {
+//          FunctionIdProcess fidAnalysis = new FunctionIdProcess(contractInfo.getCode(), analysis.simple.getEndOfFunctionIdBlock(), analysis.simple.getEndOfCode());
+//          fidAnalysis.executeAnalysis();
+//        } catch (Throwable th) {
+//          th.printStackTrace();
+//        }
       }
 
       // read next line before looping
