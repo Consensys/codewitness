@@ -27,7 +27,10 @@ public class SimpleAnalysis {
     this.code = code;
     this.startOfAuxData = startOfAuxData;
     this.isProbablySolidity = probablySolidity();
-    scanCode();
+    this.endOfCode = code.size() - 1;
+    if (this.isProbablySolidity) {
+      scanCode();
+    }
   }
 
 
