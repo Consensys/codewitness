@@ -32,6 +32,8 @@ public class CodeMerklizationAll {
     int numSol = 0;
     int total = 0;
     int definitelySol = 0;
+    int simpleAnalysisCompleted = 0;
+    int shouldBeAbleToAnalyse = 0;
 
 
     // read the first line from the text file
@@ -52,16 +54,17 @@ public class CodeMerklizationAll {
       }
 
       // There is aux data and it indicates solc is the compiler.
-      String compiler = analysis.auxData.getCompilerName();
-      if (compiler != null && compiler.equalsIgnoreCase("solc")) {
+      if (analysis.auxData.isDefinitelySolidity()) {
         definitelySol++;
       }
-      if (compiler != null && !compiler.equalsIgnoreCase("solc")) {
-        LOG.info("Compiler: {}", compiler);
+
+      if (analysis.simple.getEndOfFunctionIdBlock() != -1) {
+        shouldBeAbleToAnalyse++;
       }
 
-
-
+      if (analysis.simple.simpleAnalysisCompleted()) {
+        simpleAnalysisCompleted++;
+      }
 
       // read next line before looping
       //if end of file reached, line would be null
@@ -70,7 +73,7 @@ public class CodeMerklizationAll {
     br.close();
     bw.close();
 
-    LOG.info("Total: {}, Probably Solidity: {}, Definitely Solidity: {}", total, numSol, definitelySol);
+    LOG.info("Total: {}, Probably Solidity: {}, Definitely Solidity: {}, Should be able to Analyse: {}, End Of Code Found: {}", total, numSol, definitelySol, shouldBeAbleToAnalyse, simpleAnalysisCompleted);
 
   }
 

@@ -27,6 +27,7 @@ public class SimpleAnalysis {
   private int endOfFunctionIdBlock = -1;
   private int endOfCode;
   private int startOfAuxData;
+  private boolean simpleAnalysisCompleted = false;
 
   public SimpleAnalysis(Bytes code, int startOfAuxData) {
     this.code = code;
@@ -90,6 +91,10 @@ public class SimpleAnalysis {
 
   public int getStartOfAuxData() {
     return startOfAuxData;
+  }
+
+  public boolean simpleAnalysisCompleted() {
+    return simpleAnalysisCompleted;
   }
 
   private boolean probablySolidity() {
@@ -193,5 +198,7 @@ public class SimpleAnalysis {
       }
     }
     this.endOfCode = pc;
+
+    this.simpleAnalysisCompleted = true;
   }
 }

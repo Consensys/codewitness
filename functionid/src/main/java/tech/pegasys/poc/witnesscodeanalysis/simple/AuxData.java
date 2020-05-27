@@ -41,6 +41,7 @@ public class AuxData {
   private String sourceCodeStorageService;
   private Bytes sourceCodeHash;
   private String compilerName;
+  private boolean isDefinitelySolidity;
   private Bytes compilerVersion;
 
   public AuxData(Bytes code) {
@@ -110,6 +111,10 @@ public class AuxData {
 
   public String getCompilerName() {
     return compilerName;
+  }
+
+  public boolean isDefinitelySolidity() {
+    return this.compilerName != null && this.compilerName.equalsIgnoreCase("solc");
   }
 
   public Bytes getCompilerVersion() {
