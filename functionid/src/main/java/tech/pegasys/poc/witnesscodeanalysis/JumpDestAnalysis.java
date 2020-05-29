@@ -19,10 +19,10 @@ public class JumpDestAnalysis {
 
   public static OperationRegistry registry = MainnetEvmRegistries.berlin(BigInteger.ONE);
 
-  public void analyse(int threshold, Bytes code) {
+  public ArrayList<Integer> analyse(int threshold, Bytes code) {
     int pc = 0;
     int currentChunkSize = 0;
-    List<Integer> chunkStartAddresses = new ArrayList<>();
+    ArrayList<Integer> chunkStartAddresses = new ArrayList<>();
     chunkStartAddresses.add(0);
 
     while (true) {
@@ -32,7 +32,7 @@ public class JumpDestAnalysis {
 
       int opCode = curOp.getOpcode();
       if (opCode == JumpDestOperation.OPCODE) {
-        LOG.info("****Found JumpDest at {}", pc);
+        //LOG.info("****Found JumpDest at {}", pc);
 
         if(currentChunkSize + opSize >= threshold) {
           currentChunkSize = 0;
@@ -42,7 +42,7 @@ public class JumpDestAnalysis {
         }
 
       } else if (opCode == InvalidOperation.OPCODE) {
-        LOG.info("Reached END");
+        //LOG.info("Reached END");
         break;
       }
 
@@ -50,9 +50,10 @@ public class JumpDestAnalysis {
       pc += opSize;
     }
 
-    LOG.info("There are {} chunks with starting addresses : ", chunkStartAddresses.size());
+    return chunkStartAddresses;
+    /*LOG.info("There are {} chunks with starting addresses : ", chunkStartAddresses.size());
     for(Integer e : chunkStartAddresses) {
       LOG.info(e);
-    }
+    }*/
   }
 }
