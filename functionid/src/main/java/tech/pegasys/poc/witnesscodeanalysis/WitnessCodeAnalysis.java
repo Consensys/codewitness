@@ -1,6 +1,7 @@
 package tech.pegasys.poc.witnesscodeanalysis;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import tech.pegasys.poc.witnesscodeanalysis.functionid.FunctionIdProcess;
@@ -40,15 +41,16 @@ public class WitnessCodeAnalysis extends CodeAnalysisBase {
     }
 
     //  Parsing the JSON file for contract code
-    Gson gson = new Gson();
+    Gson gson = new GsonBuilder().setLenient().create();
 
     Reader reader = new FileReader(args[0]);
     Writer jumpDestWriter = new FileWriter(args[1]);
     Writer fixedWriter = new FileWriter(args[2]);
+    ContractData[] contractData = gson.fromJson(reader, ContractData[].class);
 
-    for(int i = 0; i < 5; i++) {
-      ContractData contractData = gson.fromJson(reader, ContractData.class);
-      Bytes code = Bytes.fromHexString(contractData.getCode());
+    for(int i = 0; i < contractData.length; i++) {
+      LOG.info("***********REACHED**********");
+      Bytes code = Bytes.fromHexString(contractData[i].getCode());
 
       // Analysis of jumpdests
       LOG.info("\nJumpDest Analysis started");
@@ -60,13 +62,14 @@ public class WitnessCodeAnalysis extends CodeAnalysisBase {
       // Analysis doing fixed size chunking
       LOG.info("\nFixedSize Analysis started");
       chunkStartAddresses = new FixedSizeAnalysis().analyse(128, code);
+      LOG.info("\nFinishe. {} chunks.", chunkStartAddresses.size());
       chunkData = new ChunkData(chunkStartAddresses);
       gson.toJson(chunkData, fixedWriter);
 
       // Function ID analysis
-      //WitnessCodeAnalysis analysis = new WitnessCodeAnalysis(code);
-      //analysis.showBasicInfo();
-      //analysis.runFunctionIdProcess();
+      WitnessCodeAnalysis analysis = new WitnessCodeAnalysis(code);
+      analysis.showBasicInfo();
+      analysis.runFunctionIdProcess();
     }
 
     reader.close();
