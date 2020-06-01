@@ -10,6 +10,7 @@ import tech.pegasys.poc.witnesscodeanalysis.vm.operations.ReturnStack;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -39,10 +40,12 @@ public class CodePaths {
 
   private Map<Bytes, Map<Integer, CodeSegment>> allCombinedCodeSegments = new TreeMap<>();
 
+  Set<Integer> jumpDests;
 
-  public CodePaths(Bytes code) {
+  public CodePaths(Bytes code, Set<Integer> jumpDests) {
     this.code = code;
     this.codeSize = code.size();
+    this.jumpDests = jumpDests;
   }
 
   public void findFunctionBlockCodePaths(int endOfFunctionIdBlock) {
@@ -64,7 +67,7 @@ public class CodePaths {
     messageFrameStack.addFirst(frame);
     frame.setState(MessageFrame.State.CODE_EXECUTING);
 
-    CodeVisitor visitor = new CodeVisitor(this.code, this.functionBlockCodeSegments, this.foundFunctions, endOfFunctionIdBlock);
+    CodeVisitor visitor = new CodeVisitor(this.code, this.functionBlockCodeSegments, this.foundFunctions, endOfFunctionIdBlock, this.jumpDests);
     visitor.visit(frame, 0);
   }
 
@@ -108,7 +111,7 @@ public class CodePaths {
       messageFrameStack.addFirst(frame);
       frame.setState(MessageFrame.State.CODE_EXECUTING);
 
-      CodeVisitor visitor = new CodeVisitor(this.code, functionCodeSegments);
+      CodeVisitor visitor = new CodeVisitor(this.code, functionCodeSegments, this.jumpDests);
       visitor.visit(frame, 0);
 
       this.allCodePaths.put(functionId, functionCodeSegments);
@@ -163,16 +166,16 @@ public class CodePaths {
 
       // None of the functions have a code segment at PC value next.
       if (next == CodeSegment.INVALID) {
-        LOG.info("No code segment at offset: {}, opcode: {}", pc, getOpCodeString(pc));
+        LOG.info("No code segment at offset: 0x{} ({}), opcode: {}", Integer.toHexString(pc), pc, getOpCodeString(pc));
         next = pc + getOpCodeLength(pc);
         if (next > endOfCodeOffset) {
-          LOG.error("Reached end of code at offset {}", this.codeSize);
+          LOG.error("Reached end of code at offset 0x{} ({})", Integer.toHexString(this.codeSize), this.codeSize);
           // TODO say the format is correct to differentiate from the errors above.
           return true;
         }
       }
       else {
-        LOG.info("Code segment at offset: {} used by functions: {}", pc, functionsUsingSegment);
+        LOG.info("Code segment at offset: 0x{} ({}) used by functions: {}", Integer.toHexString(pc), pc, functionsUsingSegment);
       }
       pc = next;
 

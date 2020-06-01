@@ -35,13 +35,13 @@ public class ByteCodePrinter {
       }
 
       if (operationLength == 1) {
-        LOG.info(" PC: {}, opcode: {}", pc, opCodeName);
+        LOG.info(" PC: 0x{}, opcode: {}", Integer.toHexString(pc), opCodeName);
       }
       else {
         int paramLength = operationLength - 1;
         final int copyLength = min(paramLength, code.size() - pc - 1);
         Bytes param = code.slice(pc + 1, copyLength);
-        LOG.info(" PC: {}, opcode: {} {}", pc, opCodeName, param);
+        LOG.info(" PC: 0x{}, opcode: {} {}", Integer.toHexString(pc), opCodeName, param);
       }
       pc += operationLength;
       if (pc == end) {

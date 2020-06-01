@@ -5,7 +5,9 @@ import org.apache.tuweni.bytes.Bytes;
 import tech.pegasys.poc.witnesscodeanalysis.vm.MainnetEvmRegistries;
 import tech.pegasys.poc.witnesscodeanalysis.vm.Operation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.OperationRegistry;
+import tech.pegasys.poc.witnesscodeanalysis.vm.operations.CallDataLoadOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.InvalidOperation;
+import tech.pegasys.poc.witnesscodeanalysis.vm.operations.JumpDestOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.JumpOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.MStoreOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.PushOperation;
@@ -14,7 +16,9 @@ import tech.pegasys.poc.witnesscodeanalysis.vm.operations.RevertOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.StopOperation;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
@@ -28,12 +32,14 @@ public class SimpleAnalysis {
   private int endOfCode;
   private int startOfAuxData;
   private boolean simpleAnalysisCompleted = false;
+  private Set<Integer> jumpDests;
 
   public SimpleAnalysis(Bytes code, int startOfAuxData) {
     this.code = code;
     this.startOfAuxData = startOfAuxData;
     this.isProbablySolidity = probablySolidity();
     this.endOfCode = code.size() - 1;
+    findJumpDests();
     if (this.isProbablySolidity) {
       scanCode();
     }
@@ -49,7 +55,12 @@ public class SimpleAnalysis {
     boolean done = false;
     while (!done) {
       Operation curOp = MainnetEvmRegistries.REGISTRY.get(code.get(pc), 0);
-      if (curOp.getName().equalsIgnoreCase("CALLDATALOAD")) {
+      if (curOp == null) {
+        // Not a valid byte code value / operation.
+        // Don't try to process any further.
+        return functionIds;
+      }
+      if (curOp.getOpcode() == CallDataLoadOperation.OPCODE) {
         done = true;
       }
       pc = pc + curOp.getOpSize();
@@ -62,11 +73,15 @@ public class SimpleAnalysis {
     done = false;
     while (!done) {
       Operation curOp = MainnetEvmRegistries.REGISTRY.get(code.get(pc), 0);
+      if (curOp == null) {
+        // Not a valid byte code value / operation.
+        // Don't try to process any further.
+        return functionIds;
+      }
       if (curOp.getOpcode() == RevertOperation.OPCODE) {
         done = true;
-      }
-      else if (curOp.getOpcode() == PushOperation.PUSH4_OPCODE) {
-        Bytes functionId = code.slice(pc+1, 4);
+      } else if (curOp.getOpcode() == PushOperation.PUSH4_OPCODE) {
+        Bytes functionId = code.slice(pc + 1, 4);
         functionIds.add(functionId);
       }
       pc = pc + curOp.getOpSize();
@@ -89,12 +104,12 @@ public class SimpleAnalysis {
     return endOfCode;
   }
 
-  public int getStartOfAuxData() {
-    return startOfAuxData;
-  }
-
   public boolean simpleAnalysisCompleted() {
     return simpleAnalysisCompleted;
+  }
+
+  public Set<Integer> getJumpDests() {
+    return jumpDests;
   }
 
   private boolean probablySolidity() {
@@ -109,17 +124,16 @@ public class SimpleAnalysis {
     //    MSTORE
     return
         ((code.get(0) == (byte) PushOperation.PUSH1_OPCODE) &&
-            (code.get(1) == (byte)0x80) &&
-            (code.get(2) == (byte)PushOperation.PUSH1_OPCODE) &&
-            (code.get(3) == (byte)0x40) &&
-            (code.get(4) == (byte) MStoreOperation.OPCODE) );
+            (code.get(1) == (byte) 0x80) &&
+            (code.get(2) == (byte) PushOperation.PUSH1_OPCODE) &&
+            (code.get(3) == (byte) 0x40) &&
+            (code.get(4) == (byte) MStoreOperation.OPCODE));
   }
 
 
   /**
    * Determine the PC of the REVERT at the end of the set of code segments that contain the
    * function ids.
-   *
    */
   private void scanCode() {
     int pc = 0;
@@ -152,11 +166,11 @@ public class SimpleAnalysis {
       }
       if (curOp.getOpcode() == RevertOperation.OPCODE) {
         done = true;
-      }
-      else {
+      } else {
         pc = pc + curOp.getOpSize();
         if (pc >= this.startOfAuxData) {
           LOG.error("No REVERT found in code: Code analysis for apparently Solidty file is unlikely to work properly");
+          LOG.error(this.code);
           return;
         }
       }
@@ -191,8 +205,7 @@ public class SimpleAnalysis {
       if (!done) {
         pc = pc + curOp.getOpSize();
         if (pc >= this.startOfAuxData) {
-          LOG.error("No JUMP or RETURN or STOP followed by INVALID operation found in code");
-          //LOG.error(this.code);
+          LOG.trace("No JUMP or RETURN or STOP followed by INVALID operation found in code");
           return;
         }
       }
@@ -200,5 +213,22 @@ public class SimpleAnalysis {
     this.endOfCode = pc;
 
     this.simpleAnalysisCompleted = true;
+  }
+
+  private void findJumpDests() {
+    int pc = 0;
+    this.jumpDests = new HashSet<>();
+
+    while (pc < this.startOfAuxData) {
+      Operation curOp = MainnetEvmRegistries.REGISTRY.get(code.get(pc), 0);
+      if (curOp == null) {
+        // Unknown opcode.
+        break;
+      }
+      if (curOp.getOpcode() == JumpDestOperation.OPCODE) {
+        this.jumpDests.add(pc);
+      }
+      pc = pc + curOp.getOpSize();
+    }
   }
 }

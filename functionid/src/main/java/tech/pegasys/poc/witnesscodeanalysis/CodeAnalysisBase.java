@@ -29,11 +29,11 @@ public class CodeAnalysisBase {
   }
 
   public void showBasicInfo() {
-    LOG.info("Probably Solidity: {}", simple.isProbablySolidity());
-    LOG.info("End of Function ID block: {}", simple.getEndOfFunctionIdBlock());
-    LOG.info("End of Code: {}", simple.getEndOfCode());
-    LOG.info("Offset Aux Data: {}", simple.getStartOfAuxData());
-    LOG.info("Code Length: {}", code.size());
+    LOG.info("Probably Solidity: {}", this.simple.isProbablySolidity());
+    LOG.info("End of Function ID block: 0x{}  ({})", Integer.toHexString(simple.getEndOfFunctionIdBlock()), simple.getEndOfFunctionIdBlock());
+    LOG.info("End of Code: 0x{}  ({})", Integer.toHexString(this.simple.getEndOfCode()), this.simple.getEndOfCode());
+    LOG.info("Offset Aux Data: 0x{}  ({})", Integer.toHexString(this.auxData.getStartOfAuxData()), this.auxData.getStartOfAuxData());
+    LOG.info("Code Length: 0x{}  ({})", Integer.toHexString(this.code.size()), this.code.size());
     if (auxData.hasAuxData()) {
       LOG.info("Compiler {} version {}", auxData.getCompilerName(), auxData.getCompilerVersion());
       LOG.info("Source Code stored in {}, message disgest of source code: {}", auxData.getSourceCodeStorageService(), auxData.getSourceCodeHash());
@@ -61,7 +61,7 @@ public class CodeAnalysisBase {
     buffer.append(this.simple.getEndOfCode());
     buffer.append(", ");
 
-    buffer.append(this.simple.getStartOfAuxData());
+    buffer.append(this.auxData.getStartOfAuxData());
     buffer.append(", ");
 
     buffer.append(this.code.size());

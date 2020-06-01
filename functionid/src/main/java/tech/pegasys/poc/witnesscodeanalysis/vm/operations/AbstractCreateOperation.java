@@ -38,6 +38,10 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
+        frame.popStackItems(getStackItemsConsumed());
+      frame.pushStackItem(Bytes32.ZERO);
+
+
     throw new Error("TODO Not implemented yet");
 //    final Wei value = Wei.wrap(frame.getStackItem(0));
 //
