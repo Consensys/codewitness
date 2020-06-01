@@ -4,13 +4,11 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
-import tech.pegasys.poc.witnesscodeanalysis.datafile.ContractInfo;
+import tech.pegasys.poc.witnesscodeanalysis.datafile.ContractData;
 import tech.pegasys.poc.witnesscodeanalysis.functionid.FunctionIdProcess;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;

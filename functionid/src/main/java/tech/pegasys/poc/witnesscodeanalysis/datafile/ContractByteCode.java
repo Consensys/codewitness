@@ -1,4 +1,4 @@
-package tech.pegasys.poc.witnesscodeanalysis;
+package tech.pegasys.poc.witnesscodeanalysis.datafile;
 
 public class ContractByteCode {
   // Contract that had 25% of all transactions submitted to it.

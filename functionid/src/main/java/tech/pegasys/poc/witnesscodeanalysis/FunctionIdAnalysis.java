@@ -1,18 +1,10 @@
 package tech.pegasys.poc.witnesscodeanalysis;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import tech.pegasys.poc.witnesscodeanalysis.datafile.ContractByteCode;
 import tech.pegasys.poc.witnesscodeanalysis.functionid.FunctionIdProcess;
 
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.Reader;
-import java.io.Writer;
-import java.util.ArrayList;
-
-import static java.lang.System.exit;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
 public class FunctionIdAnalysis extends CodeAnalysisBase {

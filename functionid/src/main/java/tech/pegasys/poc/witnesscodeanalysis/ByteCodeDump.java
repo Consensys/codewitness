@@ -2,14 +2,28 @@ package tech.pegasys.poc.witnesscodeanalysis;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import tech.pegasys.poc.witnesscodeanalysis.datafile.ContractByteCode;
 import tech.pegasys.poc.witnesscodeanalysis.simple.ByteCodePrinter;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
-public class WitnessCodeDump extends CodeAnalysisBase {
+
+/**
+ * Prints out the program counter offset, opcodes and parameter. For example:
+ *
+ * PC: 0x5d5d, opcode: PUSH1 0x20
+ * PC: 0x5d5f, opcode: ADD
+ * PC: 0x5d60, opcode: PUSH1 0x00
+ * PC: 0x5d62, opcode: DUP2
+ * PC: 0x5d63, opcode: MSTORE
+ * PC: 0x5d64, opcode: PUSH1 0x20
+ * PC: 0x5d66, opcode: ADD
+ * PC: 0x5d67, opcode: PUSH1 0x00
+ */
+public class ByteCodeDump extends CodeAnalysisBase {
   private static final Logger LOG = getLogger();
 
-  public WitnessCodeDump(Bytes code) {
+  public ByteCodeDump(Bytes code) {
     super(code);
   }
 
@@ -26,7 +40,7 @@ public class WitnessCodeDump extends CodeAnalysisBase {
 //    Bytes code = Bytes.fromHexString(ContractByteCode.contract_0x63de3096c22e89f175c8ed51ca0c129118516979);
     Bytes code = Bytes.fromHexString(ContractByteCode.contract_0xd94ea6e43b7bffc9e4cba93f3ca49a191dc06d90);
 
-    WitnessCodeDump dump = new WitnessCodeDump(code);
+    ByteCodeDump dump = new ByteCodeDump(code);
     dump.showBasicInfo();
     dump.dumpContract();
   }
