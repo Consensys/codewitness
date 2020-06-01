@@ -45,6 +45,8 @@ public class CodeMerklizationAll {
 
       ContractInfo contractInfo = inputProcessor.processEntry(line);
 
+      LOG.info("Processing contract at address: {}", contractInfo.getContractAddresses()[0]);
+
       CodeAnalysisBase analysis = new CodeAnalysisBase(contractInfo.getCode());
       // LOG.info("Analysis: {}", analysis.basicInfoAsCsv());
 

@@ -19,13 +19,12 @@ public class WitnessCodeAnalysis extends CodeAnalysisBase {
   }
 
   public void runFunctionIdProcess() {
-    FunctionIdProcess analysis = new FunctionIdProcess(this.code, simple.getEndOfFunctionIdBlock(), simple.getEndOfCode());
+    FunctionIdProcess analysis = new FunctionIdProcess(this.code, simple.getEndOfFunctionIdBlock(), simple.getEndOfCode(), simple.getJumpDests());
     analysis.executeAnalysis();
   }
 
 
   public static void main(String[] args) throws Exception {
-    LOG.info("TODO: add support for calls.");
     LOG.info("TODO: add support for contract data.");
 
     Bytes code = Bytes.fromHexString(ContractByteCode.contract_0xd94ea6e43b7bffc9e4cba93f3ca49a191dc06d90);
