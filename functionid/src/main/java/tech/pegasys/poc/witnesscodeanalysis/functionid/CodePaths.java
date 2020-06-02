@@ -2,10 +2,12 @@ package tech.pegasys.poc.witnesscodeanalysis.functionid;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import tech.pegasys.poc.witnesscodeanalysis.simple.PcUtils;
 import tech.pegasys.poc.witnesscodeanalysis.vm.Code;
 import tech.pegasys.poc.witnesscodeanalysis.vm.MainnetEvmRegistries;
 import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
 import tech.pegasys.poc.witnesscodeanalysis.vm.Operation;
+import tech.pegasys.poc.witnesscodeanalysis.vm.operations.JumpDestOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.ReturnStack;
 
 import java.util.ArrayDeque;
@@ -91,7 +93,7 @@ public class CodePaths {
         if (currentSegment.start == 0) {
           foundStart = true;
         }
-        currentSegment = this.functionBlockCodeSegments.get(currentSegment.previousSegment);
+        currentSegment = this.functionBlockCodeSegments.get(currentSegment.previousSegments.iterator().next());
         functionCodeSegments.put(currentSegment.start, currentSegment);
       } while (!foundStart);
 
@@ -107,7 +109,7 @@ public class CodePaths {
               .depth(0)
               .maxStackSize(maxStackSize)
               .build();
-      frame.setPC(functionCallFromSegment.nextSegmentJump);
+      frame.setPC(functionCallFromSegment.nextSegmentJumps.iterator().next());
       messageFrameStack.addFirst(frame);
       frame.setState(MessageFrame.State.CODE_EXECUTING);
 
@@ -140,6 +142,7 @@ public class CodePaths {
     boolean done = false;
     int pc = 0;
 
+    boolean firstOpCodeNotInSegment = true;
     while (!done) {
       int next = CodeSegment.INVALID;
       StringBuffer functionsUsingSegment = new StringBuffer();
@@ -166,7 +169,20 @@ public class CodePaths {
 
       // None of the functions have a code segment at PC value next.
       if (next == CodeSegment.INVALID) {
-        LOG.info("No code segment at offset: 0x{} ({}), opcode: {}", Integer.toHexString(pc), pc, getOpCodeString(pc));
+        if (firstOpCodeNotInSegment) {
+          firstOpCodeNotInSegment = false;
+          logOpCode(pc);
+        }
+        else {
+          byte opCode = this.code.get(pc);
+          if (opCode == JumpDestOperation.OPCODE) {
+            logOpCode(pc);
+          }
+          else {
+            //logOpCode(pc);
+          }
+        }
+
         next = pc + getOpCodeLength(pc);
         if (next > endOfCodeOffset) {
           LOG.error("Reached end of code at offset 0x{} ({})", Integer.toHexString(this.codeSize), this.codeSize);
@@ -176,6 +192,7 @@ public class CodePaths {
       }
       else {
         LOG.info("Code segment at offset: 0x{} ({}) used by functions: {}", Integer.toHexString(pc), pc, functionsUsingSegment);
+        firstOpCodeNotInSegment = true;
       }
       pc = next;
 
@@ -188,58 +205,6 @@ public class CodePaths {
       }
     }
     return true;
-
-
-
-//    CodeSegment codeSegment = this.functionBlockCodeSegments.get(0);
-//    Set<Integer> futureCodeSegmentStart = new HashSet<>();
-//    while (true) {
-//      int nextSeg = codeSegment.start + codeSegment.length;
-//      LOG.info(" Start: {}, Next: {}", codeSegment.start, nextSeg);
-//      futureCodeSegmentStart.remove(nextSeg);
-//
-//      if (codeSegment.nextSegmentJump > nextSeg) {
-//        futureCodeSegmentStart.add(codeSegment.nextSegmentJump);
-//      }
-//      else {
-//        if (codeSegment.nextSegmentJump != CodeSegment.INVALID && this.functionBlockCodeSegments.get(codeSegment.nextSegmentJump) == null) {
-//          LOG.error("Jump destination invalid for code segment: {}", codeSegment);
-//          throw new RuntimeException("Jump destination invalid");
-//        }
-//      }
-//      int lastOpCodeOffset = endOfCodeOffset-1;
-//      if (nextSeg == lastOpCodeOffset) {
-//        if (this.code.get(lastOpCodeOffset) == (byte)InvalidOperation.OPCODE) {
-//          if (futureCodeSegmentStart.isEmpty()) {
-//            return true;
-//          }
-//          LOG.info("Contained unused nextSegmentJumps: {}", futureCodeSegmentStart.size());
-//          return false;
-//        }
-//        LOG.info("Code correct length, but ends in opcode: {}", MainnetEvmRegistries.REGISTRY.get(this.code.get(lastOpCodeOffset), 0).getName());
-//        return false;
-//      }
-//      else {
-//        codeSegment = this.functionBlockCodeSegments.get(nextSeg);
-//        if (codeSegment == null) {
-//          int search = nextSeg + 1;
-//          while (codeSegment == null) {
-//            codeSegment = this.functionBlockCodeSegments.get(search++);
-//            if (search > this.codeSize) {
-//              LOG.error("Reached end of code at offset {}", this.codeSize);
-//              // TODO say the format is correct to differentiate from the errors above.
-//              return true;
-//            }
-//          }
-//          int nextSegStarts = search - 2;
-//
-//          LOG.info(" *****Can't find segment for {}, length: {}. opCode({}) is {}, and opcode({}) is {}",
-//              nextSeg, nextSegStarts - nextSeg,
-//              nextSeg, getOpCodeString(nextSeg),
-//              nextSegStarts, getOpCodeString(nextSegStarts));
-////          nextSeg = nextSegStarts;
-//        }
-//      }
   }
 
 
@@ -260,7 +225,7 @@ public class CodePaths {
       if (nextHappy != 0) {
         throw new RuntimeException("Code didn't start at zero!");
       }
-      CodeSegment newSegment = new CodeSegment(nextHappy, CodeSegment.INVALID);
+      CodeSegment newSegment = new CodeSegment(nextHappy);
       int startOfs = nextHappy;
       int len = happyPathCodeSegments.get(nextHappy).length;
 
@@ -275,7 +240,7 @@ public class CodePaths {
           combinedCodeSegments.put(startOfs, newSegment);
           startOfs = nextHappy;
           len = happyPathCodeSegments.get(nextHappy).length;
-          newSegment = new CodeSegment(startOfs, CodeSegment.INVALID);
+          newSegment = new CodeSegment(startOfs);
         }
         nextHappy = happyIter.hasNext() ? happyIter.next() : CodeSegment.INVALID;
     } while (nextHappy != CodeSegment.INVALID);
@@ -320,6 +285,9 @@ public class CodePaths {
     }
   }
 
+  private void logOpCode(int offset) {
+    LOG.info("No code segment at offset: {}, opcode: {}", PcUtils.pcStr(offset), getOpCodeString(offset));
+  }
 
   private String getOpCodeString(int offset) {
     byte opCodeValue = this.code.get(offset);
