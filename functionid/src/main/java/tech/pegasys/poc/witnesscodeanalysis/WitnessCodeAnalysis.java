@@ -22,9 +22,9 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 public class WitnessCodeAnalysis extends CodeAnalysisBase {
   private static final Logger LOG = getLogger();
 
-  public static final String DEFAULT_FILE_IN =  "/Users/raghavendra/chainData/contract_data.json";
-  public static final String DEFAULT_JUMPDEST_FILE_OUT =  "/Users/raghavendra/chainData/analysis_jumpdest.json";
-  public static final String DEFAULT_FIXED_FILE_OUT =  "/Users/raghavendra/chainData/analysis_fixed.json";
+  public static final String DEFAULT_FILE_IN =  "contract_data.json";
+  public static final String DEFAULT_JUMPDEST_FILE_OUT =  "analysis_jumpdest.json";
+  public static final String DEFAULT_FIXED_FILE_OUT =  "analysis_fixed.json";
 
   public WitnessCodeAnalysis(Bytes code) {
     super(code);
