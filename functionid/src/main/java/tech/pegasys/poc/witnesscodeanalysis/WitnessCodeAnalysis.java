@@ -69,10 +69,10 @@ public class WitnessCodeAnalysis extends CodeAnalysisBase {
 
 
     String line = reader.readLine();
-    //int i = 0;
+    int i = 0;
     // loop until all lines are read
-    while (line != null/* && i < 5*/) {
-      //i++;
+    while (line != null && i < 6) {
+      i++;
       // LOG.info(line);
       ContractData contractData = gson.fromJson(line, ContractData.class);
       LOG.info("Processing contract at address: {}", contractData.getContract_address()[0]);
@@ -93,7 +93,7 @@ public class WitnessCodeAnalysis extends CodeAnalysisBase {
       gson.toJson(chunkData, fixedWriter);
 
       // Function ID analysis
-      /*WitnessCodeAnalysis analysis = new WitnessCodeAnalysis(code);
+      WitnessCodeAnalysis analysis = new WitnessCodeAnalysis(code);
       analysis.showBasicInfo();
 
       total++;
@@ -126,7 +126,7 @@ public class WitnessCodeAnalysis extends CodeAnalysisBase {
 
       // read next line before looping
       //if end of file reached, line would be null
-      */line = reader.readLine();
+      line = reader.readLine();
     }
 
 
