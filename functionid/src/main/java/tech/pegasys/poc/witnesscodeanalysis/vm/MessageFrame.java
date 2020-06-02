@@ -241,6 +241,10 @@ public class MessageFrame implements Cloneable {
     return stack.pop();
   }
 
+  public OperandStack getCopyOfStack() {
+    return (OperandStack) ((PreAllocatedOperandStack) this.stack).clone();
+  }
+
   /**
    * Removes the corresponding number of items from the top of the stack.
    *
