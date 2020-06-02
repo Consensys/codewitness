@@ -69,8 +69,10 @@ public class WitnessCodeAnalysis extends CodeAnalysisBase {
 
 
     String line = reader.readLine();
+    int i = 0;
     // loop until all lines are read
-    while (line != null) {
+    while (line != null && i < 6) {
+      i++;
       // LOG.info(line);
       ContractData contractData = gson.fromJson(line, ContractData.class);
       LOG.info("Processing contract at address: {}", contractData.getContract_address()[0]);
@@ -78,14 +80,14 @@ public class WitnessCodeAnalysis extends CodeAnalysisBase {
 
       // Analysis of jumpdests
       LOG.info("\nJumpDest Analysis started");
-      ArrayList<Integer> chunkStartAddresses = new JumpDestAnalysis().analyse(128, code);
+      ArrayList<Integer> chunkStartAddresses = new JumpDestAnalysis(code, 128).analyse();
       LOG.info("\nFinished. {} chunks", chunkStartAddresses.size());
       ChunkData chunkData = new ChunkData(chunkStartAddresses);
       gson.toJson(chunkData, jumpDestWriter);
 
       // Analysis doing fixed size chunking
       LOG.info("\nFixedSize Analysis started");
-      chunkStartAddresses = new FixedSizeAnalysis().analyse(128, code);
+      chunkStartAddresses = new FixedSizeAnalysis(code, 128).analyse();
       LOG.info("\nFinished. {} chunks.", chunkStartAddresses.size());
       chunkData = new ChunkData(chunkStartAddresses);
       gson.toJson(chunkData, fixedWriter);

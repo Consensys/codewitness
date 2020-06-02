@@ -14,33 +14,34 @@ import java.util.List;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
-public class FixedSizeAnalysis {
+public class FixedSizeAnalysis extends CodeAnalysisBase {
   private static final Logger LOG = getLogger();
+  private int threshold;
 
   public static OperationRegistry registry = MainnetEvmRegistries.berlin(BigInteger.ONE);
 
-  public ArrayList<Integer> analyse(int threshold, Bytes code) {
+  public FixedSizeAnalysis(Bytes code, int threshold) {
+    super(code);
+    this.threshold = threshold;
+  }
+
+  public ArrayList<Integer> analyse() {
     int pc = 0;
     int currentChunkSize = 0;
     ArrayList<Integer> chunkStartAddresses = new ArrayList<>();
     chunkStartAddresses.add(0);
 
-    while (true) {
+    while (pc != this.possibleEndOfCode) {
 
       final Operation curOp = registry.get(code.get(pc), 0);
       int opSize = curOp.getOpSize();
-      int opCode = curOp.getOpcode();
+      if (curOp.getOpcode() == 0) break;
 
       if(currentChunkSize + opSize >= threshold) {
         currentChunkSize = 0;
         pc += opSize;
         chunkStartAddresses.add(pc);
         continue;
-      }
-
-      if (opCode == InvalidOperation.OPCODE) {
-        //LOG.info("Reached END");
-        break;
       }
 
       currentChunkSize += opSize;

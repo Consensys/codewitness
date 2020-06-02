@@ -14,23 +14,27 @@ import java.util.List;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
-public class JumpDestAnalysis {
+public class JumpDestAnalysis extends CodeAnalysisBase {
   private static final Logger LOG = getLogger();
+  int threshold;
 
   public static OperationRegistry registry = MainnetEvmRegistries.berlin(BigInteger.ONE);
 
-  public ArrayList<Integer> analyse(int threshold, Bytes code) {
+  public JumpDestAnalysis(Bytes code, int threshold) {
+    super(code);
+    this.threshold = threshold;
+  }
+
+  public ArrayList<Integer> analyse() {
     int pc = 0;
     int currentChunkSize = 0;
     ArrayList<Integer> chunkStartAddresses = new ArrayList<>();
     chunkStartAddresses.add(0);
-
-    while (true) {
-
+    while (pc != this.possibleEndOfCode) {
       final Operation curOp = registry.get(code.get(pc), 0);
       int opSize = curOp.getOpSize();
-
       int opCode = curOp.getOpcode();
+      if (opCode == 0) break;
       if (opCode == JumpDestOperation.OPCODE) {
         //LOG.info("****Found JumpDest at {}", pc);
 
@@ -40,10 +44,6 @@ public class JumpDestAnalysis {
           chunkStartAddresses.add(pc);
           continue;
         }
-
-      } else if (opCode == InvalidOperation.OPCODE) {
-        //LOG.info("Reached END");
-        break;
       }
 
       currentChunkSize += opSize;
