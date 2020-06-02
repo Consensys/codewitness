@@ -5,6 +5,7 @@ import org.apache.tuweni.bytes.Bytes;
 import tech.pegasys.poc.witnesscodeanalysis.simple.PcUtils;
 import tech.pegasys.poc.witnesscodeanalysis.vm.MainnetEvmRegistries;
 import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
+import tech.pegasys.poc.witnesscodeanalysis.vm.OperandStack;
 import tech.pegasys.poc.witnesscodeanalysis.vm.Operation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.EqOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.InvalidOperation;
@@ -19,6 +20,7 @@ import tech.pegasys.poc.witnesscodeanalysis.vm.operations.RevertOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.SelfDestructOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.StopOperation;
 
+import java.math.BigInteger;
 import java.util.Map;
 import java.util.Set;
 
@@ -71,11 +73,18 @@ public class CodeVisitor {
   public void visit(MessageFrame frame, int callingSegmentPc) {
     int pc = frame.getPC();
     int startingPc = pc;
-    addCodeSegment(startingPc, callingSegmentPc);
+    addCodeSegment(startingPc, callingSegmentPc, frame);
     CodeSegment codeSegment = this.codeSegments.get(startingPc);
     boolean done = false;
 
     while (!done) {
+//      if (isInStack(frame, 0x4de5)) {
+//        LOG.info("in stack");
+//      }
+//      else {
+//        LOG.info("not in stack");
+//      }
+
       final Operation curOp = MainnetEvmRegistries.REGISTRY.get(code.get(pc), 0);
       int opCode = curOp.getOpcode();
       frame.setCurrentOperation(curOp);
@@ -89,6 +98,7 @@ public class CodeVisitor {
       if (opCode == JumpiOperation.OPCODE || opCode == JumpOperation.OPCODE) {
         LOG.trace("PC1: {}, Operation {}, Jump Destination: {}", PcUtils.pcStr(pc), curOp.getName(), PcUtils.pcStr(jumpDest));
         dumpStack(frame);
+
         if (jumpDest == startingPc) {
           // This is a looping construct, jumping back to the start of the segment
           LOG.trace("Skipping jump as Jump Dest == Starting PC for {}", PcUtils.pcStr(jumpDest));
@@ -107,13 +117,13 @@ public class CodeVisitor {
           LOG.trace("Find Function Mode: Ignoring jump");
         }
         else {
-          if (this.codeSegments.get(jumpDest) == null) {
+          if (!beenHereBeforeWithSameStack(jumpDest, frame)) {
             // Not visited yet.
             MessageFrame newMessageFrame = (MessageFrame) frame.clone();
             newMessageFrame.setPC(jumpDest);
             visit(newMessageFrame, startingPc);
           } else {
-            LOG.trace("Skipping jump as I have been to {} before!", PcUtils.pcStr(jumpDest));
+            LOG.trace("Skipping jump as I have been to {} before with the same stack!", PcUtils.pcStr(jumpDest));
           }
         }
       }
@@ -133,25 +143,25 @@ public class CodeVisitor {
           codeSegment.setValuesJumpi(pc - startingPc, jumpDest, opCode);
           callingSegmentPc = startingPc;
           startingPc = pc;
-          if (this.codeSegments.get(startingPc) != null) {
-            LOG.trace("**Falling through to existing segment: {}", pc);
+          if (beenHereBeforeWithSameStack(startingPc, frame)) {
+            LOG.trace("**Falling through to existing segment: {}", startingPc);
             return;
           }
-          addCodeSegment(startingPc, callingSegmentPc);
+          addCodeSegment(startingPc, callingSegmentPc, frame);
           codeSegment = this.codeSegments.get(startingPc);
           break;
         case JumpDestOperation.OPCODE:
-          // End a code segments immediately before JUMPDEST operations, if
+          // End code segments immediately before JUMPDEST operations, if
           // the code has fallen through rather than jumped here.
           if (pc - opSize != startingPc) {
             codeSegment.setValuesJumpDest(pc - startingPc - opSize, opCode);
             callingSegmentPc = startingPc;
             startingPc = pc - opSize;
-            if (this.codeSegments.get(startingPc) != null) {
-              LOG.trace("**Falling through to existing segment: {}", pc);
+            if (beenHereBeforeWithSameStack(startingPc, frame)) {
+              LOG.trace("**Falling through to existing segment: {}", startingPc);
               return;
             }
-            addCodeSegment(startingPc, callingSegmentPc);
+            addCodeSegment(startingPc, callingSegmentPc, frame);
             codeSegment = this.codeSegments.get(startingPc);
           }
           break;
@@ -223,14 +233,49 @@ public class CodeVisitor {
   }
 
 
-  private void addCodeSegment(int startingPc, int callingSegmentPc) {
-    CodeSegment existingCodeSegent = this.codeSegments.get(startingPc);
-    if (existingCodeSegent != null) {
-      LOG.error("Code Segment already exists for start PC {}: {}", startingPc, existingCodeSegent);
-      throw new RuntimeException("Code segment already exists");
+  private void addCodeSegment(int startingPc, int callingSegmentPc, MessageFrame frame) {
+    if (beenHereBeforeWithSameStack(startingPc, frame)) {
+      LOG.error("Been here before with the same stack for start PC {}", startingPc);
+      return;
     }
-    CodeSegment codeSegment = new CodeSegment(startingPc, callingSegmentPc);
+    CodeSegment codeSegment = this.codeSegments.get(startingPc);
+    if (codeSegment != null) {
+      codeSegment.addNewPrevious(callingSegmentPc, frame.getCopyOfStack());
+    }
+    else {
+      codeSegment = new CodeSegment(startingPc, callingSegmentPc, frame.getCopyOfStack());
+
+    }
     this.codeSegments.put(startingPc, codeSegment);
+  }
+
+  /**
+   * Is the stack the same as another time the code at this startingPc has been called?
+   *
+   */
+  private boolean beenHereBeforeWithSameStack(int startingPc, MessageFrame frame) {
+    CodeSegment existingCodeSegment = this.codeSegments.get(startingPc);
+    if (existingCodeSegment == null) {
+      return false;
+    }
+
+    OperandStack stack = frame.getCopyOfStack();
+    for (OperandStack existingStack: existingCodeSegment.previousSegmentStacks) {
+      if (stack.size() != existingStack.size()) {
+        continue;
+      }
+      boolean matchingStackFound = true;
+      for (int i=0; i < stack.size(); i++) {
+        if (stack.get(i).compareTo(existingStack.get(i)) != 0) {
+          matchingStackFound = false;
+          break;
+        }
+      }
+      if (matchingStackFound) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private void dumpStack(MessageFrame frame) {
@@ -245,6 +290,17 @@ public class CodeVisitor {
       buf.append(", ");
     }
     LOG.trace(buf.toString());
+  }
+
+  private boolean isInStack(MessageFrame frame, long val) {
+    BigInteger searchVal = BigInteger.valueOf(val);
+    for (int i = 0; i < frame.stackSize(); i++) {
+      BigInteger stackItem = frame.getStackItem(i).toBigInteger();
+      if (stackItem.compareTo(searchVal) == 0) {
+        return true;
+      }
+    }
+    return false;
   }
 
 }

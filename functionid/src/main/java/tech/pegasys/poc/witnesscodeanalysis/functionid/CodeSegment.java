@@ -1,9 +1,13 @@
 package tech.pegasys.poc.witnesscodeanalysis.functionid;
 
 import tech.pegasys.poc.witnesscodeanalysis.vm.MainnetEvmRegistries;
+import tech.pegasys.poc.witnesscodeanalysis.vm.OperandStack;
 import tech.pegasys.poc.witnesscodeanalysis.vm.OperationRegistry;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 public class CodeSegment {
   public static OperationRegistry registry = MainnetEvmRegistries.berlin(BigInteger.ONE);
@@ -13,60 +17,60 @@ public class CodeSegment {
   public int length = INVALID;
   public boolean endsProgram = false;
   public boolean happyPathEnding = false;
-  public int previousSegment;
+  public ArrayList<Integer> previousSegments = new ArrayList<>();
+  public ArrayList<OperandStack> previousSegmentStacks = new ArrayList<>();
   public int nextSegmentNoJump = INVALID;
-  public int nextSegmentJump = INVALID;
+  public Set<Integer> nextSegmentJumps = new HashSet<>();
   private int lastOpCode = INVALID;
 
-  public CodeSegment(int start, int callingSegmentPc) {
+  public CodeSegment(int start) {
     this.start = start;
-    this.previousSegment = callingSegmentPc;
+  }
+
+
+  public CodeSegment(int start, int callingSegmentPc, OperandStack callingSegmentStack) {
+    this.start = start;
+    this.previousSegments.add(callingSegmentPc);
+    this.previousSegmentStacks.add(callingSegmentStack);
+  }
+
+  public void addNewPrevious(int callingSegmentPc, OperandStack callingSegmentStack) {
+    this.previousSegments.add(callingSegmentPc);
+    this.previousSegmentStacks.add(callingSegmentStack);
   }
 
   // Jump or fall through, does not end.
   public void setValuesJumpi(int len, int nextSegmentJump, int lastOpCode) {
-    checkNotSet();
-    this.length = len;
-    this.nextSegmentJump = nextSegmentJump;
-    this.nextSegmentNoJump = this.start + len;
-    this.lastOpCode = lastOpCode;
+    setLenLastOpCode(len, lastOpCode);
+    addJumpIfNotSetAlready(nextSegmentJump);
+    setNoJump();
   }
 
   // Fall through only, does not end.
   public void setValuesJumpDest(int len, int lastOpCode) {
-    checkNotSet();
-    this.length = len;
-    this.nextSegmentNoJump = this.start + len;
-    this.lastOpCode = lastOpCode;
+    setLenLastOpCode(len, lastOpCode);
+    setNoJump();
   }
 
   // Jump only, does not end.
   public void setValuesJump(int len, int nextSegmentJump, int lastOpCode) {
-    checkNotSet();
-    this.length = len;
-    this.nextSegmentJump = nextSegmentJump;
-    this.lastOpCode = lastOpCode;
+    setLenLastOpCode(len, lastOpCode);
+    addJumpIfNotSetAlready(nextSegmentJump);
   }
 
   // Return, does not end.
   public void setValuesReturnSub(int len, int lastOpCode) {
-    checkNotSet();
-    this.length = len;
-    this.lastOpCode = lastOpCode;
+    setLenLastOpCode(len, lastOpCode);
   }
 
   public void setValuesHappyEnding(int len, int lastOpCode) {
-    checkNotSet();
-    this.length = len;
-    this.lastOpCode = lastOpCode;
+    setLenLastOpCode(len, lastOpCode);
     this.endsProgram = true;
     this.happyPathEnding = true;
   }
 
   public void setValuesSadEnding(int len, int lastOpCode) {
-    checkNotSet();
-    this.length = len;
-    this.lastOpCode = lastOpCode;
+    setLenLastOpCode(len, lastOpCode);
     this.endsProgram = true;
   }
 
@@ -74,6 +78,27 @@ public class CodeSegment {
     checkNotSet();
     this.length = len;
   }
+
+  private void setLenLastOpCode(int len, int lastOpCode) {
+    if (this.length != INVALID) {
+      if (this.length != len && this.lastOpCode != lastOpCode) {
+        throw new Error("Setting ReturnSub a second time with inconsistent values");
+      }
+      return;
+    }
+    this.length = len;
+    this.lastOpCode = lastOpCode;
+  }
+
+  private void addJumpIfNotSetAlready(int nextSegmentJump) {
+    this.nextSegmentJumps.add(nextSegmentJump);
+  }
+
+  private void setNoJump() {
+    // If the start and the length are known, then the next segment no jump will always be the same.
+    this.nextSegmentNoJump = this.start + this.length;
+  }
+
 
   private void checkNotSet() {
     if (this.length != INVALID) {
@@ -86,15 +111,30 @@ public class CodeSegment {
   public String toString() {
     StringBuffer buf = new StringBuffer();
     buf.append("Code Segment: previous: ");
-    buf.append(this.previousSegment);
-    buf.append(", start: ");
+    if (this.previousSegments.isEmpty()) {
+      buf.append("none, ");
+    }
+    else {
+      for (int previousSegment: this.previousSegments) {
+        buf.append(previousSegment);
+        buf.append(", ");
+      }
+    }
+    buf.append("start: ");
     buf.append(this.start);
     buf.append(", length: ");
     buf.append(this.length);
     buf.append(", next: ");
     buf.append(this.nextSegmentNoJump);
     buf.append(", jumpdest: ");
-    buf.append(this.nextSegmentJump);
+    if (this.nextSegmentJumps.isEmpty()) {
+      buf.append("none, ");
+    } else {
+      for (int nextSegmentJump: this.nextSegmentJumps) {
+        buf.append(nextSegmentJump);
+        buf.append(", ");
+      }
+    }
     buf.append(", End of program: ");
     buf.append(this.endsProgram);
     if (this.endsProgram) {

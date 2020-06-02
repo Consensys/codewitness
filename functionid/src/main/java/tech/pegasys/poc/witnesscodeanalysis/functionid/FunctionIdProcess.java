@@ -27,6 +27,7 @@ public class FunctionIdProcess {
     CodePaths codePaths = new CodePaths(this.code, this.jumpDests);
     codePaths.findFunctionBlockCodePaths(this.endOfFunctionIdBlock);
     codePaths.findCodeSegmentsForFunctions();
+
     codePaths.showAllCodePaths();
     boolean codePathsValid = codePaths.validateCodeSegments(this.endOfCode);
     LOG.info("Code Paths Valid: {}", codePathsValid);

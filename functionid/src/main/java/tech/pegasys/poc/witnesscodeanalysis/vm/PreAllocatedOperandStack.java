@@ -111,8 +111,14 @@ public class PreAllocatedOperandStack implements OperandStack, Cloneable {
   }
 
   @Override
-  protected Object clone() throws CloneNotSupportedException {
-    PreAllocatedOperandStack cloneObj = (PreAllocatedOperandStack) super.clone();
+  protected Object clone() {
+    PreAllocatedOperandStack cloneObj = null;
+    try {
+      cloneObj = (PreAllocatedOperandStack) super.clone();
+    } catch (CloneNotSupportedException ex) {
+      // Object will support clone.
+      throw new RuntimeException(ex);
+    }
     cloneObj.entries = new Bytes32[this.entries.length];
     for (int i = 0; i < this.entries.length; i++) {
       cloneObj.entries[i] = this.entries[i];
