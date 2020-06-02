@@ -22,9 +22,9 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 public class WitnessCodeAnalysis extends CodeAnalysisBase {
   private static final Logger LOG = getLogger();
 
-  public static final String DEFAULT_FILE_IN =  "contract_data.json";
-  public static final String DEFAULT_JUMPDEST_FILE_OUT =  "analysis_jumpdest.json";
-  public static final String DEFAULT_FIXED_FILE_OUT =  "analysis_fixed.json";
+  public static final String DEFAULT_FILE_IN =  "/Users/raghavendra/chainData/contract_data.json";
+  public static final String DEFAULT_JUMPDEST_FILE_OUT =  "/Users/raghavendra/chainData/analysis_jumpdest.json";
+  public static final String DEFAULT_FIXED_FILE_OUT =  "/Users/raghavendra/chainData/analysis_fixed.json";
 
   public WitnessCodeAnalysis(Bytes code) {
     super(code);
@@ -69,8 +69,10 @@ public class WitnessCodeAnalysis extends CodeAnalysisBase {
 
 
     String line = reader.readLine();
+    //int i = 0;
     // loop until all lines are read
-    while (line != null) {
+    while (line != null/* && i < 5*/) {
+      //i++;
       // LOG.info(line);
       ContractData contractData = gson.fromJson(line, ContractData.class);
       LOG.info("Processing contract at address: {}", contractData.getContract_address()[0]);
@@ -78,20 +80,20 @@ public class WitnessCodeAnalysis extends CodeAnalysisBase {
 
       // Analysis of jumpdests
       LOG.info("\nJumpDest Analysis started");
-      ArrayList<Integer> chunkStartAddresses = new JumpDestAnalysis().analyse(128, code);
+      ArrayList<Integer> chunkStartAddresses = new JumpDestAnalysis(code, 128).analyse();
       LOG.info("\nFinished. {} chunks", chunkStartAddresses.size());
       ChunkData chunkData = new ChunkData(chunkStartAddresses);
       gson.toJson(chunkData, jumpDestWriter);
 
       // Analysis doing fixed size chunking
       LOG.info("\nFixedSize Analysis started");
-      chunkStartAddresses = new FixedSizeAnalysis().analyse(128, code);
+      chunkStartAddresses = new FixedSizeAnalysis(code, 128).analyse();
       LOG.info("\nFinished. {} chunks.", chunkStartAddresses.size());
       chunkData = new ChunkData(chunkStartAddresses);
       gson.toJson(chunkData, fixedWriter);
 
       // Function ID analysis
-      WitnessCodeAnalysis analysis = new WitnessCodeAnalysis(code);
+      /*WitnessCodeAnalysis analysis = new WitnessCodeAnalysis(code);
       analysis.showBasicInfo();
 
       total++;
@@ -124,7 +126,7 @@ public class WitnessCodeAnalysis extends CodeAnalysisBase {
 
       // read next line before looping
       //if end of file reached, line would be null
-      line = reader.readLine();
+      */line = reader.readLine();
     }
 
 
