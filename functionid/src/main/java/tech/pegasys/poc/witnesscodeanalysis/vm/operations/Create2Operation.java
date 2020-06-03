@@ -17,13 +17,22 @@ package tech.pegasys.poc.witnesscodeanalysis.vm.operations;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
+import tech.pegasys.poc.witnesscodeanalysis.vm.AbstractOperation;
+import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
 
-public class Create2Operation extends AbstractCreateOperation {
+public class Create2Operation extends AbstractOperation {
   public static int OPCODE = 0xF5;
   public static Bytes32 MARKER_AND_OPCODE = UInt256.valueOf(DYNAMIC_MARKER + OPCODE).toBytes();
 
   public Create2Operation() {
     super(OPCODE, "CREATE2", 4, 1, 1);
+  }
+
+  @Override
+  public UInt256 execute(final MessageFrame frame) {
+    frame.popStackItems(getStackItemsConsumed());
+    frame.pushStackItem(MARKER_AND_OPCODE);
+    return UInt256.ZERO;
   }
 
 

@@ -1,5 +1,7 @@
 package tech.pegasys.poc.witnesscodeanalysis.functionid;
 
+import org.apache.logging.log4j.Logger;
+import tech.pegasys.poc.witnesscodeanalysis.simple.PcUtils;
 import tech.pegasys.poc.witnesscodeanalysis.vm.MainnetEvmRegistries;
 import tech.pegasys.poc.witnesscodeanalysis.vm.OperandStack;
 import tech.pegasys.poc.witnesscodeanalysis.vm.OperationRegistry;
@@ -9,7 +11,10 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
+import static org.apache.logging.log4j.LogManager.getLogger;
+
 public class CodeSegment {
+  private static final Logger LOG = getLogger();
   public static OperationRegistry registry = MainnetEvmRegistries.berlin(BigInteger.ONE);
 
   public static final int INVALID = -1;
@@ -23,11 +28,6 @@ public class CodeSegment {
   public Set<Integer> nextSegmentJumps = new HashSet<>();
   private int lastOpCode = INVALID;
 
-  public CodeSegment(int start) {
-    this.start = start;
-  }
-
-
   public CodeSegment(int start, int callingSegmentPc, OperandStack callingSegmentStack) {
     this.start = start;
     this.previousSegments.add(callingSegmentPc);
@@ -37,6 +37,11 @@ public class CodeSegment {
   public void addNewPrevious(int callingSegmentPc, OperandStack callingSegmentStack) {
     this.previousSegments.add(callingSegmentPc);
     this.previousSegmentStacks.add(callingSegmentStack);
+
+    if (this.previousSegments.size() > 50) {
+      LOG.info("{} previous segments for PC {}", this.previousSegments.size(), PcUtils.pcStr(start));
+      throw new Error("Not detecting previous correctly");
+    }
   }
 
   // Jump or fall through, does not end.
@@ -74,11 +79,6 @@ public class CodeSegment {
     this.endsProgram = true;
   }
 
-  public void setValuesLengthOnly(int len) {
-    checkNotSet();
-    this.length = len;
-  }
-
   private void setLenLastOpCode(int len, int lastOpCode) {
     if (this.length != INVALID) {
       if (this.length != len && this.lastOpCode != lastOpCode) {
@@ -97,13 +97,6 @@ public class CodeSegment {
   private void setNoJump() {
     // If the start and the length are known, then the next segment no jump will always be the same.
     this.nextSegmentNoJump = this.start + this.length;
-  }
-
-
-  private void checkNotSet() {
-    if (this.length != INVALID) {
-      throw new RuntimeException("Code segment data already set. Start offset: " + this.start);
-    }
   }
 
 

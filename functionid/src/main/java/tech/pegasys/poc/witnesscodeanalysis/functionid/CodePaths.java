@@ -40,7 +40,8 @@ public class CodePaths {
   // The key to the inner map is the start offset with the code of the code segment.
   private Map<Bytes, Map<Integer, CodeSegment>> allCodePaths = new TreeMap<>();
 
-  private Map<Bytes, Map<Integer, CodeSegment>> allCombinedCodeSegments = new TreeMap<>();
+  // Map of function id to Map of start to length.
+  private Map<Bytes, Map<Integer, Integer>> allCombinedCodeBlocks = new TreeMap<>();
 
   Set<Integer> jumpDests;
 
@@ -75,9 +76,9 @@ public class CodePaths {
 
 
   public void findCodeSegmentsForFunctions() {
-    LOG.info("Find Code Paths functions");
+    LOG.trace("Find Code Paths functions");
     for (Bytes functionId: this.foundFunctions.keySet()) {
-      LOG.info("Find Code Paths for functionid: {}", functionId);
+      LOG.trace("Find Code Paths for functionid: {}", functionId);
       int functionStartOp = this.foundFunctions.get(functionId);
 
       Map<Integer, CodeSegment> functionCodeSegments = new TreeMap<>();
@@ -121,13 +122,13 @@ public class CodePaths {
   }
 
   public void showAllCodePaths() {
-    LOG.info("Show All Code Paths");
+    LOG.trace("Show All Code Paths");
     for (Bytes functionId: this.allCodePaths.keySet()) {
-      LOG.info(" Code Paths for functionid: {}", functionId);
+      LOG.trace(" Code Paths for functionid: {}", functionId);
       Map<Integer, CodeSegment> functionCodeSegments = this.allCodePaths.get(functionId);
 
       for (CodeSegment seg : functionCodeSegments.values()) {
-        LOG.info("  {}", seg);
+        LOG.trace("  {}", seg);
       }
     }
   }
@@ -138,7 +139,7 @@ public class CodePaths {
    * @return
    */
   public boolean validateCodeSegments(int endOfCodeOffset) {
-    LOG.info("Validating Code Segments");
+    LOG.trace("Validating Code Segments");
     boolean done = false;
     int pc = 0;
 
@@ -191,7 +192,7 @@ public class CodePaths {
         }
       }
       else {
-        LOG.info("Code segment at offset: 0x{} ({}) used by functions: {}", Integer.toHexString(pc), pc, functionsUsingSegment);
+        LOG.trace("Code segment at offset: 0x{} ({}) used by functions: {}", Integer.toHexString(pc), pc, functionsUsingSegment);
         firstOpCodeNotInSegment = true;
       }
       pc = next;
@@ -214,79 +215,64 @@ public class CodePaths {
     for (Bytes functionId: this.allCodePaths.keySet()) {
 //      LOG.info("Combining Code Segments for function: {}", functionId);
 
-      Map<Integer, CodeSegment> happyPathCodeSegments = this.allCodePaths.get(functionId);
-      Map<Integer, CodeSegment> combinedCodeSegments = new TreeMap<>();
+      Map<Integer, CodeSegment> allCodeSegments = this.allCodePaths.get(functionId);
+      Map<Integer, Integer> combinedCodeSegments = new TreeMap<>();
 
-      TreeSet<Integer> happyPathSet = new TreeSet<>();
-      happyPathSet.addAll(happyPathCodeSegments.keySet());
-      Iterator<Integer> happyIter = happyPathSet.iterator();
+      TreeSet<Integer> pathSet = new TreeSet<>(allCodeSegments.keySet());
+      Iterator<Integer> iter = pathSet.iterator();
 
-      int nextHappy = happyIter.next();
-      if (nextHappy != 0) {
+      int next = iter.next();
+      if (next != 0) {
         throw new RuntimeException("Code didn't start at zero!");
       }
-      CodeSegment newSegment = new CodeSegment(nextHappy);
-      int startOfs = nextHappy;
-      int len = happyPathCodeSegments.get(nextHappy).length;
+      int len = allCodeSegments.get(next).length;
+      int startOfs = next;
 
-
-      nextHappy = happyIter.next();
+      next = iter.next();
       do {
-        if (nextHappy - maxNumBytesBetweenCodeSegments <= startOfs + len) {
+        if (next - maxNumBytesBetweenCodeSegments <= startOfs + len) {
           // Combine segments
-          len = nextHappy - startOfs + happyPathCodeSegments.get(nextHappy).length;
+          len = next - startOfs + allCodeSegments.get(next).length;
         } else {
-          newSegment.setValuesLengthOnly(len);
-          combinedCodeSegments.put(startOfs, newSegment);
-          startOfs = nextHappy;
-          len = happyPathCodeSegments.get(nextHappy).length;
-          newSegment = new CodeSegment(startOfs);
+          combinedCodeSegments.put(startOfs, len);
+          startOfs = next;
+          len = allCodeSegments.get(next).length;
         }
-        nextHappy = happyIter.hasNext() ? happyIter.next() : CodeSegment.INVALID;
-    } while (nextHappy != CodeSegment.INVALID);
-    // Don't forget to do the final segment!
-    newSegment.setValuesLengthOnly(len);
-    combinedCodeSegments.put(startOfs, newSegment);
+        next = iter.hasNext() ? iter.next() : CodeSegment.INVALID;
+      } while (next != CodeSegment.INVALID);
+      // Don't forget to do the final segment!
+      combinedCodeSegments.put(startOfs, len);
 
-    this.allCombinedCodeSegments.put(functionId, combinedCodeSegments);
+      this.allCombinedCodeBlocks.put(functionId, combinedCodeSegments);
 
-    LOG.info("Combined CodeSegments: Function: {}, Prior to Combination: {}, Combined: {}",
-        functionId, happyPathCodeSegments.size(), combinedCodeSegments.size());
-  }
-  }
-
-  public void showCombinedCodeSegments() {
-    for (Bytes functionId : this.allCombinedCodeSegments.keySet()) {
-      Map<Integer, CodeSegment> combinedCodeSegments = this.allCombinedCodeSegments.get(functionId);
-      for (Integer startOfs : combinedCodeSegments.keySet()) {
-        LOG.info(" Function {}, Start: {}, Length: {}", functionId, startOfs, combinedCodeSegments.get(startOfs).length);
-      }
+      LOG.trace("Combined CodeSegments: Function: {}, Prior to Combination: {}, Combined: {}",
+        functionId, allCodeSegments.size(), combinedCodeSegments.size());
     }
   }
 
-  public void estimateWitnessSize() {
-    LOG.info("Contract size: {}", this.code.size());
-
-    for (Bytes functionId: this.allCombinedCodeSegments.keySet()) {
-      Map<Integer, CodeSegment> combinedCodeSegments = this.allCombinedCodeSegments.get(functionId);
-      int sizeOfCodeSegmentsIndicators = 4; // length = 2 bytes, start offset = 2 bytes.
-      int numCodeSegments = combinedCodeSegments.size();
-      int sizeOfAllCodeSegmentIndicators = numCodeSegments * sizeOfCodeSegmentsIndicators;
-      int sizeOfLengthFieldForCodeSegments = 2; // Assume there need to be up to 2**16 code segments.
-      int lenOfCode = 0;
-      for (Integer startOfs: combinedCodeSegments.keySet()) {
-        lenOfCode += combinedCodeSegments.get(startOfs).length;
-      }
-      int total = sizeOfAllCodeSegmentIndicators + sizeOfLengthFieldForCodeSegments + lenOfCode;
-      // Add in the message digest of the code used.
-      LOG.info("Estimated Witness Size for function: {} is: {} + {} + {} = {}",
-          functionId, sizeOfAllCodeSegmentIndicators, sizeOfLengthFieldForCodeSegments, lenOfCode, total);
-
-    }
-  }
+//  public void estimateWitnessSize() {
+//    LOG.info("Contract size: {}", this.code.size());
+//
+//    for (Bytes functionId: this.allCombinedCodeSegments.keySet()) {
+//      Map<Integer, CodeSegment> combinedCodeSegments = this.allCombinedCodeSegments.get(functionId);
+//      int sizeOfCodeSegmentsIndicators = 4; // length = 2 bytes, start offset = 2 bytes.
+//      int numCodeSegments = combinedCodeSegments.size();
+//      int sizeOfAllCodeSegmentIndicators = numCodeSegments * sizeOfCodeSegmentsIndicators;
+//      int sizeOfLengthFieldForCodeSegments = 2; // Assume there need to be up to 2**16 code segments.
+//      int lenOfCode = 0;
+//      for (Integer startOfs: combinedCodeSegments.keySet()) {
+//        lenOfCode += combinedCodeSegments.get(startOfs).length;
+//      }
+//      int total = sizeOfAllCodeSegmentIndicators + sizeOfLengthFieldForCodeSegments + lenOfCode;
+//      // Add in the message digest of the code used.
+//      LOG.info("Estimated Witness Size for function: {} is: {} + {} + {} = {}",
+//          functionId, sizeOfAllCodeSegmentIndicators, sizeOfLengthFieldForCodeSegments, lenOfCode, total);
+//
+//    }
+//  }
 
   private void logOpCode(int offset) {
-    LOG.info("No code segment at offset: {}, opcode: {}", PcUtils.pcStr(offset), getOpCodeString(offset));
+    LOG.trace("No code segment at offset: {}, opcode: {}", PcUtils.pcStr(offset), getOpCodeString(offset));
   }
 
   private String getOpCodeString(int offset) {
@@ -311,4 +297,7 @@ public class CodePaths {
     }
   }
 
+  public Map<Bytes, Map<Integer, Integer>> getAllCombinedCodeBlocks() {
+    return allCombinedCodeBlocks;
+  }
 }

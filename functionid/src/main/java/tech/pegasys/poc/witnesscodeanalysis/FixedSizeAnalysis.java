@@ -2,6 +2,7 @@ package tech.pegasys.poc.witnesscodeanalysis;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import tech.pegasys.poc.witnesscodeanalysis.simple.PcUtils;
 import tech.pegasys.poc.witnesscodeanalysis.vm.MainnetEvmRegistries;
 import tech.pegasys.poc.witnesscodeanalysis.vm.Operation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.OperationRegistry;
@@ -34,6 +35,10 @@ public class FixedSizeAnalysis extends CodeAnalysisBase {
     while (pc != this.possibleEndOfCode) {
 
       final Operation curOp = registry.get(code.get(pc), 0);
+      if (curOp == null) {
+        LOG.error("Unknown opcode 0x{} at PC {}", Integer.toHexString(code.get(pc)), PcUtils.pcStr(pc));
+        throw new Error("Unknown opcode");
+      }
       int opSize = curOp.getOpSize();
       if (curOp.getOpcode() == 0) break;
 
