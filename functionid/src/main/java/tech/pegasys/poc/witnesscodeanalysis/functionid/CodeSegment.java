@@ -74,11 +74,6 @@ public class CodeSegment {
     this.endsProgram = true;
   }
 
-  public void setValuesLengthOnly(int len) {
-    checkNotSet();
-    this.length = len;
-  }
-
   private void setLenLastOpCode(int len, int lastOpCode) {
     if (this.length != INVALID) {
       if (this.length != len && this.lastOpCode != lastOpCode) {
@@ -97,13 +92,6 @@ public class CodeSegment {
   private void setNoJump() {
     // If the start and the length are known, then the next segment no jump will always be the same.
     this.nextSegmentNoJump = this.start + this.length;
-  }
-
-
-  private void checkNotSet() {
-    if (this.length != INVALID) {
-      throw new RuntimeException("Code segment data already set. Start offset: " + this.start);
-    }
   }
 
 

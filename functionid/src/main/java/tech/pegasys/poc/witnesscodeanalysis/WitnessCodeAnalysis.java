@@ -5,10 +5,13 @@ import com.google.gson.GsonBuilder;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import tech.pegasys.poc.witnesscodeanalysis.datafile.ContractData;
+import tech.pegasys.poc.witnesscodeanalysis.functionid.FunctionIdAllLeaves;
 import tech.pegasys.poc.witnesscodeanalysis.functionid.FunctionIdProcess;
 
 import java.io.BufferedReader;
 import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -31,8 +34,6 @@ public class WitnessCodeAnalysis extends CodeAnalysisBase {
   }
 
   public static void main(String[] args) throws Exception {
-    LOG.info("TODO: add support for contract data.");
-
     String fileIn = null;
     String jumpDestFileOut = null;
     String fixedFileOut = null;
@@ -65,36 +66,71 @@ public class WitnessCodeAnalysis extends CodeAnalysisBase {
     int definitelySol = 0;
     int simpleAnalysisCompleted = 0;
     int shouldBeAbleToAnalyse = 0;
+    int successfullyAnalysed = 0;
 
 
 
     String line = reader.readLine();
     int i = 0;
     // loop until all lines are read
-    while (line != null && i < 6) {
+    while (line != null && i < 1000) {
       i++;
       // LOG.info(line);
       ContractData contractData = gson.fromJson(line, ContractData.class);
-      LOG.info("Processing contract at address: {}", contractData.getContract_address()[0]);
+      String contractAddress = contractData.getContract_address()[0];
+      int numDeployments = contractData.getContract_address().length;
+
+      // Print out information about the contract to get a feel for how important the results are.
+      LOG.info("Processing contract deployed at address: {} and {} other times", contractAddress, numDeployments-1);
       Bytes code = Bytes.fromHexString(contractData.getCode());
+      LOG.info(" Code Size: " + code.size());
+      int firstDeployment = 100000000;
+      int[] deployments = contractData.getDeployed_at_block();
+      for (int j = 0; j < numDeployments; j++) {
+        if (deployments[j] < firstDeployment) {
+          firstDeployment = deployments[j];
+        }
+      }
+      LOG.info(" Deployed at block: " + contractData.getDeployed_at_block()[0]);
+      int lastTransaction = 0;
+      int[] lastTransactions = contractData.getRecent_accessed_at_block();
+      for (int j = 0; j < numDeployments; j++) {
+        if (lastTransactions[j] > lastTransaction) {
+          lastTransaction = lastTransactions[j];
+        }
+      }
+      LOG.info(" Last transaction for all deployments: {}", lastTransaction);
+
+      ArrayList<Integer> chunkStartAddresses;
+      ChunkData chunkData;
 
       // Analysis of jumpdests
-      LOG.info("\nJumpDest Analysis started");
-      ArrayList<Integer> chunkStartAddresses = new JumpDestAnalysis(code, 128).analyse();
-      LOG.info("\nFinished. {} chunks", chunkStartAddresses.size());
-      ChunkData chunkData = new ChunkData(chunkStartAddresses);
-      gson.toJson(chunkData, jumpDestWriter);
+      LOG.info(" JumpDest Analysis started");
+      try {
+        chunkStartAddresses = new JumpDestAnalysis(code, 128).analyse();
+        LOG.info("  Finished. {} chunks", chunkStartAddresses.size());
+        chunkData = new ChunkData(chunkStartAddresses);
+        gson.toJson(chunkData, jumpDestWriter);
+      } catch (Throwable th) {
+        logStackTrace(th);
+      }
+
 
       // Analysis doing fixed size chunking
-      LOG.info("\nFixedSize Analysis started");
-      chunkStartAddresses = new FixedSizeAnalysis(code, 128).analyse();
-      LOG.info("\nFinished. {} chunks.", chunkStartAddresses.size());
-      chunkData = new ChunkData(chunkStartAddresses);
-      gson.toJson(chunkData, fixedWriter);
+      LOG.info(" FixedSize Analysis started");
+      try {
+        chunkStartAddresses = new FixedSizeAnalysis(code, 128).analyse();
+        LOG.info("  Finished. {} chunks.", chunkStartAddresses.size());
+        chunkData = new ChunkData(chunkStartAddresses);
+        gson.toJson(chunkData, fixedWriter);
+      } catch (Throwable th) {
+        logStackTrace(th);
+      }
+
 
       // Function ID analysis
       WitnessCodeAnalysis analysis = new WitnessCodeAnalysis(code);
-      analysis.showBasicInfo();
+      //analysis.showBasicInfo();
 
       total++;
       if (analysis.simple.isProbablySolidity()) {
@@ -114,13 +150,19 @@ public class WitnessCodeAnalysis extends CodeAnalysisBase {
         simpleAnalysisCompleted++;
       }
 
-      // Should be able to analyse
-      if (analysis.simple.getEndOfFunctionIdBlock() != -1) {
+      LOG.info(" Function Id Analysis");
+      if (analysis.simple.getEndOfFunctionIdBlock() == -1) {
+        LOG.info("  Not attempting Function Id analysis as no function id block was detected");
+      }
+      else {
+        // Should be able to analyse
         try {
           FunctionIdProcess fidAnalysis = new FunctionIdProcess(code, analysis.simple.getEndOfFunctionIdBlock(), analysis.simple.getEndOfCode(), analysis.simple.getJumpDests());
-          fidAnalysis.executeAnalysis();
+          FunctionIdAllLeaves leaves = fidAnalysis.executeAnalysis();
+          LOG.info("  Function Id Process found {} functions", leaves.getLeaves().size());
+          successfullyAnalysed++;
         } catch (Throwable th) {
-          th.printStackTrace();
+          logStackTrace(th);
         }
       }
 
@@ -130,7 +172,8 @@ public class WitnessCodeAnalysis extends CodeAnalysisBase {
     }
 
 
-    LOG.info("Total: {}, Probably Solidity: {}, Definitely Solidity: {}, Should be able to Analyse: {}, End Of Code Found: {}", total, numSol, definitelySol, shouldBeAbleToAnalyse, simpleAnalysisCompleted);
+    LOG.info("Total: {}, Probably Solidity: {}, Definitely Solidity: {}, Should be able to Analyse: {}, Successfully Analysed: {}, End Of Code Found: {}",
+        total, numSol, definitelySol, shouldBeAbleToAnalyse, successfullyAnalysed, simpleAnalysisCompleted);
 
 
     reader.close();
@@ -138,5 +181,13 @@ public class WitnessCodeAnalysis extends CodeAnalysisBase {
     fixedWriter.close();
   }
 
+
+  private static void logStackTrace(Throwable th) {
+    StringWriter sw = new StringWriter();
+    PrintWriter pw = new PrintWriter(sw);
+    th.printStackTrace(pw);
+    LOG.info("  Exception while processing: {}", sw.toString());
+
+  }
 
 }

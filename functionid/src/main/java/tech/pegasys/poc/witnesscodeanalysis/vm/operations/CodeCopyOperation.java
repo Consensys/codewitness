@@ -32,9 +32,11 @@ public class CodeCopyOperation extends AbstractOperation {
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
-    frame.popStackItem();
-    frame.popStackItem();
-    frame.popStackItem();
-    return UInt256.ZERO;
+    throw new Error("CodeCopy operation not yet supported");
+//
+//    frame.popStackItem();
+//    frame.popStackItem();
+//    frame.popStackItem();
+//    return UInt256.ZERO;
   }
 }
