@@ -1,5 +1,7 @@
 package tech.pegasys.poc.witnesscodeanalysis.functionid;
 
+import org.apache.logging.log4j.Logger;
+import tech.pegasys.poc.witnesscodeanalysis.simple.PcUtils;
 import tech.pegasys.poc.witnesscodeanalysis.vm.MainnetEvmRegistries;
 import tech.pegasys.poc.witnesscodeanalysis.vm.OperandStack;
 import tech.pegasys.poc.witnesscodeanalysis.vm.OperationRegistry;
@@ -9,7 +11,10 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
+import static org.apache.logging.log4j.LogManager.getLogger;
+
 public class CodeSegment {
+  private static final Logger LOG = getLogger();
   public static OperationRegistry registry = MainnetEvmRegistries.berlin(BigInteger.ONE);
 
   public static final int INVALID = -1;
@@ -23,11 +28,6 @@ public class CodeSegment {
   public Set<Integer> nextSegmentJumps = new HashSet<>();
   private int lastOpCode = INVALID;
 
-  public CodeSegment(int start) {
-    this.start = start;
-  }
-
-
   public CodeSegment(int start, int callingSegmentPc, OperandStack callingSegmentStack) {
     this.start = start;
     this.previousSegments.add(callingSegmentPc);
@@ -37,6 +37,11 @@ public class CodeSegment {
   public void addNewPrevious(int callingSegmentPc, OperandStack callingSegmentStack) {
     this.previousSegments.add(callingSegmentPc);
     this.previousSegmentStacks.add(callingSegmentStack);
+
+    if (this.previousSegments.size() > 50) {
+      LOG.info("{} previous segments for PC {}", this.previousSegments.size(), PcUtils.pcStr(start));
+      throw new Error("Not detecting previous correctly");
+    }
   }
 
   // Jump or fall through, does not end.

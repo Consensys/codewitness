@@ -73,7 +73,7 @@ public class WitnessCodeAnalysis extends CodeAnalysisBase {
     String line = reader.readLine();
     int i = 0;
     // loop until all lines are read
-    while (line != null && i < 1000) {
+    while (line != null && i < 10000) {
       i++;
       // LOG.info(line);
       ContractData contractData = gson.fromJson(line, ContractData.class);
@@ -81,7 +81,7 @@ public class WitnessCodeAnalysis extends CodeAnalysisBase {
       int numDeployments = contractData.getContract_address().length;
 
       // Print out information about the contract to get a feel for how important the results are.
-      LOG.info("Processing contract deployed at address: {} and {} other times", contractAddress, numDeployments-1);
+      LOG.info("Processing contract {} deployed at address: {} and {} other times", i, contractAddress, numDeployments-1);
       Bytes code = Bytes.fromHexString(contractData.getCode());
       LOG.info(" Code Size: " + code.size());
       int firstDeployment = 100000000;

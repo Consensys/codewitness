@@ -38,7 +38,7 @@ public class ByteCodeDump extends CodeAnalysisBase {
 
   public static void main(String[] args) {
 //    Bytes code = Bytes.fromHexString(ContractByteCode.contract_0x63de3096c22e89f175c8ed51ca0c129118516979);
-    Bytes code = Bytes.fromHexString(ContractByteCode.contract_0xd94ea6e43b7bffc9e4cba93f3ca49a191dc06d90);
+    Bytes code = Bytes.fromHexString(ContractByteCode.contract_0x6475593a8c52aac4059b1eb68235004f136eda5d);
 
     ByteCodeDump dump = new ByteCodeDump(code);
     dump.showBasicInfo();

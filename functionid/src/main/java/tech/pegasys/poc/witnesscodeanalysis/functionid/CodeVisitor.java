@@ -78,7 +78,7 @@ public class CodeVisitor {
     boolean done = false;
 
     while (!done) {
-//      if (isInStack(frame, 0x4de5)) {
+//      if (isInStack(frame, 0)) {
 //        LOG.info("in stack");
 //      }
 //      else {
@@ -96,7 +96,7 @@ public class CodeVisitor {
 
       // Process jumps.
       if (opCode == JumpiOperation.OPCODE || opCode == JumpOperation.OPCODE) {
-        LOG.trace("PC1: {}, Operation {}, Jump Destination: {}", PcUtils.pcStr(pc), curOp.getName(), PcUtils.pcStr(jumpDest));
+        LOG.trace("PC: {}, Operation {}, Jump Destination: {}", PcUtils.pcStr(pc), curOp.getName(), PcUtils.pcStr(jumpDest));
         dumpStack(frame);
 
         if (jumpDest == startingPc) {
@@ -130,7 +130,7 @@ public class CodeVisitor {
         }
       }
       else {
-        LOG.trace("PC1: {}, Operation {}", pc, curOp.getName());
+        LOG.trace("PC: {}, Operation {}", PcUtils.pcStr(pc), curOp.getName());
         dumpStack(frame);
       }
 
@@ -236,19 +236,18 @@ public class CodeVisitor {
 
 
   private void addCodeSegment(int startingPc, int callingSegmentPc, MessageFrame frame) {
-    if (beenHereBeforeWithSameStack(startingPc, frame)) {
-      LOG.error("Been here before with the same stack for start PC {}", startingPc);
-      return;
-    }
+//    if (beenHereBeforeWithSameStack(startingPc, frame)) {
+//      LOG.error("Been here before with the same stack for start PC {}", startingPc);
+//      return;
+//    }
     CodeSegment codeSegment = this.codeSegments.get(startingPc);
     if (codeSegment != null) {
       codeSegment.addNewPrevious(callingSegmentPc, frame.getCopyOfStack());
     }
     else {
       codeSegment = new CodeSegment(startingPc, callingSegmentPc, frame.getCopyOfStack());
-
+      this.codeSegments.put(startingPc, codeSegment);
     }
-    this.codeSegments.put(startingPc, codeSegment);
   }
 
   /**

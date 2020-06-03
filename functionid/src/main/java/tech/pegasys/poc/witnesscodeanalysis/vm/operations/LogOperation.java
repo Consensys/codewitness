@@ -33,6 +33,9 @@ public class LogOperation extends AbstractOperation {
   public UInt256 execute(final MessageFrame frame) {
     frame.popStackItem();
     frame.popStackItem();
+    for (int i = 0; i < numTopics; i++) {
+      frame.popStackItem();
+    }
 
     return UInt256.ZERO;
   }
