@@ -14,6 +14,7 @@
  */
 package tech.pegasys.poc.witnesscodeanalysis.vm.operations;
 
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes32;
 import tech.pegasys.poc.witnesscodeanalysis.vm.Address;
 
@@ -25,7 +26,11 @@ import tech.pegasys.poc.witnesscodeanalysis.vm.Words;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
+import static org.apache.logging.log4j.LogManager.getLogger;
+
 public class ExtCodeCopyOperation extends AbstractOperation {
+  private static final Logger LOG = getLogger();
+
   public static int OPCODE = 0x3C;
 
   public ExtCodeCopyOperation() {
@@ -34,6 +39,7 @@ public class ExtCodeCopyOperation extends AbstractOperation {
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
+    LOG.info("**** EXTCODECOPY operation used");
     frame.popStackItem();
     frame.popStackItem();
     frame.popStackItem();

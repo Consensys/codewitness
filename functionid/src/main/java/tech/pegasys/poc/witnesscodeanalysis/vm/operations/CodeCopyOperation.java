@@ -15,7 +15,9 @@
 package tech.pegasys.poc.witnesscodeanalysis.vm.operations;
 
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import tech.pegasys.poc.witnesscodeanalysis.functionid.BasicBlockWithCode;
 import tech.pegasys.poc.witnesscodeanalysis.vm.AbstractOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.Code;
 
@@ -23,8 +25,12 @@ import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
+import java.util.ArrayList;
+
 public class CodeCopyOperation extends AbstractOperation {
   public static int OPCODE = 0x39;
+
+  private static BasicBlockConsumer consumer = null;
 
   public CodeCopyOperation() {
     super(OPCODE, "CODECOPY", 3, 0, 1);
@@ -32,11 +38,35 @@ public class CodeCopyOperation extends AbstractOperation {
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
-    throw new Error("CodeCopy operation not yet supported");
-//
-//    frame.popStackItem();
-//    frame.popStackItem();
-//    frame.popStackItem();
-//    return UInt256.ZERO;
+    final Code code = frame.getCode();
+
+    final UInt256 memOffset = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 sourceOffset = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 numBytes = UInt256.fromBytes(frame.popStackItem());
+
+    int start = sourceOffset.intValue();
+    int len = numBytes.intValue();
+
+    Bytes codeFragment = code.getBytes().slice(start, len);
+    BasicBlockWithCode block = new BasicBlockWithCode(start, len, codeFragment);
+
+    if (consumer != null) {
+      consumer.addNewBlock(block);
+    }
+
+    return UInt256.ZERO;
   }
+
+  public interface BasicBlockConsumer {
+    void addNewBlock(BasicBlockWithCode block);
+  }
+
+  public static void setConsumer(BasicBlockConsumer consumerImpl) {
+    consumer = consumerImpl;
+  }
+
+  public static void removeConsumer() {
+    consumer = null;
+  }
+
 }

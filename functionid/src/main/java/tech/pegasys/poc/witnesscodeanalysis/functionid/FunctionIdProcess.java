@@ -2,7 +2,9 @@ package tech.pegasys.poc.witnesscodeanalysis.functionid;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import tech.pegasys.poc.witnesscodeanalysis.vm.operations.CodeCopyOperation;
 
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 
@@ -16,6 +18,9 @@ public class FunctionIdProcess {
   int endOfCode;
   Set<Integer> jumpDests;
 
+  CodeCopyConsumer codeCopyBlocksConsumer;
+
+
   CodePaths codePaths;
 
   public FunctionIdProcess(Bytes code, int endOfFunctionIdBlock, int endOfCode, Set<Integer> jumpDests) {
@@ -23,6 +28,9 @@ public class FunctionIdProcess {
     this.endOfFunctionIdBlock = endOfFunctionIdBlock;
     this.endOfCode = endOfCode;
     this.jumpDests = jumpDests;
+
+    this.codeCopyBlocksConsumer = new CodeCopyConsumer();
+    CodeCopyOperation.setConsumer(this.codeCopyBlocksConsumer);
   }
 
 
@@ -42,6 +50,18 @@ public class FunctionIdProcess {
     LOG.trace("Combining Code Segments using bytes between segments: {}", COMBINATION_GAP);
     codePaths.combineCodeSegments(COMBINATION_GAP);
 
+    ArrayList<BasicBlockWithCode> blocks = this.codeCopyBlocksConsumer.getBlocks();
+    if (blocks != null) {
+      LOG.info("******** num copy Code blocks: {}", blocks.size());
+      for (BasicBlockWithCode block: blocks) {
+        LOG.info("  block: start: {}, len: {}", block.getStart(), block.getLength());
+      }
+
+    }
+
+
+    CodeCopyOperation.removeConsumer();
+
     return createMerklePatriciaTrieLeaves();
   }
 
@@ -59,4 +79,25 @@ public class FunctionIdProcess {
     }
     return leaves;
   }
+
+
+  class CodeCopyConsumer implements CodeCopyOperation.BasicBlockConsumer {
+    ArrayList<BasicBlockWithCode> blocks;
+
+    CodeCopyConsumer() {
+      this.blocks = new ArrayList<>();
+    }
+
+
+    @Override
+    public void addNewBlock(BasicBlockWithCode block) {
+      blocks.add(block);
+    }
+
+    public ArrayList<BasicBlockWithCode> getBlocks() {
+      return this.blocks;
+    }
+
+  }
+
 }
