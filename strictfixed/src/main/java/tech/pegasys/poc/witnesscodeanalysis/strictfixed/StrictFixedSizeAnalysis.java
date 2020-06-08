@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package tech.pegasys.poc.witnesscodeanalysis.jumpdest;
+package tech.pegasys.poc.witnesscodeanalysis.strictfixed;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -22,21 +22,19 @@ import tech.pegasys.poc.witnesscodeanalysis.vm.MainnetEvmRegistries;
 import tech.pegasys.poc.witnesscodeanalysis.vm.Operation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.OperationRegistry;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.InvalidOperation;
-import tech.pegasys.poc.witnesscodeanalysis.vm.operations.JumpDestOperation;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
 
-
 import static org.apache.logging.log4j.LogManager.getLogger;
 
-public class JumpDestAnalysis extends CodeAnalysisBase {
+public class StrictFixedSizeAnalysis extends CodeAnalysisBase {
   private static final Logger LOG = getLogger();
-  int threshold;
+  private int threshold;
 
   public static OperationRegistry registry = MainnetEvmRegistries.berlin(BigInteger.ONE);
 
-  public JumpDestAnalysis(Bytes code, int threshold) {
+  public StrictFixedSizeAnalysis(Bytes code, int threshold) {
     super(code);
     this.threshold = threshold;
   }
@@ -44,41 +42,36 @@ public class JumpDestAnalysis extends CodeAnalysisBase {
   public ArrayList<Integer> analyse() {
     int pc = 0;
     int currentChunkSize = 0;
-    ArrayList<Integer> chunkStartAddresses = new ArrayList<>();
-    chunkStartAddresses.add(0);
+    ArrayList<Integer> chunkStartOffsets = new ArrayList<>();
+    chunkStartOffsets.add(0);
+
+    LOG.info("Possible End of code: {}", this.possibleEndOfCode);
     while (pc != this.possibleEndOfCode) {
+
       final Operation curOp = registry.get(code.get(pc), 0);
       if (curOp == null) {
         LOG.error("Unknown opcode 0x{} at PC {}", Integer.toHexString(code.get(pc)), PcUtils.pcStr(pc));
         throw new Error("Unknown opcode");
       }
       int opSize = curOp.getOpSize();
-      int opCode = curOp.getOpcode();
-
-      if (opCode == InvalidOperation.OPCODE) {
+      if (curOp.getOpcode() == InvalidOperation.OPCODE) {
         LOG.info("Invalid OPCODE is hit. Ending.");
         break;
       }
 
-      if (opCode == JumpDestOperation.OPCODE) {
-        //LOG.info("****Found JumpDest at {}", pc);
-
-        if(currentChunkSize + opSize >= threshold) {
-          currentChunkSize = 0;
-          pc += opSize;
-          chunkStartAddresses.add(pc);
-          continue;
-        }
+      if(currentChunkSize + opSize >= threshold) {
+        currentChunkSize = 0;
+        pc += opSize;
+        // Since the start addresses are fairly standard, we will track the offset to the first
+        // instruction in the chunk in this analysis.
+        chunkStartOffsets.add(pc % threshold);
+        continue;
       }
 
       currentChunkSize += opSize;
       pc += opSize;
     }
 
-    return chunkStartAddresses;
-    /*LOG.info("There are {} chunks with starting addresses : ", chunkStartAddresses.size());
-    for(Integer e : chunkStartAddresses) {
-      LOG.info(e);
-    }*/
+    return chunkStartOffsets;
   }
 }

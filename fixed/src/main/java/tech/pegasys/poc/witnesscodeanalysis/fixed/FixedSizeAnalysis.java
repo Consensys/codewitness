@@ -21,6 +21,7 @@ import tech.pegasys.poc.witnesscodeanalysis.common.PcUtils;
 import tech.pegasys.poc.witnesscodeanalysis.vm.MainnetEvmRegistries;
 import tech.pegasys.poc.witnesscodeanalysis.vm.Operation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.OperationRegistry;
+import tech.pegasys.poc.witnesscodeanalysis.vm.operations.InvalidOperation;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -52,7 +53,11 @@ public class FixedSizeAnalysis extends CodeAnalysisBase {
         throw new Error("Unknown opcode");
       }
       int opSize = curOp.getOpSize();
-      if (curOp.getOpcode() == 0) break;
+
+      if (curOp.getOpcode() == InvalidOperation.OPCODE) {
+        LOG.info("Invalid OPCODE is hit. Ending.");
+        break;
+      }
 
       if(currentChunkSize + opSize >= threshold) {
         currentChunkSize = 0;
@@ -66,9 +71,6 @@ public class FixedSizeAnalysis extends CodeAnalysisBase {
     }
 
     return chunkStartAddresses;
-    /*LOG.info("There are {} chunks with starting addresses : ", chunkStartAddresses.size());
-    for(Integer e : chunkStartAddresses) {
-      LOG.info(e);
-    }*/
+
   }
 }
