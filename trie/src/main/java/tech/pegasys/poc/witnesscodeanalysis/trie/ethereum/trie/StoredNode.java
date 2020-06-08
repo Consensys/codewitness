@@ -14,7 +14,7 @@
  */
 package tech.pegasys.poc.witnesscodeanalysis.trie.ethereum.trie;
 
-import org.hyperledger.besu.ethereum.rlp.RLP;
+import tech.pegasys.poc.witnesscodeanalysis.trie.ethereum.rlp.RLP;
 
 import java.util.List;
 import java.util.Optional;
