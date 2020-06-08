@@ -11,7 +11,7 @@
          OFF	The highest possible rank and is intended to turn off logging.
          TRACE
         -->
-        <Property name="root.log.level">TRACE</Property>
+        <Property name="root.log.level">INFO</Property>
     </Properties>
 
     <Appenders>
