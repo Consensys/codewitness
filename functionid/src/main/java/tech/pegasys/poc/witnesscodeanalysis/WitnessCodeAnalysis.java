@@ -29,6 +29,8 @@ public class WitnessCodeAnalysis extends CodeAnalysisBase {
   public static final String DEFAULT_JUMPDEST_FILE_OUT =  "analysis_jumpdest.json";
   public static final String DEFAULT_FIXED_FILE_OUT =  "analysis_fixed.json";
 
+  private static final int THRESHOLD = 128;
+
   public WitnessCodeAnalysis(Bytes code) {
     super(code);
   }
@@ -107,9 +109,9 @@ public class WitnessCodeAnalysis extends CodeAnalysisBase {
       // Analysis of jumpdests
       LOG.info(" JumpDest Analysis started");
       try {
-        chunkStartAddresses = new JumpDestAnalysis(code, 128).analyse();
+        chunkStartAddresses = new JumpDestAnalysis(code, THRESHOLD).analyse();
         LOG.info("  Finished. {} chunks", chunkStartAddresses.size());
-        chunkData = new ChunkData(chunkStartAddresses);
+        chunkData = new ChunkData(chunkStartAddresses, code, true, THRESHOLD);
         gson.toJson(chunkData, jumpDestWriter);
       } catch (Throwable th) {
         logStackTrace(th);
@@ -119,14 +121,24 @@ public class WitnessCodeAnalysis extends CodeAnalysisBase {
       // Analysis doing fixed size chunking
       LOG.info(" FixedSize Analysis started");
       try {
-        chunkStartAddresses = new FixedSizeAnalysis(code, 128).analyse();
+        chunkStartAddresses = new FixedSizeAnalysis(code, THRESHOLD).analyse();
         LOG.info("  Finished. {} chunks.", chunkStartAddresses.size());
-        chunkData = new ChunkData(chunkStartAddresses);
+        chunkData = new ChunkData(chunkStartAddresses, code, true, THRESHOLD);
         gson.toJson(chunkData, fixedWriter);
       } catch (Throwable th) {
         logStackTrace(th);
       }
 
+      // Analysis doing strict fixed size chunking
+      LOG.info(" StrictFixedSize Analysis started");
+      try {
+        ArrayList<Integer> chunkStartOffsets = new StrictFixedSizeAnalysis(code, THRESHOLD).analyse();
+        LOG.info("  Finished. {} chunks.", chunkStartOffsets.size());
+        chunkData = new ChunkData(chunkStartOffsets, code, false, THRESHOLD);
+        gson.toJson(chunkData, fixedWriter);
+      } catch (Throwable th) {
+        logStackTrace(th);
+      }
 
       // Function ID analysis
       WitnessCodeAnalysis analysis = new WitnessCodeAnalysis(code);

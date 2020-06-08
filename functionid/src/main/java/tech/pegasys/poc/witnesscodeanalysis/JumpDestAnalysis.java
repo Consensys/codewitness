@@ -39,7 +39,12 @@ public class JumpDestAnalysis extends CodeAnalysisBase {
       }
       int opSize = curOp.getOpSize();
       int opCode = curOp.getOpcode();
-      if (opCode == 0) break;
+
+      if (opCode == InvalidOperation.OPCODE) {
+        LOG.info("Invalid OPCODE is hit. Ending.");
+        break;
+      }
+
       if (opCode == JumpDestOperation.OPCODE) {
         //LOG.info("****Found JumpDest at {}", pc);
 
@@ -56,9 +61,5 @@ public class JumpDestAnalysis extends CodeAnalysisBase {
     }
 
     return chunkStartAddresses;
-    /*LOG.info("There are {} chunks with starting addresses : ", chunkStartAddresses.size());
-    for(Integer e : chunkStartAddresses) {
-      LOG.info(e);
-    }*/
   }
 }

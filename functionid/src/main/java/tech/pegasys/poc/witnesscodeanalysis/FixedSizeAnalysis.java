@@ -32,6 +32,7 @@ public class FixedSizeAnalysis extends CodeAnalysisBase {
     ArrayList<Integer> chunkStartAddresses = new ArrayList<>();
     chunkStartAddresses.add(0);
 
+    LOG.info("Possible End of code: {}", this.possibleEndOfCode);
     while (pc != this.possibleEndOfCode) {
 
       final Operation curOp = registry.get(code.get(pc), 0);
@@ -40,7 +41,10 @@ public class FixedSizeAnalysis extends CodeAnalysisBase {
         throw new Error("Unknown opcode");
       }
       int opSize = curOp.getOpSize();
-      if (curOp.getOpcode() == 0) break;
+      if (curOp.getOpcode() == InvalidOperation.OPCODE) {
+        LOG.info("Invalid OPCODE is hit. Ending.");
+        break;
+      }
 
       if(currentChunkSize + opSize >= threshold) {
         currentChunkSize = 0;
@@ -54,9 +58,5 @@ public class FixedSizeAnalysis extends CodeAnalysisBase {
     }
 
     return chunkStartAddresses;
-    /*LOG.info("There are {} chunks with starting addresses : ", chunkStartAddresses.size());
-    for(Integer e : chunkStartAddresses) {
-      LOG.info(e);
-    }*/
   }
 }
