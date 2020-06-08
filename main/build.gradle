@@ -1,0 +1,24 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+sourceCompatibility = 1.8
+
+repositories {
+    jcenter()
+    mavenCentral()
+}
+
+
+dependencies {
+    compile project (':common')
+    compile project (':fixed')
+    compile project (':jumpdest')
+    compile project (':functionid')
+
+    // https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-core
+    compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.13.2'
+}
+
+mainClassName = 'tech.pegasys.poc.witnesscodeanalysis.ByteCodeDump'

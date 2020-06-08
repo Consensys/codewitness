@@ -1,0 +1,12 @@
+rootProject.name = 'witness-code-analysis'
+include 'data'
+include 'evm'
+include 'trie'
+include 'common'
+include 'bytecodedump'
+include 'fixed'
+include 'jumpdest'
+include 'functionid'
+include 'main'
+
+
