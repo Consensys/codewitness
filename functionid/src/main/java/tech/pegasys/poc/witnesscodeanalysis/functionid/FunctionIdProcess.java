@@ -1,8 +1,25 @@
+/*
+ * Copyright ConsenSys AG.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package tech.pegasys.poc.witnesscodeanalysis.functionid;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import tech.pegasys.poc.witnesscodeanalysis.BasicBlockWithCode;
+import tech.pegasys.poc.witnesscodeanalysis.vm.operations.CodeCopyOperation;
 
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 
@@ -16,6 +33,9 @@ public class FunctionIdProcess {
   int endOfCode;
   Set<Integer> jumpDests;
 
+  CodeCopyConsumer codeCopyBlocksConsumer;
+
+
   CodePaths codePaths;
 
   public FunctionIdProcess(Bytes code, int endOfFunctionIdBlock, int endOfCode, Set<Integer> jumpDests) {
@@ -23,6 +43,9 @@ public class FunctionIdProcess {
     this.endOfFunctionIdBlock = endOfFunctionIdBlock;
     this.endOfCode = endOfCode;
     this.jumpDests = jumpDests;
+
+    this.codeCopyBlocksConsumer = new CodeCopyConsumer();
+    CodeCopyOperation.setConsumer(this.codeCopyBlocksConsumer);
   }
 
 
@@ -42,6 +65,18 @@ public class FunctionIdProcess {
     LOG.trace("Combining Code Segments using bytes between segments: {}", COMBINATION_GAP);
     codePaths.combineCodeSegments(COMBINATION_GAP);
 
+    ArrayList<BasicBlockWithCode> blocks = this.codeCopyBlocksConsumer.getBlocks();
+    if (blocks != null) {
+      LOG.info("******** num copy Code blocks: {}", blocks.size());
+      for (BasicBlockWithCode block: blocks) {
+        LOG.info("  block: start: {}, len: {}", block.getStart(), block.getLength());
+      }
+
+    }
+
+
+    CodeCopyOperation.removeConsumer();
+
     return createMerklePatriciaTrieLeaves();
   }
 
@@ -59,4 +94,25 @@ public class FunctionIdProcess {
     }
     return leaves;
   }
+
+
+  class CodeCopyConsumer implements CodeCopyOperation.BasicBlockConsumer {
+    ArrayList<BasicBlockWithCode> blocks;
+
+    CodeCopyConsumer() {
+      this.blocks = new ArrayList<>();
+    }
+
+
+    @Override
+    public void addNewBlock(BasicBlockWithCode block) {
+      blocks.add(block);
+    }
+
+    public ArrayList<BasicBlockWithCode> getBlocks() {
+      return this.blocks;
+    }
+
+  }
+
 }
