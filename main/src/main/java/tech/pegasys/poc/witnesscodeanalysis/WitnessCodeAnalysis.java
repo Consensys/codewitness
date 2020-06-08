@@ -45,6 +45,9 @@ public class WitnessCodeAnalysis extends CodeAnalysisBase {
   public static final String DEFAULT_FILE_IN =  "contract_data.json";
   public static final String DEFAULT_JUMPDEST_FILE_OUT =  "analysis_jumpdest.json";
   public static final String DEFAULT_FIXED_FILE_OUT =  "analysis_fixed.json";
+  public static final String DEFAULT_STRICTFIXED_FILE_OUT =  "analysis_strictfixed.json";
+
+  private static final int THRESHOLD = 128;
 
   public WitnessCodeAnalysis(Bytes code) {
     super(code);
@@ -54,15 +57,19 @@ public class WitnessCodeAnalysis extends CodeAnalysisBase {
     String fileIn = null;
     String jumpDestFileOut = null;
     String fixedFileOut = null;
+    String strictFixedFileOut = null;
+
     if (args.length == 0) {
       fileIn = DEFAULT_FILE_IN;
       jumpDestFileOut = DEFAULT_JUMPDEST_FILE_OUT;
       fixedFileOut = DEFAULT_FIXED_FILE_OUT;
+      strictFixedFileOut = DEFAULT_STRICTFIXED_FILE_OUT;
     }
-    else if (args.length == 3) {
+    else if (args.length == 4) {
       fileIn = args[0];
       jumpDestFileOut = args[1];
       fixedFileOut = args[2];
+      strictFixedFileOut = args[3];
     }
     else {
       System.out.println("Usage: <application> <input.json> <jumpDestOutput.json> <fixedOutput.json>");
@@ -77,6 +84,7 @@ public class WitnessCodeAnalysis extends CodeAnalysisBase {
     BufferedReader reader = Files.newBufferedReader(pathToFileIn, StandardCharsets.US_ASCII);
     Writer jumpDestWriter = new FileWriter(jumpDestFileOut);
     Writer fixedWriter = new FileWriter(fixedFileOut);
+    Writer strictFixedWriter = new FileWriter(strictFixedFileOut);
 
     int numSol = 0;
     int total = 0;
@@ -85,12 +93,10 @@ public class WitnessCodeAnalysis extends CodeAnalysisBase {
     int shouldBeAbleToAnalyse = 0;
     int successfullyAnalysed = 0;
 
-
-
     String line = reader.readLine();
     int i = 0;
     // loop until all lines are read
-    while (line != null && i < 10000) {
+    while (line != null && i < 1) {
       i++;
       // LOG.info(line);
       ContractData contractData = gson.fromJson(line, ContractData.class);
@@ -124,10 +130,10 @@ public class WitnessCodeAnalysis extends CodeAnalysisBase {
       // Analysis of jumpdests
       LOG.info(" JumpDest Analysis started");
       try {
-        chunkStartAddresses = new JumpDestAnalysis(code, 128).analyse();
+        chunkStartAddresses = new JumpDestAnalysis(code, THRESHOLD).analyse();
         LOG.info("  Finished. {} chunks", chunkStartAddresses.size());
-        chunkData = new ChunkData(chunkStartAddresses);
-        gson.toJson(chunkData, jumpDestWriter);
+        chunkData = new ChunkData(chunkStartAddresses, code, true, THRESHOLD);
+        gson.toJson(chunkData.constructKeyMap(), jumpDestWriter);
       } catch (Throwable th) {
         logStackTrace(th);
       }
@@ -136,14 +142,24 @@ public class WitnessCodeAnalysis extends CodeAnalysisBase {
       // Analysis doing fixed size chunking
       LOG.info(" FixedSize Analysis started");
       try {
-        chunkStartAddresses = new FixedSizeAnalysis(code, 128).analyse();
+        chunkStartAddresses = new FixedSizeAnalysis(code, THRESHOLD).analyse();
         LOG.info("  Finished. {} chunks.", chunkStartAddresses.size());
-        chunkData = new ChunkData(chunkStartAddresses);
-        gson.toJson(chunkData, fixedWriter);
+        chunkData = new ChunkData(chunkStartAddresses, code, true, THRESHOLD);
+        gson.toJson(chunkData.constructKeyMap(), fixedWriter);
       } catch (Throwable th) {
         logStackTrace(th);
       }
 
+      // Analysis doing strict fixed size chunking
+      LOG.info(" StrictFixedSize Analysis started");
+      try {
+        ArrayList<Integer> chunkStartOffsets = new StrictFixedSizeAnalysis(code, THRESHOLD).analyse();
+        LOG.info("  Finished. {} chunks.", chunkStartOffsets.size());
+        chunkData = new ChunkData(chunkStartOffsets, code, false, THRESHOLD);
+        gson.toJson(chunkData.constructKeyMap(), strictFixedWriter);
+      } catch (Throwable th) {
+        logStackTrace(th);
+      }
 
       // Function ID analysis
       WitnessCodeAnalysis analysis = new WitnessCodeAnalysis(code);
@@ -196,6 +212,7 @@ public class WitnessCodeAnalysis extends CodeAnalysisBase {
     reader.close();
     jumpDestWriter.close();
     fixedWriter.close();
+    strictFixedWriter.close();
   }
 
 

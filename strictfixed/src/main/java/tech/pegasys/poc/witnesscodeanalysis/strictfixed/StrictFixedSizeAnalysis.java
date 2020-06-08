@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package tech.pegasys.poc.witnesscodeanalysis.fixed;
+package tech.pegasys.poc.witnesscodeanalysis.strictfixed;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -23,21 +23,20 @@ import tech.pegasys.poc.witnesscodeanalysis.vm.Operation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.OperationRegistry;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.InvalidOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.JumpOperation;
-import tech.pegasys.poc.witnesscodeanalysis.vm.operations.JumpiOperation;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
-public class FixedSizeAnalysis extends CodeAnalysisBase {
+public class StrictFixedSizeAnalysis extends CodeAnalysisBase {
   private static final Logger LOG = getLogger();
   private int threshold;
   private boolean isInvalidSeen;
 
   public static OperationRegistry registry = MainnetEvmRegistries.berlin(BigInteger.ONE);
 
-  public FixedSizeAnalysis(Bytes code, int threshold) {
+  public StrictFixedSizeAnalysis(Bytes code, int threshold) {
     super(code);
     this.threshold = threshold;
     isInvalidSeen = false;
@@ -46,9 +45,10 @@ public class FixedSizeAnalysis extends CodeAnalysisBase {
   public ArrayList<Integer> analyse() {
     int pc = 0;
     int currentChunkSize = 0;
-    ArrayList<Integer> chunkStartAddresses = new ArrayList<>();
-    chunkStartAddresses.add(0);
+    ArrayList<Integer> chunkStartOffsets = new ArrayList<>();
+    chunkStartOffsets.add(0);
 
+    LOG.info("Possible End of code: {}", this.possibleEndOfCode);
     while (pc != this.possibleEndOfCode) {
 
       final Operation curOp = registry.get(code.get(pc), 0);
@@ -71,7 +71,9 @@ public class FixedSizeAnalysis extends CodeAnalysisBase {
       if(currentChunkSize + opSize >= threshold) {
         currentChunkSize = 0;
         pc += opSize;
-        chunkStartAddresses.add(pc);
+        // Since the start addresses are fairly standard, we will track the offset to the first
+        // instruction in the chunk in this analysis.
+        chunkStartOffsets.add(pc % threshold);
         continue;
       }
 
@@ -79,7 +81,6 @@ public class FixedSizeAnalysis extends CodeAnalysisBase {
       pc += opSize;
     }
 
-    return chunkStartAddresses;
-
+    return chunkStartOffsets;
   }
 }
