@@ -56,7 +56,6 @@ public class ChunkData {
         } else {
           length = code.length - chunkStartAddresses.get(i);
         }
-        LOG.info("OFFSET = {}, LENGTH = {}", chunkStartAddresses.get(i), length);
         Bytes chunk = Bytes.wrap(code, chunkStartAddresses.get(i), length);
         keyValueMap.put(chunkStartAddresses.get(i), chunk);
       }

@@ -22,6 +22,7 @@ import tech.pegasys.poc.witnesscodeanalysis.vm.MainnetEvmRegistries;
 import tech.pegasys.poc.witnesscodeanalysis.vm.Operation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.OperationRegistry;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.InvalidOperation;
+import tech.pegasys.poc.witnesscodeanalysis.vm.operations.JumpOperation;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -31,12 +32,14 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 public class StrictFixedSizeAnalysis extends CodeAnalysisBase {
   private static final Logger LOG = getLogger();
   private int threshold;
+  private boolean isInvalidSeen;
 
   public static OperationRegistry registry = MainnetEvmRegistries.berlin(BigInteger.ONE);
 
   public StrictFixedSizeAnalysis(Bytes code, int threshold) {
     super(code);
     this.threshold = threshold;
+    isInvalidSeen = false;
   }
 
   public ArrayList<Integer> analyse() {
@@ -54,9 +57,15 @@ public class StrictFixedSizeAnalysis extends CodeAnalysisBase {
         throw new Error("Unknown opcode");
       }
       int opSize = curOp.getOpSize();
-      if (curOp.getOpcode() == InvalidOperation.OPCODE) {
-        LOG.info("Invalid OPCODE is hit. Ending.");
+
+      if(isInvalidSeen && curOp.getOpcode() == JumpOperation.OPCODE) {
+        LOG.info("JUMP after Invalid is seen. Ending.");
         break;
+      }
+
+      if (curOp.getOpcode() == InvalidOperation.OPCODE) {
+        LOG.info("Invalid OPCODE is hit.");
+        isInvalidSeen = true;
       }
 
       if(currentChunkSize + opSize >= threshold) {

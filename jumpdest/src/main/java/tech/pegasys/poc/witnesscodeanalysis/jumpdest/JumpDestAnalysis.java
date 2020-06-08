@@ -23,6 +23,7 @@ import tech.pegasys.poc.witnesscodeanalysis.vm.Operation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.OperationRegistry;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.InvalidOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.JumpDestOperation;
+import tech.pegasys.poc.witnesscodeanalysis.vm.operations.JumpOperation;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -33,12 +34,14 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 public class JumpDestAnalysis extends CodeAnalysisBase {
   private static final Logger LOG = getLogger();
   int threshold;
+  private boolean isInvalidSeen;
 
   public static OperationRegistry registry = MainnetEvmRegistries.berlin(BigInteger.ONE);
 
   public JumpDestAnalysis(Bytes code, int threshold) {
     super(code);
     this.threshold = threshold;
+    isInvalidSeen = false;
   }
 
   public ArrayList<Integer> analyse() {
@@ -55,9 +58,14 @@ public class JumpDestAnalysis extends CodeAnalysisBase {
       int opSize = curOp.getOpSize();
       int opCode = curOp.getOpcode();
 
-      if (opCode == InvalidOperation.OPCODE) {
-        LOG.info("Invalid OPCODE is hit. Ending.");
+      if(isInvalidSeen && curOp.getOpcode() == JumpOperation.OPCODE) {
+        LOG.info("JUMP after Invalid is seen. Ending.");
         break;
+      }
+
+      if (opCode == InvalidOperation.OPCODE) {
+        LOG.info("Invalid OPCODE is hit.");
+        isInvalidSeen = true;
       }
 
       if (opCode == JumpDestOperation.OPCODE) {
