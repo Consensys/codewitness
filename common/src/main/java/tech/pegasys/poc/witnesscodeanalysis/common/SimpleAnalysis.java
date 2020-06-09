@@ -41,7 +41,7 @@ public class SimpleAnalysis {
   private int endOfFunctionIdBlock = -1;
   private int endOfCode;
   private int startOfAuxData;
-  private boolean simpleAnalysisCompleted = false;
+  private boolean endOfCodeDetected = false;
   private Set<Integer> jumpDests;
 
   public SimpleAnalysis(Bytes code, int startOfAuxData) {
@@ -114,8 +114,8 @@ public class SimpleAnalysis {
     return endOfCode;
   }
 
-  public boolean simpleAnalysisCompleted() {
-    return simpleAnalysisCompleted;
+  public boolean endOfCodeDetected() {
+    return endOfCodeDetected;
   }
 
   public Set<Integer> getJumpDests() {
@@ -222,7 +222,7 @@ public class SimpleAnalysis {
     }
     this.endOfCode = pc;
 
-    this.simpleAnalysisCompleted = true;
+    this.endOfCodeDetected = true;
   }
 
   private void findJumpDests() {
