@@ -31,10 +31,10 @@ public class WitnessCodeAnalysis {
   private static final Logger LOG = getLogger();
 
   public static boolean SIMPLE = true;
-  public static boolean JUMPDEST = true;
-  public static boolean FIXEDSIZE = true;
-  public static boolean STRICTFIXEDSIZE = true;
-  public static boolean FUNCTIONID = true;
+  public static boolean JUMPDEST = false;
+  public static boolean FIXEDSIZE = false;
+  public static boolean STRICTFIXEDSIZE = false;
+  public static boolean FUNCTIONID = false;
 
   private MainNetContractDataSet dataSet;
   private SimpleProcessing simpleProcessing;
@@ -176,7 +176,7 @@ public class WitnessCodeAnalysis {
 
   public static void main(String[] args) throws Exception {
     WitnessCodeAnalysis witnessCodeAnalysis = new WitnessCodeAnalysis();
-//    witnessCodeAnalysis.analyseUpTo(10);
+    witnessCodeAnalysis.analyseUpTo(10000);
 //    witnessCodeAnalysis.analyseOne(100000);
 
     witnessCodeAnalysis.analyseDeployedBlockNumbers(9999990, 10000000);

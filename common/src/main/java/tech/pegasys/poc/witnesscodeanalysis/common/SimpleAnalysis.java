@@ -48,6 +48,11 @@ public class SimpleAnalysis {
     this.code = code;
     this.startOfAuxData = startOfAuxData;
     this.isProbablySolidity = probablySolidity();
+    if (!this.isProbablySolidity) {
+      Bytes codeStart = code.slice(0, 5);
+      LOG.info(" Not Solidity contract starts with: {}", codeStart);
+    }
+
     this.endOfCode = code.size() - 1;
     findJumpDests();
     if (this.isProbablySolidity) {
