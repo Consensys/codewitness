@@ -14,214 +14,173 @@
  */
 package tech.pegasys.poc.witnesscodeanalysis;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
-import tech.pegasys.poc.witnesscodeanalysis.common.ChunkData;
 import tech.pegasys.poc.witnesscodeanalysis.common.ContractData;
-import tech.pegasys.poc.witnesscodeanalysis.fixed.FixedSizeAnalysis;
-import tech.pegasys.poc.witnesscodeanalysis.functionid.FunctionIdAllLeaves;
-import tech.pegasys.poc.witnesscodeanalysis.functionid.FunctionIdProcess;
-import tech.pegasys.poc.witnesscodeanalysis.jumpdest.JumpDestAnalysis;
+import tech.pegasys.poc.witnesscodeanalysis.processing.FixedSizeProcessing;
+import tech.pegasys.poc.witnesscodeanalysis.processing.FunctionIdProcessing;
+import tech.pegasys.poc.witnesscodeanalysis.processing.JumpDestProcessing;
+import tech.pegasys.poc.witnesscodeanalysis.processing.SimpleProcessing;
+import tech.pegasys.poc.witnesscodeanalysis.processing.StrictFixedSizeProcessing;
 
-import java.io.BufferedReader;
-import java.io.FileWriter;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.io.Writer;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
+import java.io.IOException;
 
-import static java.lang.System.exit;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
-public class WitnessCodeAnalysis extends CodeAnalysisBase {
+public class WitnessCodeAnalysis {
   private static final Logger LOG = getLogger();
 
-  public static final String DEFAULT_FILE_IN =  "contract_data.json";
-  public static final String DEFAULT_JUMPDEST_FILE_OUT =  "analysis_jumpdest.json";
-  public static final String DEFAULT_FIXED_FILE_OUT =  "analysis_fixed.json";
-  public static final String DEFAULT_STRICTFIXED_FILE_OUT =  "analysis_strictfixed.json";
+  public static boolean SIMPLE = true;
+  public static boolean JUMPDEST = true;
+  public static boolean FIXEDSIZE = true;
+  public static boolean STRICTFIXEDSIZE = true;
+  public static boolean FUNCTIONID = true;
 
-  private static final int THRESHOLD = 128;
+  private MainNetContractDataSet dataSet;
+  private SimpleProcessing simpleProcessing;
+  private JumpDestProcessing jumpDestProcessing;
+  private FixedSizeProcessing fixedSizeProcessing;
+  private StrictFixedSizeProcessing strictFixedSizeProcessing;
+  private FunctionIdProcessing functionIdProcessing;
 
-  public WitnessCodeAnalysis(Bytes code) {
-    super(code);
+
+  public WitnessCodeAnalysis() throws IOException {
+    this.dataSet = new MainNetContractDataSet();
+    this.simpleProcessing = new SimpleProcessing(true);
+    this.jumpDestProcessing = new JumpDestProcessing(true);
+    this.fixedSizeProcessing = new FixedSizeProcessing(true);
+    this.strictFixedSizeProcessing = new StrictFixedSizeProcessing(true);
+    this.functionIdProcessing = new FunctionIdProcessing(true);
   }
+
+  public void analyseAll() throws Exception {
+    int count = 0;
+    ContractData contractData;
+    while ((contractData = this.dataSet.next()) != null) {
+      contractData.showInfo(count);
+      process(contractData);
+      count++;
+    }
+    closeAll();
+  }
+
+  public void analyseUpTo(int limit) throws Exception {
+    int count = 0;
+    ContractData contractData;
+    while ((contractData = this.dataSet.next()) != null) {
+      contractData.showInfo(count);
+      process(contractData);
+      count++;
+      if (count == limit) {
+        break;
+      }
+    }
+    closeAll();
+  }
+
+  public void analyseOne(int theOne) throws Exception {
+    int count = 0;
+    ContractData contractData;
+    while ((contractData = this.dataSet.next()) != null) {
+      if (count == theOne) {
+        contractData.showInfo(count);
+        process(contractData);
+        break;
+      }
+      count++;
+    }
+    closeAll();
+  }
+
+  public void analyseDeployedBlockNumbers(int start, int end) throws Exception {
+    int count = 0;
+    ContractData contractData;
+    while ((contractData = this.dataSet.next()) != null) {
+      boolean analyse = false;
+      int[] deployedBlockNumbers = contractData.getDeployed_at_block();
+      for (int deployedBlockNumber: deployedBlockNumbers) {
+        if (deployedBlockNumber >= start && deployedBlockNumber <= end) {
+          analyse = true;
+          break;
+        }
+      }
+
+      if (analyse) {
+        contractData.showInfo(count);
+        process(contractData);
+      }
+      count++;
+    }
+    closeAll();
+  }
+
+  public void process(ContractData contractData) {
+    Bytes code = Bytes.fromHexString(contractData.getCode());
+
+    if (SIMPLE) {
+      this.simpleProcessing.process(code);
+    }
+
+    if (JUMPDEST) {
+      this.jumpDestProcessing.process(code);
+    }
+
+    if (FIXEDSIZE) {
+      this.fixedSizeProcessing.process(code);
+    }
+
+    if (STRICTFIXEDSIZE) {
+      this.strictFixedSizeProcessing.process(code);
+    }
+
+    if (FUNCTIONID) {
+      this.functionIdProcessing.process(code);
+    }
+  }
+
+  public void showSummary() {
+    LOG.info("Summary");
+    if (SIMPLE) {
+      this.simpleProcessing.showSummary();
+    }
+
+    if (JUMPDEST) {
+      this.jumpDestProcessing.showSummary();
+    }
+
+    if (FIXEDSIZE) {
+      this.fixedSizeProcessing.showSummary();
+    }
+
+    if (STRICTFIXEDSIZE) {
+      this.strictFixedSizeProcessing.showSummary();
+    }
+
+    if (FUNCTIONID) {
+      this.functionIdProcessing.showSummary();
+    }
+
+
+  }
+
+  private void closeAll() throws IOException {
+    this.dataSet.close();
+    this.simpleProcessing.close();
+    this.jumpDestProcessing.close();
+    this.fixedSizeProcessing.close();
+    this.strictFixedSizeProcessing.close();
+  }
+
+
+
 
   public static void main(String[] args) throws Exception {
-    String fileIn = null;
-    String jumpDestFileOut = null;
-    String fixedFileOut = null;
-    String strictFixedFileOut = null;
+    WitnessCodeAnalysis witnessCodeAnalysis = new WitnessCodeAnalysis();
+//    witnessCodeAnalysis.analyseUpTo(10);
+//    witnessCodeAnalysis.analyseOne(100000);
 
-    if (args.length == 0) {
-      fileIn = DEFAULT_FILE_IN;
-      jumpDestFileOut = DEFAULT_JUMPDEST_FILE_OUT;
-      fixedFileOut = DEFAULT_FIXED_FILE_OUT;
-      strictFixedFileOut = DEFAULT_STRICTFIXED_FILE_OUT;
-    }
-    else if (args.length == 4) {
-      fileIn = args[0];
-      jumpDestFileOut = args[1];
-      fixedFileOut = args[2];
-      strictFixedFileOut = args[3];
-    }
-    else {
-      System.out.println("Usage: <application> <input.json> <jumpDestOutput.json> <fixedOutput.json>");
-      System.out.println("Current arguments length = " + args.length);
-      exit(1);
-    }
+    witnessCodeAnalysis.analyseDeployedBlockNumbers(9999990, 10000000);
 
-    //  Parsing the JSON file for contract code
-    Gson gson = new GsonBuilder().setLenient().create();
-
-    Path pathToFileIn = Paths.get(fileIn);
-    BufferedReader reader = Files.newBufferedReader(pathToFileIn, StandardCharsets.US_ASCII);
-    Writer jumpDestWriter = new FileWriter(jumpDestFileOut);
-    Writer fixedWriter = new FileWriter(fixedFileOut);
-    Writer strictFixedWriter = new FileWriter(strictFixedFileOut);
-
-    int numSol = 0;
-    int total = 0;
-    int definitelySol = 0;
-    int simpleAnalysisCompleted = 0;
-    int shouldBeAbleToAnalyse = 0;
-    int successfullyAnalysed = 0;
-
-    String line = reader.readLine();
-    int i = 0;
-    // loop until all lines are read
-    while (line != null && i < 1) {
-      i++;
-      // LOG.info(line);
-      ContractData contractData = gson.fromJson(line, ContractData.class);
-      String contractAddress = contractData.getContract_address()[0];
-      int numDeployments = contractData.getContract_address().length;
-
-      // Print out information about the contract to get a feel for how important the results are.
-      LOG.info("Processing contract {} deployed at address: {} and {} other times", i, contractAddress, numDeployments-1);
-      Bytes code = Bytes.fromHexString(contractData.getCode());
-      LOG.info(" Code Size: " + code.size());
-      int firstDeployment = 100000000;
-      int[] deployments = contractData.getDeployed_at_block();
-      for (int j = 0; j < numDeployments; j++) {
-        if (deployments[j] < firstDeployment) {
-          firstDeployment = deployments[j];
-        }
-      }
-      LOG.info(" Deployed at block: " + contractData.getDeployed_at_block()[0]);
-      int lastTransaction = 0;
-      int[] lastTransactions = contractData.getRecent_accessed_at_block();
-      for (int j = 0; j < numDeployments; j++) {
-        if (lastTransactions[j] > lastTransaction) {
-          lastTransaction = lastTransactions[j];
-        }
-      }
-      LOG.info(" Last transaction for all deployments: {}", lastTransaction);
-
-      ArrayList<Integer> chunkStartAddresses;
-      ChunkData chunkData;
-
-      // Analysis of jumpdests
-      LOG.info(" JumpDest Analysis started");
-      try {
-        chunkStartAddresses = new JumpDestAnalysis(code, THRESHOLD).analyse();
-        LOG.info("  Finished. {} chunks", chunkStartAddresses.size());
-        chunkData = new ChunkData(chunkStartAddresses, code, true, THRESHOLD);
-        gson.toJson(chunkData.constructKeyMap(), jumpDestWriter);
-      } catch (Throwable th) {
-        logStackTrace(th);
-      }
-
-
-      // Analysis doing fixed size chunking
-      LOG.info(" FixedSize Analysis started");
-      try {
-        chunkStartAddresses = new FixedSizeAnalysis(code, THRESHOLD).analyse();
-        LOG.info("  Finished. {} chunks.", chunkStartAddresses.size());
-        chunkData = new ChunkData(chunkStartAddresses, code, true, THRESHOLD);
-        gson.toJson(chunkData.constructKeyMap(), fixedWriter);
-      } catch (Throwable th) {
-        logStackTrace(th);
-      }
-
-      // Analysis doing strict fixed size chunking
-      LOG.info(" StrictFixedSize Analysis started");
-      try {
-        ArrayList<Integer> chunkStartOffsets = new StrictFixedSizeAnalysis(code, THRESHOLD).analyse();
-        LOG.info("  Finished. {} chunks.", chunkStartOffsets.size());
-        chunkData = new ChunkData(chunkStartOffsets, code, false, THRESHOLD);
-        gson.toJson(chunkData.constructKeyMap(), strictFixedWriter);
-      } catch (Throwable th) {
-        logStackTrace(th);
-      }
-
-      // Function ID analysis
-      WitnessCodeAnalysis analysis = new WitnessCodeAnalysis(code);
-      //analysis.showBasicInfo();
-
-      total++;
-      if (analysis.simple.isProbablySolidity()) {
-        numSol++;
-      }
-
-      // There is aux data and it indicates solc is the compiler.
-      if (analysis.auxData.isDefinitelySolidity()) {
-        definitelySol++;
-      }
-
-      if (analysis.simple.getEndOfFunctionIdBlock() != -1) {
-        shouldBeAbleToAnalyse++;
-      }
-
-      if (analysis.simple.simpleAnalysisCompleted()) {
-        simpleAnalysisCompleted++;
-      }
-
-      LOG.info(" Function Id Analysis");
-      if (analysis.simple.getEndOfFunctionIdBlock() == -1) {
-        LOG.info("  Not attempting Function Id analysis as no function id block was detected");
-      }
-      else {
-        // Should be able to analyse
-        try {
-          FunctionIdProcess fidAnalysis = new FunctionIdProcess(code, analysis.simple.getEndOfFunctionIdBlock(), analysis.simple.getEndOfCode(), analysis.simple.getJumpDests());
-          FunctionIdAllLeaves leaves = fidAnalysis.executeAnalysis();
-          LOG.info("  Function Id Process found {} functions", leaves.getLeaves().size());
-          successfullyAnalysed++;
-        } catch (Throwable th) {
-          logStackTrace(th);
-        }
-      }
-
-      // read next line before looping
-      //if end of file reached, line would be null
-      line = reader.readLine();
-    }
-
-
-    LOG.info("Total: {}, Probably Solidity: {}, Definitely Solidity: {}, Should be able to Analyse: {}, Successfully Analysed: {}, End Of Code Found: {}",
-        total, numSol, definitelySol, shouldBeAbleToAnalyse, successfullyAnalysed, simpleAnalysisCompleted);
-
-
-    reader.close();
-    jumpDestWriter.close();
-    fixedWriter.close();
-    strictFixedWriter.close();
+    witnessCodeAnalysis.showSummary();
   }
-
-
-  private static void logStackTrace(Throwable th) {
-    StringWriter sw = new StringWriter();
-    PrintWriter pw = new PrintWriter(sw);
-    th.printStackTrace(pw);
-    LOG.info("  Exception while processing: {}", sw.toString());
-
-  }
-
 }

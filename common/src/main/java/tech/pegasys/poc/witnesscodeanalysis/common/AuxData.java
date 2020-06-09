@@ -14,9 +14,12 @@
  */
 package tech.pegasys.poc.witnesscodeanalysis.common;
 
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import tech.pegasys.poc.witnesscodeanalysis.vm.Code;
+
+import static org.apache.logging.log4j.LogManager.getLogger;
 
 
 /**
@@ -49,6 +52,8 @@ import tech.pegasys.poc.witnesscodeanalysis.vm.Code;
  * 0032      The length of the aux data: 0x32 = 50 bytes
  */
 public class AuxData {
+  private static final Logger LOG = getLogger();
+
   private Bytes code;
   private boolean hasAuxData;
   private int startOfAuxData;
@@ -90,6 +95,14 @@ public class AuxData {
 
     ofs++;
     int lenOfDigest = this.code.get(ofs++);
+    if (lenOfDigest < 0) {
+      LOG.info("Len of Digest is negative: {}", lenOfDigest);
+      return;
+    }
+    if (lenOfDigest + ofs > this.code.size()) {
+      LOG.info("Len of Digest is too large: {}", lenOfDigest);
+      return;
+    }
     this.sourceCodeHash = this.code.slice(ofs, lenOfDigest);
     ofs += lenOfDigest;
 

@@ -14,10 +14,15 @@
  */
 package tech.pegasys.poc.witnesscodeanalysis.common;
 
+import org.apache.logging.log4j.Logger;
+
+import static org.apache.logging.log4j.LogManager.getLogger;
+
 /**
  * Class to match fields from data file.
  */
 public class ContractData {
+  private static final Logger LOG = getLogger();
 
   private String code;
   private String code_hash;
@@ -99,5 +104,33 @@ public class ContractData {
 
   public void setSolidity_metadata(String solidity_metadata) {
     this.solidity_metadata = solidity_metadata;
+  }
+
+
+  public void showInfo(int contractNumber) {
+    String contractAddress = getContract_address()[0];
+    int numDeployments = getContract_address().length;
+
+    // Print out information about the contract to get a feel for how important the results are.
+    LOG.info("Processing contract {} deployed at address: {} and {} other times", contractNumber, contractAddress, numDeployments - 1);
+    LOG.info(" Code Size: " + this.code.length() / 2);
+    int firstDeployment = 100000000;
+    int[] deployments = getDeployed_at_block();
+    for (int j = 0; j < numDeployments; j++) {
+      if (deployments[j] < firstDeployment) {
+        firstDeployment = deployments[j];
+      }
+    }
+    LOG.info(" First Deployed at block: " + firstDeployment);
+    int lastTransaction = 0;
+    int[] lastTransactions = getRecent_accessed_at_block();
+    if (lastTransactions != null) {
+      for (int j = 0; j < numDeployments; j++) {
+        if (lastTransactions[j] > lastTransaction) {
+          lastTransaction = lastTransactions[j];
+        }
+      }
+      LOG.info(" Last transaction for all deployments: {}", lastTransaction);
+    }
   }
 }
