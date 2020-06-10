@@ -57,9 +57,13 @@ public class WitnessCodeAnalysis {
     int count = 0;
     ContractData contractData;
     while ((contractData = this.dataSet.next()) != null) {
-      contractData.showInfo(count);
+      //contractData.showInfo(count);
       process(contractData);
       count++;
+
+      if (count % 1000 == 0) {
+        LOG.info(count);
+      }
     }
     closeAll();
   }
@@ -176,10 +180,14 @@ public class WitnessCodeAnalysis {
 
   public static void main(String[] args) throws Exception {
     WitnessCodeAnalysis witnessCodeAnalysis = new WitnessCodeAnalysis();
-    witnessCodeAnalysis.analyseUpTo(10000);
-//    witnessCodeAnalysis.analyseOne(100000);
 
-    witnessCodeAnalysis.analyseDeployedBlockNumbers(9999990, 10000000);
+    // NOTE: Can only choose one of these.
+//    witnessCodeAnalysis.analyseUpTo(10000);
+//    witnessCodeAnalysis.analyseOne(561648);
+
+//    witnessCodeAnalysis.analyseDeployedBlockNumbers(9999990, 10000000);
+
+    witnessCodeAnalysis.analyseAll();
 
     witnessCodeAnalysis.showSummary();
   }

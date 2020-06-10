@@ -42,7 +42,7 @@ import java.util.ArrayList;
 import static java.lang.System.exit;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
-public abstract class AbstractProcessing {
+abstract class AbstractProcessing {
   private static final Logger LOG = getLogger();
 
   public static final String DEFAULT_BASE_FILE_NAME =  "analysis_";

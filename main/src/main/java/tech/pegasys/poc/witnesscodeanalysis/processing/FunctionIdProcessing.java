@@ -40,7 +40,7 @@ public class FunctionIdProcessing extends AbstractProcessing {
   protected void executeProcessing(Bytes code) throws Exception {
     LOG.trace(" Function Id Analysis");
     AuxData auxData = new AuxData(code);
-    SimpleAnalysis simple = new SimpleAnalysis(code, auxData.getStartOfAuxData());
+    SimpleAnalysis simple = new SimpleAnalysis(code);
 
     if (simple.getEndOfFunctionIdBlock() == -1) {
       LOG.trace("  Not attempting Function Id analysis as no function id block was detected");

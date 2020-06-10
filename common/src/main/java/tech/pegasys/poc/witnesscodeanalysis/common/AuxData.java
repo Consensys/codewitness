@@ -14,21 +14,31 @@
  */
 package tech.pegasys.poc.witnesscodeanalysis.common;
 
+import co.nstant.in.cbor.CborDecoder;
+import co.nstant.in.cbor.CborException;
+import co.nstant.in.cbor.model.ByteString;
+import co.nstant.in.cbor.model.DataItem;
+import co.nstant.in.cbor.model.MajorType;
+import co.nstant.in.cbor.model.Map;
+import co.nstant.in.cbor.model.Special;
+import co.nstant.in.cbor.model.UnicodeString;
+import co.nstant.in.cbor.model.UnsignedInteger;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
-import tech.pegasys.poc.witnesscodeanalysis.vm.Code;
+
+import java.io.ByteArrayInputStream;
+import java.util.List;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
 
 /**
  * Should be something like:
- * 0xa2
+ * 0xa2                 The top three bits are the type: 101 indicates MAP. The bottom five
+ *                      bits are the length. For map this is the number of key-value pairs.
  * 0x64 'i' 'p' 'f' 's' 0x58 0x22 <34 bytes IPFS hash>
  * 0x64 's' 'o' 'l' 'c' 0x43 <3 byte version encoding>
  * 0x00 0x33
- *
  *
  * The data is CBOR encoded: https://tools.ietf.org/html/rfc7049#page-7
  *
@@ -54,14 +64,22 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 public class AuxData {
   private static final Logger LOG = getLogger();
 
+  private static final String SWARM0 = "bzzr0";
+  private static final String SWARM1 = "bzzr1";
+  private static final String IPFS = "ipfs";
+  private static final String SOLC = "solc";
+  private static final String EXPERIMENTAL = "experimental";
+
+
   private Bytes code;
   private boolean hasAuxData;
   private int startOfAuxData;
   private String sourceCodeStorageService;
-  private Bytes sourceCodeHash;
+  private byte[] sourceCodeHash;
   private String compilerName;
   private boolean isDefinitelySolidity;
   private Bytes compilerVersion;
+  private String experimentalInfo;
 
   public AuxData(Bytes code) {
     this.code = code;
@@ -77,47 +95,150 @@ public class AuxData {
     }
     byte b0 = code.get(len-2);
     byte b1 = code.get(len-1);
-    this.hasAuxData = (b0 == 0) && ((b1 >= 0x29) && (b1 <= 0x33));
-    if (!this.hasAuxData) {
+    int auxLength = (((((int)b0) << 8) & 0xff00) + (((int)b1) & 0xff));
+    if (auxLength > len) {
+      this.hasAuxData = false;
       return;
     }
-    this.startOfAuxData = len - b1 - 2;
 
-    int ofs = this.startOfAuxData + 1;
-    byte sourceCodeStorageService = this.code.get(ofs++);
-    int lenSourceCodeStorageService = sourceCodeStorageService & 0xf;
-    StringBuffer buffer = new StringBuffer();
-    for (int i=0; i<lenSourceCodeStorageService; i++) {
-      buffer.append((char)this.code.get(ofs++));
-    }
-    this.sourceCodeStorageService = buffer.toString();
-    //System.out.println(this.sourceCodeStorageService);
-
-    ofs++;
-    int lenOfDigest = this.code.get(ofs++);
-    if (lenOfDigest < 0) {
-      LOG.info("Len of Digest is negative: {}", lenOfDigest);
+    // Have a few extra rules to limit the amount of searching of non-aux data by the
+    // CBOR decoder.
+    // The Aux Data will be at least 32 (message digest size) and an indication of the
+    // storage location (ipfs for example), plus a couple of bytes of formatting.
+    // Assume the minimum length is 38 bytes
+    if (auxLength < 39) {
+      this.hasAuxData = false;
       return;
     }
-    if (lenOfDigest + ofs > this.code.size()) {
-      LOG.info("Len of Digest is too large: {}", lenOfDigest);
+    // Assume that aux data should never be more than... say 100 bytes.
+    if (auxLength > 100) {
+      this.hasAuxData = false;
       return;
     }
-    this.sourceCodeHash = this.code.slice(ofs, lenOfDigest);
-    ofs += lenOfDigest;
-
-    int lenCompilerName = this.code.get(ofs++) & 0xf;
-    buffer = new StringBuffer();
-    for (int i=0; i<lenCompilerName; i++) {
-      buffer.append((char)this.code.get(ofs++));
-    }
-    this.compilerName = buffer.toString();
-
-    int lenCompilerVersion = this.code.get(ofs++) & 0xf;
-    if (ofs + lenCompilerVersion > len) {
+    int maybeStartOfAuxData = len - auxLength - 2;
+    // Check that the first element is a map.
+    byte firstByte = this.code.get(maybeStartOfAuxData);
+    if (((firstByte >> 5) & 0x7) != 5) {
+      this.hasAuxData = false;
       return;
     }
-    this.compilerVersion = this.code.slice(ofs, lenCompilerVersion);
+    // Check that the second byte, the key to the first item in the map, is a text string.
+    byte secondByte = this.code.get(maybeStartOfAuxData+1);
+    if (((secondByte >> 5) & 0x7) != 3) {
+      this.hasAuxData = false;
+      return;
+    }
+
+    Bytes auxDataEncoded = this.code.slice(maybeStartOfAuxData, auxLength);
+    byte[] auxDataBytes = auxDataEncoded.toArray();
+
+    try {
+      ByteArrayInputStream bais = new ByteArrayInputStream(auxDataBytes);
+      List<DataItem> dataItems = new CborDecoder(bais).decode();
+      for (DataItem dataItem: dataItems) {
+        switch (dataItem.getMajorType()) {
+          case MAP:
+            Map map = (Map)dataItem;
+            for (DataItem key: map.getKeys()) {
+              DataItem val = map.get(key);
+//              LOG.info("Key: {}, type: {}", key, key.getMajorType());
+//              LOG.info("Value: {}, type: {}", val, val.getMajorType());
+              if (key.getMajorType() == MajorType.UNICODE_STRING) {
+                UnicodeString unicodeString = (UnicodeString) key;
+                String keyStr = unicodeString.getString();
+                if ((keyStr.equals(SWARM0) || keyStr.equals(SWARM1) || keyStr.equals(IPFS))) {
+                  this.hasAuxData = true;
+                  this.startOfAuxData = maybeStartOfAuxData;
+                  this.sourceCodeStorageService = keyStr;
+                  // Assume value major type is Byte String
+                  ByteString byteString = (ByteString)val;
+                  this.sourceCodeHash = byteString.getBytes();
+                }
+                else if (keyStr.equals(SOLC)) {
+                  this.hasAuxData = true;
+                  this.startOfAuxData = maybeStartOfAuxData;
+                  this.isDefinitelySolidity = true;
+                  this.compilerName = SOLC;
+                  // Assume value major type is Byte String
+                  ByteString byteString = (ByteString)val;
+                  this.compilerVersion = Bytes.wrap(byteString.getBytes());
+                }
+                else if (keyStr.equals(EXPERIMENTAL)) {
+                  this.hasAuxData = true;
+                  this.startOfAuxData = maybeStartOfAuxData;
+                  // Assume value major type is Special
+                  Special special = (Special) val;
+                  this.experimentalInfo = special.toString();
+                }
+                else {
+                  LOG.error("Not implemented yet. Unknown Aux Data Key inside map: {}", keyStr);
+                  throw new Error("Not implemented yet. Unknown Aux Data Key inside map: " + keyStr);
+                }
+              }
+              else {
+                LOG.error("Not implemented yet. Unknown Aux Data Key type in map: {}", key.getMajorType());
+                throw new Error("Not implemented yet. Unknown Aux Data Key type in map: " + key.getMajorType());
+              }
+
+
+            }
+            break;
+
+          default:
+            LOG.trace("Non-map found in aux data: probably not valid CBOR: {}", dataItem.getMajorType());
+            this.hasAuxData = false;
+            return;
+        }
+      }
+
+
+    } catch (Exception ex) {
+      this.hasAuxData = false;
+      return;
+    }
+
+
+    this.hasAuxData = true;
+
+
+
+//
+//
+//    int ofs = this.startOfAuxData + 1;
+//    byte sourceCodeStorageService = this.code.get(ofs++);
+//    int lenSourceCodeStorageService = sourceCodeStorageService & 0xf;
+//    StringBuffer buffer = new StringBuffer();
+//    for (int i=0; i<lenSourceCodeStorageService; i++) {
+//      buffer.append((char)this.code.get(ofs++));
+//    }
+//    this.sourceCodeStorageService = buffer.toString();
+//    //System.out.println(this.sourceCodeStorageService);
+//
+//    ofs++;
+//    int lenOfDigest = this.code.get(ofs++);
+//    if (lenOfDigest < 0) {
+//      LOG.info("Len of Digest is negative: {}", lenOfDigest);
+//      return;
+//    }
+//    if (lenOfDigest + ofs > this.code.size()) {
+//      LOG.info("Len of Digest is too large: {}", lenOfDigest);
+//      return;
+//    }
+//    this.sourceCodeHash = this.code.slice(ofs, lenOfDigest);
+//    ofs += lenOfDigest;
+//
+//    int lenCompilerName = this.code.get(ofs++) & 0xf;
+//    buffer = new StringBuffer();
+//    for (int i=0; i<lenCompilerName; i++) {
+//      buffer.append((char)this.code.get(ofs++));
+//    }
+//    this.compilerName = buffer.toString();
+//
+//    int lenCompilerVersion = this.code.get(ofs++) & 0xf;
+//    if (ofs + lenCompilerVersion > len) {
+//      return;
+//    }
+//    this.compilerVersion = this.code.slice(ofs, lenCompilerVersion);
   }
 
   public boolean hasAuxData() {
@@ -132,7 +253,7 @@ public class AuxData {
     return sourceCodeStorageService;
   }
 
-  public Bytes getSourceCodeHash() {
+  public byte[] getSourceCodeHash() {
     return sourceCodeHash;
   }
 
@@ -141,10 +262,14 @@ public class AuxData {
   }
 
   public boolean isDefinitelySolidity() {
-    return this.compilerName != null && this.compilerName.equalsIgnoreCase("solc");
+    return this.isDefinitelySolidity;
   }
 
   public Bytes getCompilerVersion() {
     return compilerVersion;
+  }
+
+  public String getExperimentalInfo() {
+    return experimentalInfo;
   }
 }
