@@ -29,6 +29,7 @@ public class SimpleProcessing extends AbstractProcessing {
   public static final String DEFAULT_NAME =  "simple";
 
   int numSol = 0;
+  int newSol = 0;
   int definitelySol = 0;
   int shouldBeAbleToAnalyse = 0;
   int endOfCodeDetected = 0;
@@ -41,11 +42,15 @@ public class SimpleProcessing extends AbstractProcessing {
   @Override
   protected void executeProcessing(Bytes code) throws Exception {
     AuxData auxData = new AuxData(code);
-    SimpleAnalysis simple = new SimpleAnalysis(code, auxData.getStartOfAuxData());
+    SimpleAnalysis simple = new SimpleAnalysis(code);
     //analysis.showBasicInfo();
 
     if (simple.isProbablySolidity()) {
       numSol++;
+    }
+
+    if (simple.isNewSolidity()) {
+      this.newSol++;
     }
 
     // There is aux data and it indicates solc is the compiler.
@@ -78,8 +83,8 @@ public class SimpleProcessing extends AbstractProcessing {
   @Override
   public void showSummary() {
     super.showSummary();
-    LOG.info("  Probably Solidity: {}, Definitely Solidity: {}, Should be able to Analyse: {}, End Of Code Detected: {}",
-        numSol, definitelySol, shouldBeAbleToAnalyse, this.endOfCodeDetected);
+    LOG.info("  Probably Solidity: {}, New Solidity: {}, Definitely Solidity: {}, Should be able to Analyse: {}, End Of Code Detected: {}",
+        numSol, this.newSol, this.definitelySol, this.shouldBeAbleToAnalyse, this.endOfCodeDetected);
   }
 
 }

@@ -36,10 +36,7 @@ public class CodeAnalysisBase {
     this.code = code;
     this.auxData = new AuxData(code);
     this.possibleEndOfCode = code.size() - 1;
-    if (this.auxData.hasAuxData()) {
-      this.possibleEndOfCode = this.auxData.getStartOfAuxData();
-    }
-    this.simple = new SimpleAnalysis(code, this.possibleEndOfCode);
+    this.simple = new SimpleAnalysis(code);
   }
 
   public void showBasicInfo() {

@@ -22,7 +22,6 @@ import tech.pegasys.poc.witnesscodeanalysis.vm.operations.CallDataLoadOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.InvalidOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.JumpDestOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.JumpOperation;
-import tech.pegasys.poc.witnesscodeanalysis.vm.operations.MStoreOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.PushOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.ReturnOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.RevertOperation;
@@ -36,18 +35,24 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 public class SimpleAnalysis {
   private static final Logger LOG = getLogger();
 
+  private static final int START_LEN = 5;
+  private static final Bytes OLD_SOL_START = Bytes.fromHexString("0x6060604052");
+  private static final Bytes NEW_SOL_START = Bytes.fromHexString("0x6080604052");
+
+
   private Bytes code;
   private boolean isProbablySolidity;
+  private boolean isNewSolidity;
   private int endOfFunctionIdBlock = -1;
   private int endOfCode;
-  private int startOfAuxData;
   private boolean endOfCodeDetected = false;
   private Set<Integer> jumpDests;
 
-  public SimpleAnalysis(Bytes code, int startOfAuxData) {
+  public SimpleAnalysis(Bytes code) {
     this.code = code;
-    this.startOfAuxData = startOfAuxData;
-    this.isProbablySolidity = probablySolidity();
+    //LOG.trace(" Contract bytecode: {}", this.code);
+    checkIfSolidity();
+
     this.endOfCode = code.size() - 1;
     findJumpDests();
     if (this.isProbablySolidity) {
@@ -106,6 +111,10 @@ public class SimpleAnalysis {
     return isProbablySolidity;
   }
 
+  public boolean isNewSolidity() {
+    return isNewSolidity;
+  }
+
   public int getEndOfFunctionIdBlock() {
     return endOfFunctionIdBlock;
   }
@@ -122,22 +131,25 @@ public class SimpleAnalysis {
     return jumpDests;
   }
 
-  private boolean probablySolidity() {
-    int len = code.size();
-    if (len < 10) {
-      return false;
+  private void checkIfSolidity() {
+    int len = this.code.size();
+    if (len < START_LEN) {
+      return;
     }
 
-    // Look for:
-    //    PUSH1 0x80
-    //    PUSH1 0x40
-    //    MSTORE
-    return
-        ((code.get(0) == (byte) PushOperation.PUSH1_OPCODE) &&
-            (code.get(1) == (byte) 0x80) &&
-            (code.get(2) == (byte) PushOperation.PUSH1_OPCODE) &&
-            (code.get(3) == (byte) 0x40) &&
-            (code.get(4) == (byte) MStoreOperation.OPCODE));
+    Bytes codeStart = this.code.slice(0, START_LEN);
+    if (codeStart.compareTo(NEW_SOL_START) == 0) {
+      LOG.trace("New Solidity start of code detected");
+      this.isProbablySolidity = true;
+      this.isNewSolidity = true;
+    }
+    else if (codeStart.compareTo(OLD_SOL_START) == 0) {
+      LOG.trace("Old Solidity start of code detected");
+      this.isProbablySolidity = true;
+    }
+    else {
+      LOG.trace(" Not Solidity contract starts with: {}", codeStart);
+    }
   }
 
 
@@ -156,12 +168,12 @@ public class SimpleAnalysis {
         // Unknown opcode.
         return;
       }
-      if (curOp.getName().equalsIgnoreCase("CALLDATALOAD")) {
+      if (curOp.getOpcode() == CallDataLoadOperation.OPCODE) {
         done = true;
       }
       pc = pc + curOp.getOpSize();
-      if (pc >= this.startOfAuxData) {
-        LOG.error("No CALLDATALOAD found in code: analysis unlikely to work");
+      if (pc >= this.endOfCode) {
+        LOG.trace("No CALLDATALOAD found in code: analysis unlikely to work");
         return;
       }
     }
@@ -174,13 +186,14 @@ public class SimpleAnalysis {
         // Unknown opcode.
         return;
       }
-      if (curOp.getOpcode() == RevertOperation.OPCODE) {
+      if ((curOp.getOpcode() == RevertOperation.OPCODE) ||
+          (curOp.getOpcode() == StopOperation.OPCODE) ||
+          (curOp.getOpcode() == ReturnOperation.OPCODE)) {
         done = true;
       } else {
         pc = pc + curOp.getOpSize();
-        if (pc >= this.startOfAuxData) {
-          LOG.error("No REVERT found in code: Code analysis for apparently Solidty file is unlikely to work properly");
-          LOG.error(this.code);
+        if (pc >= this.endOfCode) {
+          LOG.trace("No REVERT, STOP, or RETURN found in code: Code analysis for apparently Solidity file is unlikely to work properly");
           return;
         }
       }
@@ -214,7 +227,7 @@ public class SimpleAnalysis {
 
       if (!done) {
         pc = pc + curOp.getOpSize();
-        if (pc >= this.startOfAuxData) {
+        if (pc >= this.endOfCode) {
           LOG.trace("No JUMP or RETURN or STOP followed by INVALID operation found in code");
           return;
         }
@@ -229,7 +242,7 @@ public class SimpleAnalysis {
     int pc = 0;
     this.jumpDests = new HashSet<>();
 
-    while (pc < this.startOfAuxData) {
+    while (pc < this.endOfCode) {
       Operation curOp = MainnetEvmRegistries.REGISTRY.get(code.get(pc), 0);
       if (curOp == null) {
         // Unknown opcode.
