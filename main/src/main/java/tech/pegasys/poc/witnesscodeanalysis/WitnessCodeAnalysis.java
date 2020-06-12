@@ -16,6 +16,7 @@ package tech.pegasys.poc.witnesscodeanalysis;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import tech.pegasys.poc.witnesscodeanalysis.bytecodedump.ByteCodeDump;
 import tech.pegasys.poc.witnesscodeanalysis.common.ContractData;
 import tech.pegasys.poc.witnesscodeanalysis.processing.FixedSizeProcessing;
 import tech.pegasys.poc.witnesscodeanalysis.processing.FunctionIdProcessing;
@@ -34,7 +35,7 @@ public class WitnessCodeAnalysis {
   public static boolean JUMPDEST = false;
   public static boolean FIXEDSIZE = false;
   public static boolean STRICTFIXEDSIZE = false;
-  public static boolean FUNCTIONID = false;
+  public static boolean FUNCTIONID = true;
 
   private MainNetContractDataSet dataSet;
   private SimpleProcessing simpleProcessing;
@@ -57,7 +58,7 @@ public class WitnessCodeAnalysis {
     int count = 0;
     ContractData contractData;
     while ((contractData = this.dataSet.next()) != null) {
-      //contractData.showInfo(count);
+      contractData.showInfo(count);
       process(contractData);
       count++;
 
@@ -117,6 +118,25 @@ public class WitnessCodeAnalysis {
     }
     closeAll();
   }
+
+
+  public void dumpOne(int theOne) throws Exception {
+    int count = 0;
+    ContractData contractData;
+    while ((contractData = this.dataSet.next()) != null) {
+      if (count == theOne) {
+        contractData.showInfo(count);
+        Bytes code = Bytes.fromHexString(contractData.getCode());
+        ByteCodeDump dump = new ByteCodeDump(code);
+        dump.showBasicInfo();
+        dump.dumpContract();
+        break;
+      }
+      count++;
+    }
+    closeAll();
+  }
+
 
   public void process(ContractData contractData) {
     Bytes code = Bytes.fromHexString(contractData.getCode());
@@ -182,8 +202,9 @@ public class WitnessCodeAnalysis {
     WitnessCodeAnalysis witnessCodeAnalysis = new WitnessCodeAnalysis();
 
     // NOTE: Can only choose one of these.
-//    witnessCodeAnalysis.analyseUpTo(10000);
-//    witnessCodeAnalysis.analyseOne(561648);
+    //witnessCodeAnalysis.analyseUpTo(541);
+    //witnessCodeAnalysis.dumpOne(541);
+//    witnessCodeAnalysis.analyseOne(541);
 
 //    witnessCodeAnalysis.analyseDeployedBlockNumbers(9999990, 10000000);
 

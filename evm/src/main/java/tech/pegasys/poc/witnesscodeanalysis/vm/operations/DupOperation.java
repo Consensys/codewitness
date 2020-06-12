@@ -34,4 +34,9 @@ public class DupOperation extends AbstractOperation {
     frame.pushStackItem(frame.getStackItem(index - 1));
     return UInt256.ZERO;
   }
+
+  public static boolean isADupOpCode(int opCode) {
+    return (opCode >= 0x80 && opCode <= 0x8f);
+  }
+
 }
