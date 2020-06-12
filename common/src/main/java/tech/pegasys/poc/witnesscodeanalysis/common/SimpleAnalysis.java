@@ -80,7 +80,7 @@ public class SimpleAnalysis {
       }
       pc = pc + curOp.getOpSize();
       if (pc > probableEndOfCode) {
-        throw new Error("No REVERT found in code");
+        throw new Error("No CALLDATALOAD found in code");
       }
     }
 
@@ -93,7 +93,9 @@ public class SimpleAnalysis {
         // Don't try to process any further.
         return functionIds;
       }
-      if (curOp.getOpcode() == RevertOperation.OPCODE) {
+      if ((curOp.getOpcode() == RevertOperation.OPCODE) ||
+          (curOp.getOpcode() == StopOperation.OPCODE) ||
+          (curOp.getOpcode() == ReturnOperation.OPCODE)) {
         done = true;
       } else if (curOp.getOpcode() == PushOperation.PUSH4_OPCODE) {
         Bytes functionId = code.slice(pc + 1, 4);
@@ -101,7 +103,7 @@ public class SimpleAnalysis {
       }
       pc = pc + curOp.getOpSize();
       if (pc > probableEndOfCode) {
-        throw new Error("No REVERT found in code");
+        throw new Error("No REVERT, RETURN or STOP found in code");
       }
     }
     return functionIds;
@@ -233,7 +235,8 @@ public class SimpleAnalysis {
         }
       }
     }
-    this.endOfCode = pc;
+    // End of code detection is not reliable. Hence, just have end of code as the length of the code.
+    //this.endOfCode = pc;
 
     this.endOfCodeDetected = true;
   }

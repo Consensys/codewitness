@@ -39,7 +39,7 @@ public class FunctionIdProcessing extends AbstractProcessing {
   @Override
   protected void executeProcessing(Bytes code) throws Exception {
     LOG.trace(" Function Id Analysis");
-    AuxData auxData = new AuxData(code);
+//    AuxData auxData = new AuxData(code);
     SimpleAnalysis simple = new SimpleAnalysis(code);
 
     if (simple.getEndOfFunctionIdBlock() == -1) {

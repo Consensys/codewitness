@@ -211,11 +211,11 @@ public class CodePaths {
       }
       pc = next;
 
-      if (pc > endOfCodeOffset) {
+      if (pc > endOfCodeOffset+1) {
         LOG.error("Gone past end of code: pc: {}, end of code: {}", pc, endOfCodeOffset);
         throw new RuntimeException("Gone past end of code");
       }
-      if (pc == endOfCodeOffset) {
+      if (pc == endOfCodeOffset || pc == endOfCodeOffset+1) {
         done = true;
       }
     }

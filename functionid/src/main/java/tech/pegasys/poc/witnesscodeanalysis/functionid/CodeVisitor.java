@@ -21,6 +21,7 @@ import tech.pegasys.poc.witnesscodeanalysis.vm.MainnetEvmRegistries;
 import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
 import tech.pegasys.poc.witnesscodeanalysis.vm.OperandStack;
 import tech.pegasys.poc.witnesscodeanalysis.vm.Operation;
+import tech.pegasys.poc.witnesscodeanalysis.vm.operations.DupOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.EqOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.InvalidOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.JumpDestOperation;
@@ -240,6 +241,11 @@ public class CodeVisitor {
       this.foundPush4OpCode = false;
       if (opCode == EqOperation.OPCODE) {
         this.foundEqOpCode = true;
+      }
+      else if (DupOperation.isADupOpCode(opCode)) {
+        // Some times there is a Dup2 between the PUSH4 and the EQ.
+        // Stay in the "waiting for EQ opcode state"
+        this.foundPush4OpCode = true;
       }
     }
     if (opCode == PushOperation.PUSH4_OPCODE) {
