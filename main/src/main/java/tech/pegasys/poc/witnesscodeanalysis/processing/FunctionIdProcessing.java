@@ -16,11 +16,12 @@ package tech.pegasys.poc.witnesscodeanalysis.processing;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
-import tech.pegasys.poc.witnesscodeanalysis.common.AuxData;
 import tech.pegasys.poc.witnesscodeanalysis.common.SimpleAnalysis;
+import tech.pegasys.poc.witnesscodeanalysis.common.UnableToProcess;
+import tech.pegasys.poc.witnesscodeanalysis.common.UnableToProcessException;
+import tech.pegasys.poc.witnesscodeanalysis.common.UnableToProcessReason;
 import tech.pegasys.poc.witnesscodeanalysis.functionid.FunctionIdAllLeaves;
 import tech.pegasys.poc.witnesscodeanalysis.functionid.FunctionIdProcess;
-import tech.pegasys.poc.witnesscodeanalysis.processing.AbstractProcessing;
 
 import java.io.IOException;
 import static org.apache.logging.log4j.LogManager.getLogger;
@@ -31,6 +32,13 @@ public class FunctionIdProcessing extends AbstractProcessing {
 
   public static final String DEFAULT_NAME =  "functionid";
 
+  private int numSuccessful = 0;
+  private int numFailUnknownReason = 0;
+  private int numFailInvalidJumpDest = 0;
+  private int numFailCodeCopyDynamicParameters = 0;
+  private int numFailDynamicJump = 0;
+  private int numFailEndFunctionIdBlockNotFound = 0;
+
 
   public FunctionIdProcessing(boolean json) throws IOException {
     super(DEFAULT_NAME, json);
@@ -39,23 +47,59 @@ public class FunctionIdProcessing extends AbstractProcessing {
   @Override
   protected void executeProcessing(Bytes code) throws Exception {
     LOG.trace(" Function Id Analysis");
+
+    UnableToProcess unableToProcessInstance = UnableToProcess.getInstance();
+    unableToProcessInstance.clean();
+    try {
 //    AuxData auxData = new AuxData(code);
-    SimpleAnalysis simple = new SimpleAnalysis(code);
+      SimpleAnalysis simple = new SimpleAnalysis(code);
 
-    if (simple.getEndOfFunctionIdBlock() == -1) {
-      LOG.trace("  Not attempting Function Id analysis as no function id block was detected");
-      // Reduce the number processed successfully to counteract the increment happening in the outer loop.
-      this.numberProcessedSuccessfully--;
-    }
-    else {
-      // Should be able to analyse
-      FunctionIdProcess fidAnalysis = new FunctionIdProcess(code, simple.getEndOfFunctionIdBlock(), simple.getEndOfCode(), simple.getJumpDests());
-      FunctionIdAllLeaves leaves = fidAnalysis.executeAnalysis();
-      if (leaves != null) {
-        LOG.trace("  Function Id Process found {} functions", leaves.getLeaves().size());
+      if (simple.getEndOfFunctionIdBlock() == -1) {
+        UnableToProcess.getInstance().unableToProcess(UnableToProcessReason.END_OF_FUNCTION_ID_BLOCK_NOT_FOUND);
       }
+      else {
+        // Should be able to analyse
+        FunctionIdProcess fidAnalysis = new FunctionIdProcess(code, simple.getEndOfFunctionIdBlock(), simple.getEndOfCode(), simple.getJumpDests());
+        FunctionIdAllLeaves leaves = fidAnalysis.executeAnalysis();
+        if (leaves != null) {
+          LOG.trace("  Function Id Process found {} functions", leaves.getLeaves().size());
+        }
 
-      // TODO output JSON or CSV results
+        this.numSuccessful++;
+        // TODO output JSON or CSV results
+      }
+    } catch (UnableToProcessException ex) {
+      LOG.info(" Unable to Process: {}: {}", unableToProcessInstance.getReason(), unableToProcessInstance.getMessage());
+
+      switch (ex.getReason()) {
+        case END_OF_FUNCTION_ID_BLOCK_NOT_FOUND:
+          this.numFailEndFunctionIdBlockNotFound++;
+          break;
+        case DYNAMIC_JUMP:
+          this.numFailDynamicJump++;
+          break;
+        case INVALID_JUMP_DEST:
+          this.numFailInvalidJumpDest++;
+          break;
+        case CODECOPY_WITH_DYNAMIC_PARAMETERS:
+          this.numFailCodeCopyDynamicParameters++;
+          break;
+        default:
+          LOG.error("Unknown failure reason: {}", ex.getReason() );
+          logStackTrace(ex);
+          break;
+      }
+    } catch (Throwable th) {
+      logStackTrace(th);
+      this.numFailUnknownReason++;
     }
   }
+
+  public void showSummary() {
+    LOG.info(" {}: Processed: {}, Processed Successfully: {}",
+        analysisName.toUpperCase(), this.numberProcessed, this.numSuccessful);
+    LOG.info("   Fail(End Of FunctionId Block Not Found): {}, Fail(Dynamic Jump): {}, Fail(Invalid Jump Dest): {}, Fail(Copy Copy Dynamic): {}",
+        this.numFailEndFunctionIdBlockNotFound, this.numFailDynamicJump, this.numFailInvalidJumpDest, this.numFailCodeCopyDynamicParameters);
+  }
+
 }

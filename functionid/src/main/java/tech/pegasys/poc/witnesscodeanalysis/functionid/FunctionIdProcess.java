@@ -17,8 +17,6 @@ package tech.pegasys.poc.witnesscodeanalysis.functionid;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import tech.pegasys.poc.witnesscodeanalysis.BasicBlockWithCode;
-import tech.pegasys.poc.witnesscodeanalysis.common.UnableToProcess;
-import tech.pegasys.poc.witnesscodeanalysis.common.UnableToProcessException;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.CodeCopyOperation;
 
 import java.util.Collection;
@@ -53,40 +51,31 @@ public class FunctionIdProcess {
 
 
   public FunctionIdAllLeaves executeAnalysis() {
-    UnableToProcess unableToProcessInstance = UnableToProcess.getInstance();
-    unableToProcessInstance.clean();
+    this.codePaths = new CodePaths(this.code, this.jumpDests);
+    codePaths.findFunctionBlockCodePaths(this.endOfFunctionIdBlock);
+    codePaths.findCodeSegmentsForFunctions();
 
-    FunctionIdAllLeaves leaves = null;
-    try {
-      this.codePaths = new CodePaths(this.code, this.jumpDests);
-      codePaths.findFunctionBlockCodePaths(this.endOfFunctionIdBlock);
-      codePaths.findCodeSegmentsForFunctions();
-
-      codePaths.showAllCodePaths();
-      boolean codePathsValid = codePaths.validateCodeSegments(this.endOfCode);
-      LOG.trace("Code Paths Valid: {}", codePathsValid);
-      if (!codePathsValid) {
-        return null;
-      }
-
-      int COMBINATION_GAP = 4;
-      LOG.trace("Combining Code Segments using bytes between segments: {}", COMBINATION_GAP);
-      codePaths.combineCodeSegments(COMBINATION_GAP);
-
-      Collection<BasicBlockWithCode> blocks = this.codeCopyBlocksConsumer.getBlocks();
-      if (blocks != null) {
-        LOG.info("******** num copy Code blocks: {}", blocks.size());
-        for (BasicBlockWithCode block: blocks) {
-          LOG.info("  block: start: {}, len: {}", block.getStart(), block.getLength());
-        }
-      }
-
-      leaves = createMerklePatriciaTrieLeaves();
-    } catch (UnableToProcessException ex) {
-      LOG.info(" Unable to Process: {}: {}", unableToProcessInstance.getReason(), unableToProcessInstance.getMessage());
+    codePaths.showAllCodePaths();
+    boolean codePathsValid = codePaths.validateCodeSegments(this.endOfCode);
+    LOG.trace("Code Paths Valid: {}", codePathsValid);
+    if (!codePathsValid) {
+      return null;
     }
+
+    int COMBINATION_GAP = 4;
+    LOG.trace("Combining Code Segments using bytes between segments: {}", COMBINATION_GAP);
+    codePaths.combineCodeSegments(COMBINATION_GAP);
+
+    Collection<BasicBlockWithCode> blocks = this.codeCopyBlocksConsumer.getBlocks();
+    if (blocks != null) {
+      LOG.info("******** num copy Code blocks: {}", blocks.size());
+      for (BasicBlockWithCode block: blocks) {
+        LOG.info("  block: start: {}, len: {}", block.getStart(), block.getLength());
+      }
+    }
+
     CodeCopyOperation.removeConsumer();
-    return leaves;
+    return createMerklePatriciaTrieLeaves();
   }
 
 

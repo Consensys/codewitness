@@ -16,10 +16,14 @@ public class UnableToProcess {
     return instance;
   }
 
+  public void unableToProcess(UnableToProcessReason reason) {
+    unableToProcess(reason, "");
+  }
+
   public void unableToProcess(UnableToProcessReason reason, String message) {
     this.reason = reason;
     this.message = message;
-    throw new UnableToProcessException(" Unable to process: " + reason + ": " + message);
+    throw new UnableToProcessException(reason, message);
   }
 
   public void clean() {

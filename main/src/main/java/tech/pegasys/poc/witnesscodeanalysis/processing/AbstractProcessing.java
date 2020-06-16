@@ -105,7 +105,7 @@ abstract class AbstractProcessing {
         analysisName.toUpperCase(), this.numberProcessed, this.numberProcessedSuccessfully);
   }
 
-  private static void logStackTrace(Throwable th) {
+  protected static void logStackTrace(Throwable th) {
     StringWriter sw = new StringWriter();
     PrintWriter pw = new PrintWriter(sw);
     th.printStackTrace(pw);

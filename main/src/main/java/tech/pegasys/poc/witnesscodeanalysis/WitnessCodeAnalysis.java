@@ -202,13 +202,13 @@ public class WitnessCodeAnalysis {
     WitnessCodeAnalysis witnessCodeAnalysis = new WitnessCodeAnalysis();
 
     // NOTE: Can only choose one of these.
-    //witnessCodeAnalysis.analyseUpTo(541);
+    witnessCodeAnalysis.analyseUpTo(100);
     //witnessCodeAnalysis.dumpOne(541);
 //    witnessCodeAnalysis.analyseOne(50);
 
 //    witnessCodeAnalysis.analyseDeployedBlockNumbers(9999990, 10000000);
 
-    witnessCodeAnalysis.analyseAll();
+//    witnessCodeAnalysis.analyseAll();
 
     witnessCodeAnalysis.showSummary();
   }
