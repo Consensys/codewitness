@@ -16,14 +16,17 @@ package tech.pegasys.poc.witnesscodeanalysis.fixed;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import tech.pegasys.poc.witnesscodeanalysis.CodeAnalysisBase;
 import tech.pegasys.poc.witnesscodeanalysis.common.PcUtils;
+import tech.pegasys.poc.witnesscodeanalysis.trie.ethereum.trie.Proof;
+import tech.pegasys.poc.witnesscodeanalysis.trie.ethereum.trie.SimpleMerklePatriciaTrie;
 import tech.pegasys.poc.witnesscodeanalysis.vm.MainnetEvmRegistries;
 import tech.pegasys.poc.witnesscodeanalysis.vm.Operation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.OperationRegistry;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.InvalidOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.JumpOperation;
-import tech.pegasys.poc.witnesscodeanalysis.vm.operations.JumpiOperation;
+import tech.pegasys.poc.witnesscodeanalysis.trie.ethereum.trie.MerklePatriciaTrie;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -34,6 +37,8 @@ public class FixedSizeAnalysis extends CodeAnalysisBase {
   private static final Logger LOG = getLogger();
   private int threshold;
   private boolean isInvalidSeen;
+  private ArrayList<Integer> chunkStartAddresses;
+  private MerklePatriciaTrie<Bytes32, Bytes> codeTrie;
 
   public static OperationRegistry registry = MainnetEvmRegistries.berlin(BigInteger.ONE);
 
@@ -41,12 +46,17 @@ public class FixedSizeAnalysis extends CodeAnalysisBase {
     super(code);
     this.threshold = threshold;
     isInvalidSeen = false;
+    chunkStartAddresses = null;
   }
 
-  public ArrayList<Integer> analyse() {
+  /*
+   * This method creates chunks of the given code and populates the chunkStartAddresses with the
+   * start addresses of the chunks.
+   */
+  public void createChunks() {
     int pc = 0;
     int currentChunkSize = 0;
-    ArrayList<Integer> chunkStartAddresses = new ArrayList<>();
+    chunkStartAddresses = new ArrayList<>();
     chunkStartAddresses.add(0);
 
     while (pc != this.possibleEndOfCode) {
@@ -78,8 +88,34 @@ public class FixedSizeAnalysis extends CodeAnalysisBase {
       currentChunkSize += opSize;
       pc += opSize;
     }
+    LOG.trace("  Finished. {} chunks", chunkStartAddresses.size());
+  }
 
-    return chunkStartAddresses;
+  /*
+   * This method uses the chunk start addresses to create a SimpleMerklePatriciaTrie with
+   * plain natural number addresses as keys, and code chunks as values
+   */
+  public void merkelize() {
+    codeTrie = new SimpleMerklePatriciaTrie<Bytes32, Bytes>(v->v);
+    int numChunks = chunkStartAddresses.size();
+    // The keys are just plain natural number indices
+    for (int index=0; index < numChunks; index++) {
+      int thisChunkStart = chunkStartAddresses.get(index);
 
+      int length = (index == numChunks - 1) ?
+        code.size() - thisChunkStart :
+        chunkStartAddresses.get(index+1) - thisChunkStart;
+
+      Bytes chunk = this.code.slice(thisChunkStart, length);
+      codeTrie.put(Bytes32.leftPad(Bytes.of(index)), chunk);
+    }
+    LOG.trace("Merkelization finished.");
+  }
+
+  /*
+   * This method constructs proof and prints some statistics
+   */
+  public void proof(int index) {
+    Proof<Bytes> proof = codeTrie.getValueWithProof(Bytes32.leftPad(Bytes.of(index)));
   }
 }

@@ -15,6 +15,7 @@
 package tech.pegasys.poc.witnesscodeanalysis.trie.ethereum.trie;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.apache.logging.log4j.LogManager.getLogger;
 import static tech.pegasys.poc.witnesscodeanalysis.trie.ethereum.trie.CompactEncoding.bytesToPath;
 
 import java.util.List;
@@ -24,6 +25,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -33,6 +35,7 @@ import org.apache.tuweni.bytes.Bytes32;
  * @param <V> The type of values stored by this trie.
  */
 public class SimpleMerklePatriciaTrie<K extends Bytes, V> implements MerklePatriciaTrie<K, V> {
+  private static final Logger LOG = getLogger();
   private final PathNodeVisitor<V> getVisitor = new GetVisitor<>();
   private final PathNodeVisitor<V> removeVisitor = new RemoveVisitor<>();
   private final DefaultNodeFactory<V> nodeFactory;
@@ -62,6 +65,10 @@ public class SimpleMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
     final Optional<V> value = root.accept(proofVisitor, bytesToPath(key)).getValue();
     final List<Bytes> proof =
         proofVisitor.getProof().stream().map(Node::getRlp).collect(Collectors.toList());
+    LOG.trace("Proof nodes");
+    for(Node<V> node : proofVisitor.proof) {
+      LOG.trace(node.toString());
+    }
     return new Proof<>(value, proof);
   }
 

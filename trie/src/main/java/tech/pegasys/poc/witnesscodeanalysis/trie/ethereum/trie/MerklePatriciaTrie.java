@@ -18,6 +18,7 @@ package tech.pegasys.poc.witnesscodeanalysis.trie.ethereum.trie;
 
 import tech.pegasys.poc.witnesscodeanalysis.trie.ethereum.rlp.RLP;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
