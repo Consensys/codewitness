@@ -52,10 +52,10 @@ public class CodeSegment {
     this.previousSegments.add(callingSegmentPc);
     this.previousSegmentStacks.add(callingSegmentStack);
 
-    if (this.previousSegments.size() > 50) {
-      LOG.info("{} previous segments for PC {}", this.previousSegments.size(), PcUtils.pcStr(start));
-      throw new Error("Not detecting previous correctly");
-    }
+//    if (this.previousSegments.size() > 50) {
+//      LOG.info("{} previous segments for PC {}", this.previousSegments.size(), PcUtils.pcStr(start));
+//      throw new Error("Not detecting previous correctly");
+//    }
   }
 
   // Jump or fall through, does not end.

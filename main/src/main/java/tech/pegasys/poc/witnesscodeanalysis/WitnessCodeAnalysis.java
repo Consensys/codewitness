@@ -204,7 +204,7 @@ public class WitnessCodeAnalysis {
     // NOTE: Can only choose one of these.
     //witnessCodeAnalysis.analyseUpTo(541);
     //witnessCodeAnalysis.dumpOne(541);
-//    witnessCodeAnalysis.analyseOne(541);
+//    witnessCodeAnalysis.analyseOne(50);
 
 //    witnessCodeAnalysis.analyseDeployedBlockNumbers(9999990, 10000000);
 

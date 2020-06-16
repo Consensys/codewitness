@@ -200,7 +200,8 @@ public class CodePaths {
 
         next = pc + getOpCodeLength(pc);
         if (next > endOfCodeOffset) {
-          LOG.error("Reached end of code at offset 0x{} ({})", Integer.toHexString(this.codeSize), this.codeSize);
+          LOG.error("Unexpectedly processing continues past end of code. Next: 0x{}, EndOfCode: 0x{}, CodeLength: 0x{}",
+              Integer.toHexString(next), Integer.toHexString(endOfCodeOffset), Integer.toHexString(this.codeSize));
           // TODO say the format is correct to differentiate from the errors above.
           return true;
         }

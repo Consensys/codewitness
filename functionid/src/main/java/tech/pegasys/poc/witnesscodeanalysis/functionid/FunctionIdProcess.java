@@ -17,11 +17,14 @@ package tech.pegasys.poc.witnesscodeanalysis.functionid;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import tech.pegasys.poc.witnesscodeanalysis.BasicBlockWithCode;
+import tech.pegasys.poc.witnesscodeanalysis.common.UnableToProcess;
+import tech.pegasys.poc.witnesscodeanalysis.common.UnableToProcessException;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.CodeCopyOperation;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
@@ -50,34 +53,40 @@ public class FunctionIdProcess {
 
 
   public FunctionIdAllLeaves executeAnalysis() {
-    this.codePaths = new CodePaths(this.code, this.jumpDests);
-    codePaths.findFunctionBlockCodePaths(this.endOfFunctionIdBlock);
-    codePaths.findCodeSegmentsForFunctions();
+    UnableToProcess unableToProcessInstance = UnableToProcess.getInstance();
+    unableToProcessInstance.clean();
 
-    codePaths.showAllCodePaths();
-    boolean codePathsValid = codePaths.validateCodeSegments(this.endOfCode);
-    LOG.trace("Code Paths Valid: {}", codePathsValid);
-    if (!codePathsValid) {
-      return null;
-    }
+    FunctionIdAllLeaves leaves = null;
+    try {
+      this.codePaths = new CodePaths(this.code, this.jumpDests);
+      codePaths.findFunctionBlockCodePaths(this.endOfFunctionIdBlock);
+      codePaths.findCodeSegmentsForFunctions();
 
-    int COMBINATION_GAP = 4;
-    LOG.trace("Combining Code Segments using bytes between segments: {}", COMBINATION_GAP);
-    codePaths.combineCodeSegments(COMBINATION_GAP);
-
-    ArrayList<BasicBlockWithCode> blocks = this.codeCopyBlocksConsumer.getBlocks();
-    if (blocks != null) {
-      LOG.info("******** num copy Code blocks: {}", blocks.size());
-      for (BasicBlockWithCode block: blocks) {
-        LOG.info("  block: start: {}, len: {}", block.getStart(), block.getLength());
+      codePaths.showAllCodePaths();
+      boolean codePathsValid = codePaths.validateCodeSegments(this.endOfCode);
+      LOG.trace("Code Paths Valid: {}", codePathsValid);
+      if (!codePathsValid) {
+        return null;
       }
 
+      int COMBINATION_GAP = 4;
+      LOG.trace("Combining Code Segments using bytes between segments: {}", COMBINATION_GAP);
+      codePaths.combineCodeSegments(COMBINATION_GAP);
+
+      Collection<BasicBlockWithCode> blocks = this.codeCopyBlocksConsumer.getBlocks();
+      if (blocks != null) {
+        LOG.info("******** num copy Code blocks: {}", blocks.size());
+        for (BasicBlockWithCode block: blocks) {
+          LOG.info("  block: start: {}, len: {}", block.getStart(), block.getLength());
+        }
+      }
+
+      leaves = createMerklePatriciaTrieLeaves();
+    } catch (UnableToProcessException ex) {
+      LOG.info(" Unable to Process: {}: {}", unableToProcessInstance.getReason(), unableToProcessInstance.getMessage());
     }
-
-
     CodeCopyOperation.removeConsumer();
-
-    return createMerklePatriciaTrieLeaves();
+    return leaves;
   }
 
 
@@ -97,20 +106,30 @@ public class FunctionIdProcess {
 
 
   class CodeCopyConsumer implements CodeCopyOperation.BasicBlockConsumer {
-    ArrayList<BasicBlockWithCode> blocks;
+    Map<Integer, BasicBlockWithCode> blocks;
 
     CodeCopyConsumer() {
-      this.blocks = new ArrayList<>();
+      this.blocks = new TreeMap();
     }
 
 
     @Override
     public void addNewBlock(BasicBlockWithCode block) {
-      blocks.add(block);
+      BasicBlockWithCode existing = this.blocks.get(block.getStart());
+      if (existing != null) {
+        if (existing.getLength() != block.getLength()) {
+          LOG.info("******** A code copy block was inserted with a different length to the existing block");
+          LOG.info("Existing: Start: {}, Length: {}", existing.getStart(), existing.getLength());
+          LOG.info("New: Start: {}, Length: {}", block.getStart(), block.getLength());
+        }
+      }
+      else {
+        blocks.put(block.getStart(), block);
+      }
     }
 
-    public ArrayList<BasicBlockWithCode> getBlocks() {
-      return this.blocks;
+    public Collection<BasicBlockWithCode> getBlocks() {
+      return this.blocks.values();
     }
 
   }

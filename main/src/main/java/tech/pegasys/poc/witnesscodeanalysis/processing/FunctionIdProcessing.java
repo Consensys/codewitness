@@ -51,7 +51,9 @@ public class FunctionIdProcessing extends AbstractProcessing {
       // Should be able to analyse
       FunctionIdProcess fidAnalysis = new FunctionIdProcess(code, simple.getEndOfFunctionIdBlock(), simple.getEndOfCode(), simple.getJumpDests());
       FunctionIdAllLeaves leaves = fidAnalysis.executeAnalysis();
-      LOG.trace("  Function Id Process found {} functions", leaves.getLeaves().size());
+      if (leaves != null) {
+        LOG.trace("  Function Id Process found {} functions", leaves.getLeaves().size());
+      }
 
       // TODO output JSON or CSV results
     }
