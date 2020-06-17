@@ -69,6 +69,10 @@ public class SimpleMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
     for(Node<V> node : proofVisitor.proof) {
       LOG.trace(node.toString());
     }
+    LOG.trace("Actual Proofs:");
+    for(Bytes p : proof) {
+      LOG.trace(p.toHexString());
+    }
     return new Proof<>(value, proof);
   }
 
