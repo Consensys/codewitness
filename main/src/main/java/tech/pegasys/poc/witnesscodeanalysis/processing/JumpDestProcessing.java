@@ -59,14 +59,14 @@ public class JumpDestProcessing extends AbstractProcessing {
   }
 
   @Override
-  protected void executeProcessing(Bytes code) throws Exception {
+  protected void executeProcessing(int id, String deployedAddress, Bytes code) throws Exception {
     ArrayList<Integer> chunkStartAddresses;
     ChunkData chunkData;
 
     LOG.trace(" JumpDest Analysis started");
     chunkStartAddresses = new JumpDestAnalysis(code, this.threshold).analyse();
     LOG.trace("  Finished. {} chunks", chunkStartAddresses.size());
-    chunkData = new ChunkData(chunkStartAddresses, code, true, this.threshold);
+    chunkData = new ChunkData(id, deployedAddress, chunkStartAddresses, code, true, this.threshold);
 
     if (this.json) {
       gson.toJson(chunkData, this.writer);

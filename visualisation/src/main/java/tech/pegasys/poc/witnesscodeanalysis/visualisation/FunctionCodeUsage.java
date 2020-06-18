@@ -1,0 +1,92 @@
+package tech.pegasys.poc.witnesscodeanalysis.visualisation;
+
+import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
+import tech.pegasys.poc.witnesscodeanalysis.BasicBlockWithCode;
+import tech.pegasys.poc.witnesscodeanalysis.functionid.FunctionIdAllLeaves;
+import tech.pegasys.poc.witnesscodeanalysis.functionid.FunctionIdDataSetReader;
+import tech.pegasys.poc.witnesscodeanalysis.functionid.FunctionIdMerklePatriciaTrieLeafData;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+
+import static org.apache.logging.log4j.LogManager.getLogger;
+
+public class FunctionCodeUsage {
+  private static final Logger LOG = getLogger();
+  Bytes allCodeFunctionId = Bytes.wrap(new byte[]{1, 0, 0, 0, 0});
+
+  FunctionIdDataSetReader reader;
+
+  public FunctionCodeUsage() throws Exception {
+    this.reader = new FunctionIdDataSetReader();
+  }
+
+  public void run() throws Exception {
+    FunctionIdAllLeaves allLeaves = this.reader.next();
+    // Assume leaves aren't null
+
+    int codeSize = 0;
+    ArrayList<FunctionIdMerklePatriciaTrieLeafData> leaves = allLeaves.getLeaves();
+    for (FunctionIdMerklePatriciaTrieLeafData leaf: leaves) {
+      Bytes functionId = leaf.getFunctionId();
+      LOG.info("FunctionId: {}", functionId);
+      BasicBlockWithCode[] blocks = leaf.getBasicBlocksWithCode();
+      for (BasicBlockWithCode block: blocks) {
+        LOG.info(" Block start: {}, len: {}", block.getStart(), block.getLength());
+      }
+
+      if (functionId.compareTo(this.allCodeFunctionId) == 0) {
+        codeSize = blocks[0].getLength();
+      }
+    }
+
+    char used = 'X';
+    char notUsed = '_';
+    int columns = 80;
+    int rows = 10;
+    int volume = columns * rows;
+    int quantizationStep = 0;
+    if (volume >= codeSize) {
+      quantizationStep = 1;
+    }
+    else {
+      quantizationStep = codeSize / volume + 1;
+    }
+    boolean[] inUse = new boolean[codeSize/quantizationStep];
+
+    leaves = allLeaves.getLeaves();
+    for (FunctionIdMerklePatriciaTrieLeafData leaf: leaves) {
+      Arrays.fill(inUse, false);
+
+      Bytes functionId = leaf.getFunctionId();
+      LOG.info("FunctionId: {}", functionId);
+      BasicBlockWithCode[] blocks = leaf.getBasicBlocksWithCode();
+      for (BasicBlockWithCode block: blocks) {
+        for (int i = block.getStart(); i < block.getStart() + block.getLength(); i++) {
+          inUse[i/quantizationStep] = true;
+        }
+      }
+
+      for (int i = 0; i < inUse.length; i++) {
+        System.out.print(inUse[i] ? used : notUsed);
+        if ((i+1) % columns == 0) {
+          System.out.println();
+        }
+      }
+      System.out.println();
+    }
+
+
+
+  }
+
+
+
+  public static void main(String[] args) throws Exception {
+    (new FunctionCodeUsage()).run();
+
+
+  }
+
+}

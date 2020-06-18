@@ -59,7 +59,7 @@ public class WitnessCodeAnalysis {
     ContractData contractData;
     while ((contractData = this.dataSet.next()) != null) {
       contractData.showInfo(count);
-      process(contractData);
+      process(count, contractData);
       count++;
 
       if (count % 1000 == 0) {
@@ -74,7 +74,7 @@ public class WitnessCodeAnalysis {
     ContractData contractData;
     while ((contractData = this.dataSet.next()) != null) {
       contractData.showInfo(count);
-      process(contractData);
+      process(count, contractData);
       count++;
       if (count == limit) {
         break;
@@ -89,7 +89,7 @@ public class WitnessCodeAnalysis {
     while ((contractData = this.dataSet.next()) != null) {
       if (count == theOne) {
         contractData.showInfo(count);
-        process(contractData);
+        process(count, contractData);
         break;
       }
       count++;
@@ -112,7 +112,7 @@ public class WitnessCodeAnalysis {
 
       if (analyse) {
         contractData.showInfo(count);
-        process(contractData);
+        process(count, contractData);
       }
       count++;
     }
@@ -138,27 +138,28 @@ public class WitnessCodeAnalysis {
   }
 
 
-  public void process(ContractData contractData) {
+  public void process(int id, ContractData contractData) {
     Bytes code = Bytes.fromHexString(contractData.getCode());
+    String aDeployedAddress = contractData.getContract_address()[0];
 
     if (SIMPLE) {
-      this.simpleProcessing.process(code);
+      this.simpleProcessing.process(id, aDeployedAddress, code);
     }
 
     if (JUMPDEST) {
-      this.jumpDestProcessing.process(code);
+      this.jumpDestProcessing.process(id, aDeployedAddress, code);
     }
 
     if (FIXEDSIZE) {
-      this.fixedSizeProcessing.process(code);
+      this.fixedSizeProcessing.process(id, aDeployedAddress, code);
     }
 
     if (STRICTFIXEDSIZE) {
-      this.strictFixedSizeProcessing.process(code);
+      this.strictFixedSizeProcessing.process(id, aDeployedAddress, code);
     }
 
     if (FUNCTIONID) {
-      this.functionIdProcessing.process(code);
+      this.functionIdProcessing.process(id, aDeployedAddress, code);
     }
   }
 
@@ -193,6 +194,7 @@ public class WitnessCodeAnalysis {
     this.jumpDestProcessing.close();
     this.fixedSizeProcessing.close();
     this.strictFixedSizeProcessing.close();
+    this.functionIdProcessing.close();
   }
 
 

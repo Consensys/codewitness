@@ -40,7 +40,7 @@ public class SimpleProcessing extends AbstractProcessing {
   }
 
   @Override
-  protected void executeProcessing(Bytes code) throws Exception {
+  protected void executeProcessing(int id, String deployedAddress, Bytes code) throws Exception {
     AuxData auxData = new AuxData(code);
     SimpleAnalysis simple = new SimpleAnalysis(code);
     //analysis.showBasicInfo();

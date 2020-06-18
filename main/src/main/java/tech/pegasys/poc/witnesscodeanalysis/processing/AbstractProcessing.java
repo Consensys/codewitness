@@ -74,10 +74,10 @@ abstract class AbstractProcessing {
     this.analysisName = analysisName;
   }
 
-  public boolean process(Bytes code) {
+  public boolean process(int id, String deployedAddress, Bytes code) {
     try {
       this.numberProcessed++;
-      executeProcessing(code);
+      executeProcessing(id, deployedAddress, code);
       this.numberProcessedSuccessfully++;
       return true;
     } catch (Throwable th) {
@@ -86,7 +86,7 @@ abstract class AbstractProcessing {
     }
   }
 
-  protected abstract void executeProcessing(Bytes code) throws Exception;
+  protected abstract void executeProcessing(int id, String deployedAddress, Bytes code) throws Exception;
 
   public void close() throws IOException {
     writer.close();

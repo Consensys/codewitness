@@ -22,6 +22,7 @@ import tech.pegasys.poc.witnesscodeanalysis.vm.operations.CodeCopyOperation;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
@@ -71,6 +72,13 @@ public class FunctionIdProcess {
     // Map of function id to Map of start to length.
     Map<Bytes, Map<Integer, Integer>> allCombinedCodeBlocks = this.codePaths.getAllCombinedCodeBlocks();
     FunctionIdAllLeaves leaves = new FunctionIdAllLeaves();
+
+    // Add in a leaf with all code. It has an invalid function id that is 5 bytes long.
+    Bytes allCodeFunctionId = Bytes.wrap(new byte[]{1, 0, 0, 0, 0});
+    Map<Integer, Integer> allCode = new TreeMap<>();
+    allCode.put(0, this.code.size());
+    FunctionIdMerklePatriciaTrieLeafData allCodeLeaf = new FunctionIdMerklePatriciaTrieLeafData(allCodeFunctionId, code, allCode);
+    leaves.addLeaf(allCodeLeaf);
 
     for (Bytes functionId: allCombinedCodeBlocks.keySet()) {
       Map<Integer, Integer> startLen = allCombinedCodeBlocks.get(functionId);

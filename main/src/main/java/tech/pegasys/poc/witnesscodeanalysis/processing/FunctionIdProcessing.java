@@ -33,7 +33,8 @@ public class FunctionIdProcessing extends AbstractProcessing {
   public static final String DEFAULT_NAME =  "functionid";
 
   private int numSuccessful = 0;
-  private int numFailUnknownReason = 0;
+  private int numFailUnknownReason1 = 0;
+  private int numFailUnknownReason2 = 0;
   private int numFailInvalidJumpDest = 0;
   private int numFailCodeCopyDynamicParameters = 0;
   private int numFailDynamicJump = 0;
@@ -45,7 +46,7 @@ public class FunctionIdProcessing extends AbstractProcessing {
   }
 
   @Override
-  protected void executeProcessing(Bytes code) throws Exception {
+  protected void executeProcessing(int id, String deployedAddress, Bytes code) throws Exception {
     LOG.trace(" Function Id Analysis");
 
     UnableToProcess unableToProcessInstance = UnableToProcess.getInstance();
@@ -61,12 +62,17 @@ public class FunctionIdProcessing extends AbstractProcessing {
         // Should be able to analyse
         FunctionIdProcess fidAnalysis = new FunctionIdProcess(code, simple.getEndOfFunctionIdBlock(), simple.getEndOfCode(), simple.getJumpDests());
         FunctionIdAllLeaves leaves = fidAnalysis.executeAnalysis();
-        if (leaves != null) {
-          LOG.trace("  Function Id Process found {} functions", leaves.getLeaves().size());
+        leaves.setContractInfo(id, deployedAddress);
+
+        if (this.json) {
+          gson.toJson(leaves, this.writer);
+        }
+        else {
+          throw new Error("NOT IMPLEMENTED YET");
         }
 
+        LOG.trace("  Function Id Process found {} functions", leaves.getLeaves().size());
         this.numSuccessful++;
-        // TODO output JSON or CSV results
       }
     } catch (UnableToProcessException ex) {
       LOG.info(" Unable to Process: {}: {}", unableToProcessInstance.getReason(), unableToProcessInstance.getMessage());
@@ -87,11 +93,12 @@ public class FunctionIdProcessing extends AbstractProcessing {
         default:
           LOG.error("Unknown failure reason: {}", ex.getReason() );
           logStackTrace(ex);
+          this.numFailUnknownReason1++;
           break;
       }
     } catch (Throwable th) {
       logStackTrace(th);
-      this.numFailUnknownReason++;
+      this.numFailUnknownReason2++;
     }
   }
 
@@ -100,6 +107,8 @@ public class FunctionIdProcessing extends AbstractProcessing {
         analysisName.toUpperCase(), this.numberProcessed, this.numSuccessful);
     LOG.info("   Fail(End Of FunctionId Block Not Found): {}, Fail(Dynamic Jump): {}, Fail(Invalid Jump Dest): {}, Fail(Copy Copy Dynamic): {}",
         this.numFailEndFunctionIdBlockNotFound, this.numFailDynamicJump, this.numFailInvalidJumpDest, this.numFailCodeCopyDynamicParameters);
+    LOG.info("   Fail(Unknown Reason1): {}, Fail(Processing Failed): {}",
+        this.numFailUnknownReason1, this.numFailUnknownReason2);
   }
 
 }

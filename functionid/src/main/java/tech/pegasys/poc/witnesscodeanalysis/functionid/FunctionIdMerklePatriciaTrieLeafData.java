@@ -30,11 +30,11 @@ import java.util.Map;
  *
  */
 public class FunctionIdMerklePatriciaTrieLeafData {
-  private Bytes functionId;
+  private byte[] functionId;
   private byte[] encodedLeaf;
 
   public FunctionIdMerklePatriciaTrieLeafData(Bytes functionId, Bytes code, Map<Integer, Integer> blocks) {
-    this.functionId = functionId;
+    this.functionId = functionId.toArray();
     int numBlocks = blocks.size();
 
     byte[] codeBytes = code.toArray();
@@ -53,7 +53,7 @@ public class FunctionIdMerklePatriciaTrieLeafData {
   }
 
   public Bytes getFunctionId() {
-    return functionId;
+    return Bytes.wrap(functionId);
   }
 
   public byte[] getEncodedLeaf() {
