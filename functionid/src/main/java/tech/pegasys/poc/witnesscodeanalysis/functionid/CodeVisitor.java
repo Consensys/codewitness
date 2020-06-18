@@ -283,7 +283,7 @@ public class CodeVisitor {
     OperandStack stack = frame.getCopyOfStack();
 
     // Try to detect recursive functions and deal with them separately.
-    final int RECURSIVE_FUNCTION_THRESHOLD = 20;
+    final int RECURSIVE_FUNCTION_THRESHOLD = 10;
     if (stack.size() > RECURSIVE_FUNCTION_THRESHOLD) {
       for (OperandStack existingStack: existingCodeSegment.previousSegmentStacks) {
         int stackToCheck = RECURSIVE_FUNCTION_THRESHOLD;

@@ -22,7 +22,6 @@ import tech.pegasys.poc.witnesscodeanalysis.vm.operations.CodeCopyOperation;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
@@ -34,7 +33,6 @@ public class FunctionIdProcess {
   int endOfCode;
   Set<Integer> jumpDests;
 
-  CodeCopyConsumer codeCopyBlocksConsumer;
 
 
   CodePaths codePaths;
@@ -44,9 +42,7 @@ public class FunctionIdProcess {
     this.endOfFunctionIdBlock = endOfFunctionIdBlock;
     this.endOfCode = endOfCode;
     this.jumpDests = jumpDests;
-
-    this.codeCopyBlocksConsumer = new CodeCopyConsumer();
-    CodeCopyOperation.setConsumer(this.codeCopyBlocksConsumer);
+    CodeCopyOperation.setConsumer(CodeCopyConsumer.getInstance());
   }
 
 
@@ -66,14 +62,6 @@ public class FunctionIdProcess {
     LOG.trace("Combining Code Segments using bytes between segments: {}", COMBINATION_GAP);
     codePaths.combineCodeSegments(COMBINATION_GAP);
 
-    Collection<BasicBlockWithCode> blocks = this.codeCopyBlocksConsumer.getBlocks();
-    if (blocks != null) {
-      LOG.info("******** num copy Code blocks: {}", blocks.size());
-      for (BasicBlockWithCode block: blocks) {
-        LOG.info("  block: start: {}, len: {}", block.getStart(), block.getLength());
-      }
-    }
-
     CodeCopyOperation.removeConsumer();
     return createMerklePatriciaTrieLeaves();
   }
@@ -92,35 +80,4 @@ public class FunctionIdProcess {
     }
     return leaves;
   }
-
-
-  class CodeCopyConsumer implements CodeCopyOperation.BasicBlockConsumer {
-    Map<Integer, BasicBlockWithCode> blocks;
-
-    CodeCopyConsumer() {
-      this.blocks = new TreeMap();
-    }
-
-
-    @Override
-    public void addNewBlock(BasicBlockWithCode block) {
-      BasicBlockWithCode existing = this.blocks.get(block.getStart());
-      if (existing != null) {
-        if (existing.getLength() != block.getLength()) {
-          LOG.info("******** A code copy block was inserted with a different length to the existing block");
-          LOG.info("Existing: Start: {}, Length: {}", existing.getStart(), existing.getLength());
-          LOG.info("New: Start: {}, Length: {}", block.getStart(), block.getLength());
-        }
-      }
-      else {
-        blocks.put(block.getStart(), block);
-      }
-    }
-
-    public Collection<BasicBlockWithCode> getBlocks() {
-      return this.blocks.values();
-    }
-
-  }
-
 }
