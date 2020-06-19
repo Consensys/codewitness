@@ -29,12 +29,15 @@ public class FunctionCodeUsage {
     int codeSize = 0;
     ArrayList<FunctionIdMerklePatriciaTrieLeafData> leaves = allLeaves.getLeaves();
     for (FunctionIdMerklePatriciaTrieLeafData leaf: leaves) {
+      int totalLength = 0;
       Bytes functionId = leaf.getFunctionId();
       LOG.info("FunctionId: {}", functionId);
       BasicBlockWithCode[] blocks = leaf.getBasicBlocksWithCode();
       for (BasicBlockWithCode block: blocks) {
         LOG.info(" Block start: {}, len: {}", block.getStart(), block.getLength());
+        totalLength += block.getLength();
       }
+      LOG.info(" Total length {} bytes", totalLength);
 
       if (functionId.compareTo(this.allCodeFunctionId) == 0) {
         codeSize = blocks[0].getLength();
@@ -42,7 +45,7 @@ public class FunctionCodeUsage {
     }
 
     char used = 'X';
-    char notUsed = '_';
+    char notUsed = '.';
     int columns = 80;
     int rows = 10;
     int volume = columns * rows;
@@ -54,6 +57,8 @@ public class FunctionCodeUsage {
       quantizationStep = codeSize / volume + 1;
     }
     boolean[] inUse = new boolean[codeSize/quantizationStep];
+    boolean[] notUsedEver = new boolean[codeSize/quantizationStep];
+    Arrays.fill(notUsedEver, true);
 
     leaves = allLeaves.getLeaves();
     for (FunctionIdMerklePatriciaTrieLeafData leaf: leaves) {
@@ -65,6 +70,9 @@ public class FunctionCodeUsage {
       for (BasicBlockWithCode block: blocks) {
         for (int i = block.getStart(); i < block.getStart() + block.getLength(); i++) {
           inUse[i/quantizationStep] = true;
+          if (functionId.compareTo(this.allCodeFunctionId) != 0) {
+            notUsedEver[i/quantizationStep] = false;
+          }
         }
       }
 
@@ -77,6 +85,14 @@ public class FunctionCodeUsage {
       System.out.println();
     }
 
+    System.out.println("Not used");
+    for (int i = 0; i < inUse.length; i++) {
+      System.out.print(notUsedEver[i] ? used : notUsed);
+      if ((i+1) % columns == 0) {
+        System.out.println();
+      }
+    }
+    System.out.println();
 
 
   }
