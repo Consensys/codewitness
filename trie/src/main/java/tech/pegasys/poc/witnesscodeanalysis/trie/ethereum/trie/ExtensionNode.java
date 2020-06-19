@@ -49,6 +49,10 @@ class ExtensionNode<V> implements Node<V> {
     return visitor.visit(this, path);
   }
 
+  public Bytes32 computeRootHash(final Bytes prefixPath) {
+    return this.getChild().computeRootHash(Bytes.concatenate(prefixPath, this.getPath()));
+  }
+
   @Override
   public void accept(final NodeVisitor<V> visitor) {
     visitor.visit(this);

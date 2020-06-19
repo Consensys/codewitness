@@ -64,6 +64,19 @@ class BranchNode<V> implements Node<V> {
     return visitor.visit(this, path);
   }
 
+  public Bytes32 computeRootHash(Bytes prefixPath) {
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
+    out.startList();
+    for (int i = 0; i < RADIX; ++i) {
+      Bytes32 branchElemHash = children.get(i).computeRootHash(Bytes.concatenate(prefixPath, Bytes.of(i)));
+      if(branchElemHash != Bytes32.ZERO) {
+        out.writeRLPUnsafe(branchElemHash);
+      }
+    }
+    out.endList();
+    return keccak256(out.encoded());
+  }
+
   @Override
   public void accept(final NodeVisitor<V> visitor) {
     visitor.visit(this);

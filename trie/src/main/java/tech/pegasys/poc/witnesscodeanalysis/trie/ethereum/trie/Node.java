@@ -24,6 +24,8 @@ public interface Node<V> {
 
   Node<V> accept(PathNodeVisitor<V> visitor, Bytes path);
 
+  default Bytes32 computeRootHash(Bytes prefixPath) { return Bytes32.ZERO; }
+
   void accept(NodeVisitor<V> visitor);
 
   Bytes getPath();

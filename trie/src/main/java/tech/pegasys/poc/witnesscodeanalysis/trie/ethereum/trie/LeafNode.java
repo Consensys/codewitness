@@ -54,6 +54,11 @@ class LeafNode<V> implements Node<V> {
   }
 
   @Override
+  public Bytes32 computeRootHash(Bytes prefixPath) {
+    return keccak256(Bytes.concatenate(prefixPath, getRlp()));
+  }
+
+  @Override
   public void accept(final NodeVisitor<V> visitor) {
     visitor.visit(this);
   }
