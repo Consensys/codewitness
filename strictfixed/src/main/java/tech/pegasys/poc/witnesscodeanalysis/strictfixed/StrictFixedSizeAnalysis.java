@@ -31,15 +31,13 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 
 public class StrictFixedSizeAnalysis extends CodeAnalysisBase {
   private static final Logger LOG = getLogger();
-  private int threshold;
-  private boolean isInvalidSeen;
+  private int chunkSize;
 
   public static OperationRegistry registry = MainnetEvmRegistries.berlin(BigInteger.ONE);
 
-  public StrictFixedSizeAnalysis(Bytes code, int threshold) {
+  public StrictFixedSizeAnalysis(Bytes code, int chunkSize) {
     super(code);
-    this.threshold = threshold;
-    isInvalidSeen = false;
+    this.chunkSize = chunkSize;
   }
 
   public ArrayList<Integer> analyse() {
@@ -48,37 +46,44 @@ public class StrictFixedSizeAnalysis extends CodeAnalysisBase {
     ArrayList<Integer> chunkStartOffsets = new ArrayList<>();
     chunkStartOffsets.add(0);
 
-    LOG.info("Possible End of code: {}", this.possibleEndOfCode);
-    while (pc != this.possibleEndOfCode) {
+    int codeLength = this.code.size();
 
-      final Operation curOp = registry.get(code.get(pc), 0);
-      if (curOp == null) {
-        LOG.error("Unknown opcode 0x{} at PC {}", Integer.toHexString(code.get(pc)), PcUtils.pcStr(pc));
-        throw new Error("Unknown opcode");
+    // True when the part of the contract being processed is definitely code.
+    boolean executableCodeSection = true;
+
+    LOG.trace(" Contract size: {}", codeLength);
+    while (pc < codeLength) {
+      if (executableCodeSection) {
+        // While processing executable code, determine the start offset of the
+        // the first opcode.
+        final Operation curOp = registry.get(code.get(pc), 0);
+        if (curOp == null) {
+          LOG.trace(" Found unknown opcode at PC: {}", PcUtils.pcStr(pc));
+          executableCodeSection = false;
+          // Move the PC to the end of the chunk.
+          pc += this.chunkSize - pc % this.chunkSize;
+          continue;
+        }
+        int opSize = curOp.getOpSize();
+
+        // Detect the end of the chunk
+        if(currentChunkSize + opSize >= this.chunkSize) {
+          currentChunkSize = currentChunkSize + opSize - this.chunkSize;
+          pc += opSize;
+          // Since the start addresses are fairly standard, we will track the offset to the first
+          // instruction in the chunk in this analysis.
+          chunkStartOffsets.add(currentChunkSize);
+        }
+        else {
+          currentChunkSize += opSize;
+          pc += opSize;
+        }
       }
-      int opSize = curOp.getOpSize();
-
-      if(isInvalidSeen && curOp.getOpcode() == JumpOperation.OPCODE) {
-        LOG.info("JUMP after Invalid is seen. Ending.");
-        break;
+      else {
+        // processing non-executable code
+        chunkStartOffsets.add(0);
+        pc += this.chunkSize;
       }
-
-      if (curOp.getOpcode() == InvalidOperation.OPCODE) {
-        LOG.info("Invalid OPCODE is hit.");
-        isInvalidSeen = true;
-      }
-
-      if(currentChunkSize + opSize >= threshold) {
-        currentChunkSize = 0;
-        pc += opSize;
-        // Since the start addresses are fairly standard, we will track the offset to the first
-        // instruction in the chunk in this analysis.
-        chunkStartOffsets.add(pc % threshold);
-        continue;
-      }
-
-      currentChunkSize += opSize;
-      pc += opSize;
     }
 
     return chunkStartOffsets;
