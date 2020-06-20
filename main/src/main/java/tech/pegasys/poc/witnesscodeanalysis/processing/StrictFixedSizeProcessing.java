@@ -42,13 +42,13 @@ public class StrictFixedSizeProcessing extends AbstractProcessing {
 
   @Override
   protected void executeProcessing(int id, String[] deployedAddresses, Bytes code) throws Exception {
-    ArrayList<Integer> chunkStartAddresses;
+    ArrayList<Integer> chunkStartOffsets;
     ChunkData chunkData;
 
     LOG.trace(" StrictFixedSize Analysis started");
-    chunkStartAddresses = new StrictFixedSizeAnalysis(code, this.threshold).analyse();
-    LOG.trace("  Finished. {} chunks", chunkStartAddresses.size());
-    chunkData = new ChunkData(id, deployedAddresses, chunkStartAddresses, code, true, this.threshold);
+    chunkStartOffsets = new StrictFixedSizeAnalysis(code, this.threshold).analyse();
+    LOG.trace("  Finished. {} chunks", chunkStartOffsets.size());
+    chunkData = new ChunkData(id, deployedAddresses, chunkStartOffsets, code, true, this.threshold);
 
     if (this.json) {
       gson.toJson(chunkData, this.writer);
