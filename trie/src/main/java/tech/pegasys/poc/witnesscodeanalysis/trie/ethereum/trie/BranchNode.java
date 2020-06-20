@@ -68,13 +68,42 @@ class BranchNode<V> implements Node<V> {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
     for (int i = 0; i < RADIX; ++i) {
-      Bytes32 branchElemHash = children.get(i).computeRootHash(Bytes.concatenate(prefixPath, Bytes.of(i)));
-      if(branchElemHash != Bytes32.ZERO) {
+      if(!(children.get(i) instanceof NullNode)) {
+        Bytes32 branchElemHash = children.get(i).computeRootHash(Bytes.concatenate(prefixPath, Bytes.of(i)));
         out.writeRLPUnsafe(branchElemHash);
       }
     }
     out.endList();
     return keccak256(out.encoded());
+  }
+
+  public Node<V> constructMultiproof(List<Bytes> keys, NodeFactory<V> nodeFactory) {
+    ArrayList<Node<V>> proofChildren = new ArrayList<>();
+
+    for(int i = 0; i < RADIX; i ++) {
+      if (children.get(i) instanceof NullNode) {
+        proofChildren.add(i, NullNode.instance());
+        continue;
+      }
+
+      boolean match = false;
+      List<Bytes> newkeys = new ArrayList<>();
+      for(Bytes key : keys) {
+        // Matching the first nibble of the key with the branch label
+        if(key.get(0) == i) {
+          newkeys.add(key.shiftRight(1));
+          match = true;
+        }
+      }
+
+      if(match) {
+        Node<V> proofChild = children.get(i).constructMultiproof(newkeys, nodeFactory);
+        proofChildren.add(i, proofChild);
+      } else {
+        proofChildren.add(i, nodeFactory.createProofHash(children.get(i).getRlpRef()));
+      }
+    }
+    return nodeFactory.createBranch(proofChildren, Optional.empty());
   }
 
   @Override

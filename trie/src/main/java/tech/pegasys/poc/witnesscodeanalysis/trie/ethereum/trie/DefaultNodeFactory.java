@@ -21,6 +21,8 @@ import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 
+import static tech.pegasys.poc.witnesscodeanalysis.trie.crypto.Hash.keccak256;
+
 class DefaultNodeFactory<V> implements NodeFactory<V> {
   @SuppressWarnings("rawtypes")
   private static final Node NULL_NODE = NullNode.instance();
@@ -67,5 +69,10 @@ class DefaultNodeFactory<V> implements NodeFactory<V> {
   @Override
   public Node<V> createLeaf(final Bytes path, final V value) {
     return new LeafNode<>(path, value, this, valueSerializer);
+  }
+
+  @Override
+  public Node<V> createProofHash(final Bytes toHash) {
+    return new MerkleProofHashNode<>(keccak256(toHash));
   }
 }

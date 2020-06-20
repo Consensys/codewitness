@@ -76,6 +76,10 @@ public class SimpleMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
     return new Proof<>(value, proof);
   }
 
+  public MultiMerkleProof<V> getValuesWithMultiMerkleProof(List<Bytes> keys) {
+    return new MultiMerkleProof<>(root.constructMultiproof(keys, nodeFactory));
+  }
+
   @Override
   public void put(final K key, final V value) {
     checkNotNull(key);

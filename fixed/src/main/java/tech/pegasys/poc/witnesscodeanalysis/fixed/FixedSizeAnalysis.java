@@ -19,6 +19,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import tech.pegasys.poc.witnesscodeanalysis.CodeAnalysisBase;
 import tech.pegasys.poc.witnesscodeanalysis.common.PcUtils;
+import tech.pegasys.poc.witnesscodeanalysis.trie.ethereum.trie.MultiMerkleProof;
 import tech.pegasys.poc.witnesscodeanalysis.trie.ethereum.trie.Proof;
 import tech.pegasys.poc.witnesscodeanalysis.trie.ethereum.trie.SimpleMerklePatriciaTrie;
 import tech.pegasys.poc.witnesscodeanalysis.vm.MainnetEvmRegistries;
@@ -116,6 +117,8 @@ public class FixedSizeAnalysis extends CodeAnalysisBase {
    * This method constructs proof and prints some statistics
    */
   public void proof(int index) {
-    Proof<Bytes> proof = codeTrie.getValueWithProof(Bytes32.leftPad(Bytes.of(index)));
+    ArrayList<Bytes> keys = new ArrayList<>();
+    keys.add(Bytes.wrap(Bytes32.leftPad(Bytes.of(index))));
+    MultiMerkleProof multiMerkleProof = codeTrie.getValuesWithMultiMerkleProof(keys);
   }
 }

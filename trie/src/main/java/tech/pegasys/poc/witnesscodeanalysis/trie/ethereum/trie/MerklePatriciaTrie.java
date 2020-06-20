@@ -51,6 +51,16 @@ public interface MerklePatriciaTrie<K, V> {
   Proof<V> getValueWithProof(K key);
 
   /**
+   * Returns a MultiMerkleProof along with the values
+   *
+   * @param keys The list of keys for which the multi Merkle proof is desired.
+   * @return a multi Merkle proof along with the data
+   */
+   default MultiMerkleProof<V> getValuesWithMultiMerkleProof(List<Bytes> keys) {
+     return new MultiMerkleProof<>(NullNode.instance());
+   }
+
+  /**
    * Updates the value mapped to the specified key, creating the mapping if one does not already
    * exist.
    *

@@ -25,6 +25,7 @@ public interface Node<V> {
   Node<V> accept(PathNodeVisitor<V> visitor, Bytes path);
 
   default Bytes32 computeRootHash(Bytes prefixPath) { return Bytes32.ZERO; }
+  default Node<V> constructMultiproof(List<Bytes> keys, NodeFactory<V> nodeFactory) { return NullNode.instance(); }
 
   void accept(NodeVisitor<V> visitor);
 

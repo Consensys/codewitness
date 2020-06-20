@@ -16,18 +16,22 @@ package tech.pegasys.poc.witnesscodeanalysis.trie.ethereum.trie;
 
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import tech.pegasys.poc.witnesscodeanalysis.trie.ethereum.rlp.BytesValueRLPOutput;
 import tech.pegasys.poc.witnesscodeanalysis.trie.ethereum.rlp.RLP;
 
+import static org.apache.logging.log4j.LogManager.getLogger;
 import static tech.pegasys.poc.witnesscodeanalysis.trie.crypto.Hash.keccak256;
 
 class ExtensionNode<V> implements Node<V> {
+  private static final Logger LOG = getLogger();
   private final Bytes path;
   private final Node<V> child;
   private final NodeFactory<V> nodeFactory;
@@ -51,6 +55,19 @@ class ExtensionNode<V> implements Node<V> {
 
   public Bytes32 computeRootHash(final Bytes prefixPath) {
     return this.getChild().computeRootHash(Bytes.concatenate(prefixPath, this.getPath()));
+  }
+
+  public Node<V> constructMultiproof(List<Bytes> keys, NodeFactory<V> nodeFactory) {
+    // The prefixes of all the keys should exactly match the path of this extension node
+    List<Bytes> newkeys = new ArrayList<>();
+    for(Bytes key : keys) {
+      if(path != key.slice(0, path.size())) {
+        LOG.error("EXTENSION NODE PATH = {}, AND GIVEN KEY = {} does not match", path.toHexString(), key.toHexString());
+        return NullNode.instance();
+      }
+      newkeys.add(key.slice(path.size()));
+    }
+    return nodeFactory.createExtension(path, child.constructMultiproof(newkeys, nodeFactory));
   }
 
   @Override
