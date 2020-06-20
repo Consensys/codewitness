@@ -19,12 +19,14 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import tech.pegasys.poc.witnesscodeanalysis.trie.ethereum.rlp.RLP;
+
+import static tech.pegasys.poc.witnesscodeanalysis.trie.crypto.Hash.keccak256;
 
 public interface Node<V> {
 
   Node<V> accept(PathNodeVisitor<V> visitor, Bytes path);
 
-  default Bytes32 computeRootHash(Bytes prefixPath) { return Bytes32.ZERO; }
   default Node<V> constructMultiproof(List<Bytes> keys, NodeFactory<V> nodeFactory) { return NullNode.instance(); }
 
   void accept(NodeVisitor<V> visitor);

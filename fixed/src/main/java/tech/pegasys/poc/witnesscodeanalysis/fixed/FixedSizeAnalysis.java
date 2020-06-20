@@ -96,7 +96,7 @@ public class FixedSizeAnalysis extends CodeAnalysisBase {
    * plain natural number addresses as keys, and code chunks as values
    */
   public void merkelize() {
-    codeTrie = new SimpleMerklePatriciaTrie<Bytes32, Bytes>(v->v);
+    codeTrie = new SimpleMerklePatriciaTrie<>(v->v);
     int numChunks = chunkStartAddresses.size();
     // The keys are just plain natural number indices
     for (int index=0; index < numChunks; index++) {
@@ -116,14 +116,13 @@ public class FixedSizeAnalysis extends CodeAnalysisBase {
    * This method constructs proof and prints some statistics
    */
   public void proof(int index) {
-    LOG.info("MultiMerkleProof Construction Start");
     ArrayList<Bytes> keys = new ArrayList<>();
     keys.add(Bytes.wrap(Bytes32.leftPad(Bytes.of(index))));
     MultiMerkleProof multiMerkleProof = codeTrie.getValuesWithMultiMerkleProof(keys);
-    multiMerkleProof.print();
-    Bytes32 computedRootHash = multiMerkleProof.computeRootHash();
-    LOG.info("Trie Root Hash = {}, Computed Root hash = {}, Equal = {}",
-      codeTrie.getRootHash().toHexString(), computedRootHash.toHexString(),
-      codeTrie.getRootHash() == computedRootHash);
+    Bytes32 codeTrieRootHash = codeTrie.getRootHash();
+    Bytes32 computedRootHash2 = multiMerkleProof.computeRootHash();
+    LOG.info("Multiproof constructed. Trie Root Hash = {}, Computed Root hash = {}, Verified = {}",
+      codeTrieRootHash.toHexString(), computedRootHash2.toHexString(),
+      codeTrieRootHash.equals(computedRootHash2));
   }
 }

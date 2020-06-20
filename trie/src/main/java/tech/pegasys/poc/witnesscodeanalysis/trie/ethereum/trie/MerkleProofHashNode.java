@@ -20,6 +20,7 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import tech.pegasys.poc.witnesscodeanalysis.trie.ethereum.rlp.RLP;
 
 class MerkleProofHashNode<V> implements Node<V> {
   // Actual Merkle Proof component
@@ -61,15 +62,13 @@ class MerkleProofHashNode<V> implements Node<V> {
 
   @Override
   public Bytes getRlpRef() {
-    return MerklePatriciaTrie.EMPTY_TRIE_NODE;
+    return RLP.encodeOne(hash);
   }
 
   @Override
   public Bytes32 getHash() {
     return hash;
   }
-
-  public Bytes32 computeRootHash(Bytes prefixPath) { return hash; }
 
   @Override
   public Node<V> replacePath(final Bytes path) {

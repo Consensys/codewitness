@@ -20,6 +20,9 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import tech.pegasys.poc.witnesscodeanalysis.trie.ethereum.rlp.RLP;
+
+import static tech.pegasys.poc.witnesscodeanalysis.trie.crypto.Hash.keccak256;
 
 class NullNode<V> implements Node<V> {
   @SuppressWarnings("rawtypes")

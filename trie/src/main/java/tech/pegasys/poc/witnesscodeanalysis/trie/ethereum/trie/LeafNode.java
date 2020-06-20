@@ -57,11 +57,6 @@ class LeafNode<V> implements Node<V> {
   }
 
   @Override
-  public Bytes32 computeRootHash(Bytes prefixPath) {
-    return keccak256(Bytes.concatenate(prefixPath, getRlp()));
-  }
-
-  @Override
   public Node<V> constructMultiproof(List<Bytes> keys, NodeFactory<V> nodeFactory) {
     if(keys.size() != 1) {
       LOG.error("Construct LeafNode should be called with only one key. It is called with {} keys", keys.size());
@@ -74,7 +69,6 @@ class LeafNode<V> implements Node<V> {
       return NullNode.instance();
     }
 
-    LOG.info("Leaf Node created");
     return nodeFactory.createLeaf(this.path, this.value);
   }
 
