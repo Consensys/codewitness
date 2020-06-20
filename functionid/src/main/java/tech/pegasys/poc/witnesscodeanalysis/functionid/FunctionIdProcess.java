@@ -16,10 +16,10 @@ package tech.pegasys.poc.witnesscodeanalysis.functionid;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
-import tech.pegasys.poc.witnesscodeanalysis.BasicBlockWithCode;
+import tech.pegasys.poc.witnesscodeanalysis.common.UnableToProcessException;
+import tech.pegasys.poc.witnesscodeanalysis.common.UnableToProcessReason;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.CodeCopyOperation;
 
-import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -47,45 +47,40 @@ public class FunctionIdProcess {
   }
 
 
-  public FunctionIdAllLeaves executeAnalysis() {
+  public void executeAnalysis(FunctionIdAllResult result) {
     this.codePaths = new CodePaths(this.code, this.jumpDests);
     codePaths.findFunctionBlockCodePaths(this.endOfFunctionIdBlock);
     codePaths.findCodeSegmentsForFunctions();
 
     codePaths.showAllCodePaths();
-    boolean codePathsValid = codePaths.validateCodeSegments(this.endOfCode);
-    LOG.trace("Code Paths Valid: {}", codePathsValid);
-    if (!codePathsValid) {
-      return null;
-    }
+    // Validate Code Segments throws an exception if there is an issue.
+    this.codePaths.validateCodeSegments(this.endOfCode);
 
-    int COMBINATION_GAP = 4;
+    int COMBINATION_GAP = 0;
     LOG.trace("Combining Code Segments using bytes between segments: {}", COMBINATION_GAP);
     codePaths.combineCodeSegments(COMBINATION_GAP);
 
     CodeCopyOperation.removeConsumer();
-    return createMerklePatriciaTrieLeaves();
+    createMerklePatriciaTrieLeaves(result);
   }
 
 
-  private FunctionIdAllLeaves createMerklePatriciaTrieLeaves() {
+  private void createMerklePatriciaTrieLeaves(FunctionIdAllResult result) {
     // Map of function id to Map of start to length.
     Map<Bytes, Map<Integer, Integer>> allCombinedCodeBlocks = this.codePaths.getAllCombinedCodeBlocks();
-    FunctionIdAllLeaves leaves = new FunctionIdAllLeaves();
 
     // Add in a leaf with all code. It has an invalid function id that is 5 bytes long.
     Bytes allCodeFunctionId = Bytes.wrap(new byte[]{1, 0, 0, 0, 0});
     Map<Integer, Integer> allCode = new TreeMap<>();
     allCode.put(0, this.code.size());
     FunctionIdMerklePatriciaTrieLeafData allCodeLeaf = new FunctionIdMerklePatriciaTrieLeafData(allCodeFunctionId, code, allCode);
-    leaves.addLeaf(allCodeLeaf);
+    result.addLeaf(allCodeLeaf);
 
     for (Bytes functionId: allCombinedCodeBlocks.keySet()) {
       Map<Integer, Integer> startLen = allCombinedCodeBlocks.get(functionId);
       FunctionIdMerklePatriciaTrieLeafData leaf = new FunctionIdMerklePatriciaTrieLeafData(functionId, code, startLen);
-      leaves.addLeaf(leaf);
+      result.addLeaf(leaf);
       LOG.trace("FunctionId: {}, Leaf size: {}", functionId, leaf.getEncodedLeaf().length);
     }
-    return leaves;
   }
 }

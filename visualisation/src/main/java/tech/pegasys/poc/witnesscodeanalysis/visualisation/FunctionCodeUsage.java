@@ -3,7 +3,7 @@ package tech.pegasys.poc.witnesscodeanalysis.visualisation;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import tech.pegasys.poc.witnesscodeanalysis.BasicBlockWithCode;
-import tech.pegasys.poc.witnesscodeanalysis.functionid.FunctionIdAllLeaves;
+import tech.pegasys.poc.witnesscodeanalysis.functionid.FunctionIdAllResult;
 import tech.pegasys.poc.witnesscodeanalysis.functionid.FunctionIdDataSetReader;
 import tech.pegasys.poc.witnesscodeanalysis.functionid.FunctionIdMerklePatriciaTrieLeafData;
 
@@ -23,7 +23,7 @@ public class FunctionCodeUsage {
   }
 
   public void run() throws Exception {
-    FunctionIdAllLeaves allLeaves = this.reader.next();
+    FunctionIdAllResult allLeaves = this.reader.next();
     // Assume leaves aren't null
 
     int codeSize = 0;
@@ -56,6 +56,7 @@ public class FunctionCodeUsage {
     else {
       quantizationStep = codeSize / volume + 1;
     }
+    System.out.println("Quantum Step: " + quantizationStep);
     boolean[] inUse = new boolean[codeSize/quantizationStep];
     boolean[] notUsedEver = new boolean[codeSize/quantizationStep];
     Arrays.fill(notUsedEver, true);

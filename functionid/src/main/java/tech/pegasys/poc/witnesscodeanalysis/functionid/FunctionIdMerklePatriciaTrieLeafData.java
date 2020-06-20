@@ -30,6 +30,8 @@ import java.util.Map;
  *
  */
 public class FunctionIdMerklePatriciaTrieLeafData {
+  public static boolean INCLUDECODE = false;
+
   private byte[] functionId;
   private byte[] encodedLeaf;
 
@@ -45,9 +47,11 @@ public class FunctionIdMerklePatriciaTrieLeafData {
       buf.putShort((short) start);
       int length = blocks.get(start);
       buf.putShort((short) length);
-      byte[] codeFragment = new byte[length];
-      System.arraycopy(codeBytes, start, codeFragment, 0, length);
-      buf.put(codeFragment);
+      if (INCLUDECODE) {
+        byte[] codeFragment = new byte[length];
+        System.arraycopy(codeBytes, start, codeFragment, 0, length);
+        buf.put(codeFragment);
+      }
     }
     this.encodedLeaf = Arrays.copyOf(buf.array(), buf.position());
   }
@@ -69,9 +73,14 @@ public class FunctionIdMerklePatriciaTrieLeafData {
     for (int i=0; i<numBlocks; i++) {
       int start = ((int) buf.getShort() & 0xffff);
       int length = ((int) buf.getShort() & 0xffff);
-      byte[] codeFragment = new byte[length];
-      buf.get(codeFragment);
-      blocks[i] = new BasicBlockWithCode(start, length, Bytes.wrap(codeFragment));
+      if (INCLUDECODE) {
+        byte[] codeFragment = new byte[length];
+        buf.get(codeFragment);
+        blocks[i] = new BasicBlockWithCode(start, length, Bytes.wrap(codeFragment));
+      }
+      else {
+        blocks[i] = new BasicBlockWithCode(start, length, null);
+      }
     }
     return blocks;
   }

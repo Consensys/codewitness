@@ -14,10 +14,7 @@
  */
 package tech.pegasys.poc.witnesscodeanalysis;
 
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.tuweni.bytes.Bytes;
 import tech.pegasys.poc.witnesscodeanalysis.bytecodedump.ByteCodeDump;
 import tech.pegasys.poc.witnesscodeanalysis.common.ContractData;
@@ -72,14 +69,13 @@ public class FunctionIdAnalysis {
 
   public void process(int id, ContractData contractData) {
     Bytes code = Bytes.fromHexString(contractData.getCode());
-    String aDeployedAddress = contractData.getContract_address()[0];
 
     if (SIMPLE) {
-      this.simpleProcessing.process(id, aDeployedAddress, code);
+      this.simpleProcessing.process(id, contractData.getContract_address(), code);
     }
 
     if (FUNCTIONID) {
-      this.functionIdProcessing.process(id, aDeployedAddress, code);
+      this.functionIdProcessing.process(id, contractData.getContract_address(), code);
     }
   }
 

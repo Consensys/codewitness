@@ -16,7 +16,6 @@ package tech.pegasys.poc.witnesscodeanalysis.functionid;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import tech.pegasys.poc.witnesscodeanalysis.common.ContractData;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -47,13 +46,13 @@ public class FunctionIdDataSetReader {
   }
 
 
-  public FunctionIdAllLeaves next() throws Exception {
+  public FunctionIdAllResult next() throws Exception {
     try {
       String line = reader.readLine();
       if (line == null) {
         return null;
       }
-      return gson.fromJson(line, FunctionIdAllLeaves.class);
+      return gson.fromJson(line, FunctionIdAllResult.class);
     } catch (IOException ioe) {
       return null;
     }

@@ -18,6 +18,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import tech.pegasys.poc.witnesscodeanalysis.bytecodedump.ByteCodeDump;
 import tech.pegasys.poc.witnesscodeanalysis.common.ContractData;
+import tech.pegasys.poc.witnesscodeanalysis.functionid.FunctionIdMerklePatriciaTrieLeafData;
 import tech.pegasys.poc.witnesscodeanalysis.processing.FixedSizeProcessing;
 import tech.pegasys.poc.witnesscodeanalysis.processing.FunctionIdProcessing;
 import tech.pegasys.poc.witnesscodeanalysis.processing.JumpDestProcessing;
@@ -32,9 +33,9 @@ public class WitnessCodeAnalysis {
   private static final Logger LOG = getLogger();
 
   public static boolean SIMPLE = true;
-  public static boolean JUMPDEST = false;
-  public static boolean FIXEDSIZE = false;
-  public static boolean STRICTFIXEDSIZE = false;
+  public static boolean JUMPDEST = true;
+  public static boolean FIXEDSIZE = true;
+  public static boolean STRICTFIXEDSIZE = true;
   public static boolean FUNCTIONID = true;
 
   private MainNetContractDataSet dataSet;
@@ -140,26 +141,26 @@ public class WitnessCodeAnalysis {
 
   public void process(int id, ContractData contractData) {
     Bytes code = Bytes.fromHexString(contractData.getCode());
-    String aDeployedAddress = contractData.getContract_address()[0];
+
 
     if (SIMPLE) {
-      this.simpleProcessing.process(id, aDeployedAddress, code);
+      this.simpleProcessing.process(id, contractData.getContract_address(), code);
     }
 
     if (JUMPDEST) {
-      this.jumpDestProcessing.process(id, aDeployedAddress, code);
+      this.jumpDestProcessing.process(id, contractData.getContract_address(), code);
     }
 
     if (FIXEDSIZE) {
-      this.fixedSizeProcessing.process(id, aDeployedAddress, code);
+      this.fixedSizeProcessing.process(id, contractData.getContract_address(), code);
     }
 
     if (STRICTFIXEDSIZE) {
-      this.strictFixedSizeProcessing.process(id, aDeployedAddress, code);
+      this.strictFixedSizeProcessing.process(id, contractData.getContract_address(), code);
     }
 
     if (FUNCTIONID) {
-      this.functionIdProcessing.process(id, aDeployedAddress, code);
+      this.functionIdProcessing.process(id, contractData.getContract_address(), code);
     }
   }
 
@@ -201,16 +202,18 @@ public class WitnessCodeAnalysis {
 
 
   public static void main(String[] args) throws Exception {
+    FunctionIdMerklePatriciaTrieLeafData.INCLUDECODE = false;
+
     WitnessCodeAnalysis witnessCodeAnalysis = new WitnessCodeAnalysis();
 
     // NOTE: Can only choose one of these.
-//    witnessCodeAnalysis.analyseUpTo(100);
+    witnessCodeAnalysis.analyseUpTo(100);
     //witnessCodeAnalysis.dumpOne(541);
 //    witnessCodeAnalysis.analyseOne(50);
 
 //    witnessCodeAnalysis.analyseDeployedBlockNumbers(9999990, 10000000);
 
-    witnessCodeAnalysis.analyseAll();
+//    witnessCodeAnalysis.analyseAll();
 
     witnessCodeAnalysis.showSummary();
   }

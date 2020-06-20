@@ -16,30 +16,15 @@ package tech.pegasys.poc.witnesscodeanalysis;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.bytes.Bytes;
-import tech.pegasys.poc.witnesscodeanalysis.common.AuxData;
-import tech.pegasys.poc.witnesscodeanalysis.common.ChunkData;
 import tech.pegasys.poc.witnesscodeanalysis.common.ContractData;
-import tech.pegasys.poc.witnesscodeanalysis.common.SimpleAnalysis;
-import tech.pegasys.poc.witnesscodeanalysis.fixed.FixedSizeAnalysis;
-import tech.pegasys.poc.witnesscodeanalysis.functionid.FunctionIdAllLeaves;
-import tech.pegasys.poc.witnesscodeanalysis.functionid.FunctionIdProcess;
-import tech.pegasys.poc.witnesscodeanalysis.jumpdest.JumpDestAnalysis;
 
 import java.io.BufferedReader;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 
-import static java.lang.System.exit;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
 public class MainNetContractDataSet {

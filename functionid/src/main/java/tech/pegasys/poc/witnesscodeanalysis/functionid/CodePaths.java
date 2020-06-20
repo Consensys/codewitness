@@ -18,6 +18,8 @@ import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import tech.pegasys.poc.witnesscodeanalysis.BasicBlockWithCode;
 import tech.pegasys.poc.witnesscodeanalysis.common.PcUtils;
+import tech.pegasys.poc.witnesscodeanalysis.common.UnableToProcessException;
+import tech.pegasys.poc.witnesscodeanalysis.common.UnableToProcessReason;
 import tech.pegasys.poc.witnesscodeanalysis.vm.Code;
 import tech.pegasys.poc.witnesscodeanalysis.vm.MainnetEvmRegistries;
 import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
@@ -161,9 +163,8 @@ public class CodePaths {
   /**
    * Check that all of code is accessed
    *
-   * @return
    */
-  public boolean validateCodeSegments(int endOfCodeOffset) {
+  public void validateCodeSegments(int endOfCodeOffset) {
     LOG.trace("Validating Code Segments");
     boolean done = false;
     int pc = 0;
@@ -186,7 +187,7 @@ public class CodePaths {
             if (next != proposedNext) {
               // Two or more functions have the same segment, but with different lengths.
               LOG.error("Next {} != Proposed Next: {}", next, proposedNext);
-              throw new RuntimeException("Next doesn't match proposed next");
+              throw new UnableToProcessException(UnableToProcessReason.CODE_PATHS_NOT_VALID, "Next doesn't match proposed next");
             }
           }
           else {
@@ -207,7 +208,7 @@ public class CodePaths {
               if (next != proposedNext) {
                 // Two or more functions have the same data, but with different lengths.
                 LOG.error("Block Next {} != Proposed Next: {}", next, proposedNext);
-                throw new RuntimeException("Block Next doesn't match proposed next");
+                throw new UnableToProcessException(UnableToProcessReason.CODE_PATHS_NOT_VALID, "Block Next doesn't match proposed next");
               }
             }
             else {
@@ -239,7 +240,7 @@ public class CodePaths {
           // Probably due to processing data, and not code.
           LOG.trace("Processing continues past end of code. Next: 0x{}, EndOfCode: 0x{}, CodeLength: 0x{}",
               Integer.toHexString(next), Integer.toHexString(endOfCodeOffset), Integer.toHexString(this.codeSize));
-          return true;
+          return;
         }
       }
       else {
@@ -261,7 +262,6 @@ public class CodePaths {
         done = true;
       }
     }
-    return true;
   }
 
 
