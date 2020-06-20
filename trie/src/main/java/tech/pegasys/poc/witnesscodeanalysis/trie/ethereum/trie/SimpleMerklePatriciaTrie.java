@@ -18,6 +18,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.logging.log4j.LogManager.getLogger;
 import static tech.pegasys.poc.witnesscodeanalysis.trie.ethereum.trie.CompactEncoding.bytesToPath;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -77,7 +78,11 @@ public class SimpleMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
   }
 
   public MultiMerkleProof<V> getValuesWithMultiMerkleProof(List<Bytes> keys) {
-    return new MultiMerkleProof<>(root.constructMultiproof(keys, nodeFactory));
+    ArrayList<Bytes> keyPaths = new ArrayList<>();
+    for(Bytes key: keys) {
+      keyPaths.add(CompactEncoding.bytesToPath(key));
+    }
+    return new MultiMerkleProof<>(root.constructMultiproof(keyPaths, nodeFactory));
   }
 
   @Override

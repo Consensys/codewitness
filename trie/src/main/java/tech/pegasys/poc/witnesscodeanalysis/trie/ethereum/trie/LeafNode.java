@@ -68,12 +68,13 @@ class LeafNode<V> implements Node<V> {
       return NullNode.instance();
     }
 
-    if(keys.get(0).slice(0, path.size()) != path) {
+    if(!(keys.get(0).slice(0, path.size()-1).equals(path.slice(0, path.size()-1)))) {
       LOG.error("Construct LeafNode is called with an unmatched key. Key = {}, Path inside leaf = {}",
         keys.get(0).toHexString(), path.toHexString());
       return NullNode.instance();
     }
 
+    LOG.info("Leaf Node created");
     return nodeFactory.createLeaf(this.path, this.value);
   }
 

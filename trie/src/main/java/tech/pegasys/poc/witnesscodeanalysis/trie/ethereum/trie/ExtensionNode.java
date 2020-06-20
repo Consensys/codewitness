@@ -57,11 +57,11 @@ class ExtensionNode<V> implements Node<V> {
     return this.getChild().computeRootHash(Bytes.concatenate(prefixPath, this.getPath()));
   }
 
-  public Node<V> constructMultiproof(List<Bytes> keys, NodeFactory<V> nodeFactory) {
-    // The prefixes of all the keys should exactly match the path of this extension node
+  public Node<V> constructMultiproof(List<Bytes> keyPaths, NodeFactory<V> nodeFactory) {
+    // The prefixes of all the keyPaths should exactly match the path of this extension node
     List<Bytes> newkeys = new ArrayList<>();
-    for(Bytes key : keys) {
-      if(path != key.slice(0, path.size())) {
+    for(Bytes key : keyPaths) {
+      if(!path.slice(0, path.size()-1).equals(key.slice(0, path.size()-1))) {
         LOG.error("EXTENSION NODE PATH = {}, AND GIVEN KEY = {} does not match", path.toHexString(), key.toHexString());
         return NullNode.instance();
       }

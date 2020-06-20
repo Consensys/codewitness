@@ -20,7 +20,6 @@ import org.apache.tuweni.bytes.Bytes32;
 import tech.pegasys.poc.witnesscodeanalysis.CodeAnalysisBase;
 import tech.pegasys.poc.witnesscodeanalysis.common.PcUtils;
 import tech.pegasys.poc.witnesscodeanalysis.trie.ethereum.trie.MultiMerkleProof;
-import tech.pegasys.poc.witnesscodeanalysis.trie.ethereum.trie.Proof;
 import tech.pegasys.poc.witnesscodeanalysis.trie.ethereum.trie.SimpleMerklePatriciaTrie;
 import tech.pegasys.poc.witnesscodeanalysis.vm.MainnetEvmRegistries;
 import tech.pegasys.poc.witnesscodeanalysis.vm.Operation;
@@ -117,8 +116,14 @@ public class FixedSizeAnalysis extends CodeAnalysisBase {
    * This method constructs proof and prints some statistics
    */
   public void proof(int index) {
+    LOG.info("MultiMerkleProof Construction Start");
     ArrayList<Bytes> keys = new ArrayList<>();
     keys.add(Bytes.wrap(Bytes32.leftPad(Bytes.of(index))));
     MultiMerkleProof multiMerkleProof = codeTrie.getValuesWithMultiMerkleProof(keys);
+    multiMerkleProof.print();
+    Bytes32 computedRootHash = multiMerkleProof.computeRootHash();
+    LOG.info("Trie Root Hash = {}, Computed Root hash = {}, Equal = {}",
+      codeTrie.getRootHash().toHexString(), computedRootHash.toHexString(),
+      codeTrie.getRootHash() == computedRootHash);
   }
 }

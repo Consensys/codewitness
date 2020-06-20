@@ -25,16 +25,19 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
 import tech.pegasys.poc.witnesscodeanalysis.trie.ethereum.rlp.BytesValueRLPOutput;
 import tech.pegasys.poc.witnesscodeanalysis.trie.ethereum.rlp.RLP;
 
+import static org.apache.logging.log4j.LogManager.getLogger;
 import static tech.pegasys.poc.witnesscodeanalysis.trie.crypto.Hash.keccak256;
 
 class BranchNode<V> implements Node<V> {
   public static final byte RADIX = CompactEncoding.LEAF_TERMINATOR;
+  private static final Logger LOG = getLogger();
 
   @SuppressWarnings("rawtypes")
   private static final Node NULL_NODE = NullNode.instance();
@@ -80,8 +83,11 @@ class BranchNode<V> implements Node<V> {
   public Node<V> constructMultiproof(List<Bytes> keys, NodeFactory<V> nodeFactory) {
     ArrayList<Node<V>> proofChildren = new ArrayList<>();
 
-    for(int i = 0; i < RADIX; i ++) {
+    LOG.info("Branch node");
+
+    for(byte i = 0; i < RADIX; i ++) {
       if (children.get(i) instanceof NullNode) {
+        LOG.info("Child {} is a NULLNODE", i);
         proofChildren.add(i, NullNode.instance());
         continue;
       }
@@ -100,6 +106,7 @@ class BranchNode<V> implements Node<V> {
         Node<V> proofChild = children.get(i).constructMultiproof(newkeys, nodeFactory);
         proofChildren.add(i, proofChild);
       } else {
+        LOG.info("Keys do not match to any children. Hence creating a hash node.");
         proofChildren.add(i, nodeFactory.createProofHash(children.get(i).getRlpRef()));
       }
     }

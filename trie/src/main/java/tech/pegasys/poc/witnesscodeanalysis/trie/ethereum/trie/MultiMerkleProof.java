@@ -47,6 +47,10 @@ public class MultiMerkleProof<V>  {
     return root.accept(getVisitor, bytesToPath(key)).getValue();
   }
 
+  public void print() {
+    root.print();
+  }
+
   /*
    * This is a bottom-up parsing of the multiMerkleProof. First it computes the hash of the
    * leaf nodes, and progressively goes up, taking Merkle hashes, and finally returns the root hash.
