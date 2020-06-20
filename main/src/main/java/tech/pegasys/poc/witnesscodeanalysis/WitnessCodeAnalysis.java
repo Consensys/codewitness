@@ -18,6 +18,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import tech.pegasys.poc.witnesscodeanalysis.bytecodedump.ByteCodeDump;
 import tech.pegasys.poc.witnesscodeanalysis.common.ContractData;
+import tech.pegasys.poc.witnesscodeanalysis.functionid.FunctionIdMerklePatriciaTrieLeafData;
 import tech.pegasys.poc.witnesscodeanalysis.processing.FixedSizeProcessing;
 import tech.pegasys.poc.witnesscodeanalysis.processing.FunctionIdProcessing;
 import tech.pegasys.poc.witnesscodeanalysis.processing.JumpDestProcessing;
@@ -32,9 +33,9 @@ public class WitnessCodeAnalysis {
   private static final Logger LOG = getLogger();
 
   public static boolean SIMPLE = true;
-  public static boolean JUMPDEST = false;
-  public static boolean FIXEDSIZE = false;
-  public static boolean STRICTFIXEDSIZE = false;
+  public static boolean JUMPDEST = true;
+  public static boolean FIXEDSIZE = true;
+  public static boolean STRICTFIXEDSIZE = true;
   public static boolean FUNCTIONID = true;
 
   private MainNetContractDataSet dataSet;
@@ -59,7 +60,7 @@ public class WitnessCodeAnalysis {
     ContractData contractData;
     while ((contractData = this.dataSet.next()) != null) {
       contractData.showInfo(count);
-      process(contractData);
+      process(count, contractData);
       count++;
 
       if (count % 1000 == 0) {
@@ -74,7 +75,7 @@ public class WitnessCodeAnalysis {
     ContractData contractData;
     while ((contractData = this.dataSet.next()) != null) {
       contractData.showInfo(count);
-      process(contractData);
+      process(count, contractData);
       count++;
       if (count == limit) {
         break;
@@ -89,7 +90,7 @@ public class WitnessCodeAnalysis {
     while ((contractData = this.dataSet.next()) != null) {
       if (count == theOne) {
         contractData.showInfo(count);
-        process(contractData);
+        process(count, contractData);
         break;
       }
       count++;
@@ -112,7 +113,7 @@ public class WitnessCodeAnalysis {
 
       if (analyse) {
         contractData.showInfo(count);
-        process(contractData);
+        process(count, contractData);
       }
       count++;
     }
@@ -138,27 +139,28 @@ public class WitnessCodeAnalysis {
   }
 
 
-  public void process(ContractData contractData) {
+  public void process(int id, ContractData contractData) {
     Bytes code = Bytes.fromHexString(contractData.getCode());
 
+
     if (SIMPLE) {
-      this.simpleProcessing.process(code);
+      this.simpleProcessing.process(id, contractData.getContract_address(), code);
     }
 
     if (JUMPDEST) {
-      this.jumpDestProcessing.process(code);
+      this.jumpDestProcessing.process(id, contractData.getContract_address(), code);
     }
 
     if (FIXEDSIZE) {
-      this.fixedSizeProcessing.process(code);
+      this.fixedSizeProcessing.process(id, contractData.getContract_address(), code);
     }
 
     if (STRICTFIXEDSIZE) {
-      this.strictFixedSizeProcessing.process(code);
+      this.strictFixedSizeProcessing.process(id, contractData.getContract_address(), code);
     }
 
     if (FUNCTIONID) {
-      this.functionIdProcessing.process(code);
+      this.functionIdProcessing.process(id, contractData.getContract_address(), code);
     }
   }
 
@@ -193,22 +195,25 @@ public class WitnessCodeAnalysis {
     this.jumpDestProcessing.close();
     this.fixedSizeProcessing.close();
     this.strictFixedSizeProcessing.close();
+    this.functionIdProcessing.close();
   }
 
 
 
 
   public static void main(String[] args) throws Exception {
+    FunctionIdMerklePatriciaTrieLeafData.INCLUDECODE = false;
+
     WitnessCodeAnalysis witnessCodeAnalysis = new WitnessCodeAnalysis();
 
     // NOTE: Can only choose one of these.
-    //witnessCodeAnalysis.analyseUpTo(541);
+    witnessCodeAnalysis.analyseUpTo(100);
     //witnessCodeAnalysis.dumpOne(541);
-//    witnessCodeAnalysis.analyseOne(541);
+//    witnessCodeAnalysis.analyseOne(50);
 
 //    witnessCodeAnalysis.analyseDeployedBlockNumbers(9999990, 10000000);
 
-    witnessCodeAnalysis.analyseAll();
+//    witnessCodeAnalysis.analyseAll();
 
     witnessCodeAnalysis.showSummary();
   }

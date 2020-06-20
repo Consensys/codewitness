@@ -16,7 +16,10 @@ package tech.pegasys.poc.witnesscodeanalysis.functionid;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import tech.pegasys.poc.witnesscodeanalysis.BasicBlockWithCode;
 import tech.pegasys.poc.witnesscodeanalysis.common.PcUtils;
+import tech.pegasys.poc.witnesscodeanalysis.common.UnableToProcessException;
+import tech.pegasys.poc.witnesscodeanalysis.common.UnableToProcessReason;
 import tech.pegasys.poc.witnesscodeanalysis.vm.Code;
 import tech.pegasys.poc.witnesscodeanalysis.vm.MainnetEvmRegistries;
 import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
@@ -53,6 +56,7 @@ public class CodePaths {
   // The key to the outer map is the function id.
   // The key to the inner map is the start offset with the code of the code segment.
   private Map<Bytes, Map<Integer, CodeSegment>> allCodePaths = new TreeMap<>();
+  private Map<Bytes, Map<Integer, BasicBlockWithCode>> allCodePathsAssociatedData = new TreeMap<>();
 
   // Map of function id to Map of start to length.
   private Map<Bytes, Map<Integer, Integer>> allCombinedCodeBlocks = new TreeMap<>();
@@ -93,6 +97,8 @@ public class CodePaths {
     LOG.trace("Find Code Paths functions");
     for (Bytes functionId: this.foundFunctions.keySet()) {
       LOG.trace("Find Code Paths for functionid: {}", functionId);
+      CodeCopyConsumer.getInstance().reset();
+
       int functionStartOp = this.foundFunctions.get(functionId);
 
       Map<Integer, CodeSegment> functionCodeSegments = new TreeMap<>();
@@ -132,6 +138,7 @@ public class CodePaths {
       visitor.visit(frame, 0);
 
       this.allCodePaths.put(functionId, functionCodeSegments);
+      this.allCodePathsAssociatedData.put(functionId, CodeCopyConsumer.getInstance().getBlocks());
     }
   }
 
@@ -139,26 +146,32 @@ public class CodePaths {
     LOG.trace("Show All Code Paths");
     for (Bytes functionId: this.allCodePaths.keySet()) {
       LOG.trace(" Code Paths for functionid: {}", functionId);
-      Map<Integer, CodeSegment> functionCodeSegments = this.allCodePaths.get(functionId);
 
+      Map<Integer, CodeSegment> functionCodeSegments = this.allCodePaths.get(functionId);
       for (CodeSegment seg : functionCodeSegments.values()) {
         LOG.trace("  {}", seg);
       }
+
+      Map<Integer, BasicBlockWithCode> blocks = this.allCodePathsAssociatedData.get(functionId);
+      for (BasicBlockWithCode block: blocks.values()) {
+        LOG.trace(" {}", block);
+      }
+
     }
   }
 
   /**
    * Check that all of code is accessed
    *
-   * @return
    */
-  public boolean validateCodeSegments(int endOfCodeOffset) {
+  public void validateCodeSegments(int endOfCodeOffset) {
     LOG.trace("Validating Code Segments");
     boolean done = false;
     int pc = 0;
 
     boolean firstOpCodeNotInSegment = true;
     while (!done) {
+      boolean isCode = true;
       int next = CodeSegment.INVALID;
       StringBuffer functionsUsingSegment = new StringBuffer();
       for (Bytes functionId: this.allCodePaths.keySet()) {
@@ -172,12 +185,36 @@ public class CodePaths {
           int proposedNext = codeSegment.length + pc;
           if (next != CodeSegment.INVALID) {
             if (next != proposedNext) {
+              // Two or more functions have the same segment, but with different lengths.
               LOG.error("Next {} != Proposed Next: {}", next, proposedNext);
-              throw new RuntimeException("Next doesn't match proposed next");
+              throw new UnableToProcessException(UnableToProcessReason.CODE_PATHS_NOT_VALID, "Next doesn't match proposed next");
             }
           }
           else {
             next = proposedNext;
+          }
+        }
+        else {
+          Map<Integer, BasicBlockWithCode> blocks = this.allCodePathsAssociatedData.get(functionId);
+          BasicBlockWithCode block = blocks.get(pc);
+          if (block != null) {
+            isCode = false;
+            if (functionsUsingSegment.length() != 0) {
+              functionsUsingSegment.append(", ");
+            }
+            functionsUsingSegment.append(functionId);
+            int proposedNext = block.getLength() + pc;
+            if (next != CodeSegment.INVALID) {
+              if (next != proposedNext) {
+                // Two or more functions have the same data, but with different lengths.
+                LOG.error("Block Next {} != Proposed Next: {}", next, proposedNext);
+                throw new UnableToProcessException(UnableToProcessReason.CODE_PATHS_NOT_VALID, "Block Next doesn't match proposed next");
+              }
+            }
+            else {
+              next = proposedNext;
+            }
+
           }
         }
       }
@@ -200,26 +237,31 @@ public class CodePaths {
 
         next = pc + getOpCodeLength(pc);
         if (next > endOfCodeOffset) {
-          LOG.error("Reached end of code at offset 0x{} ({})", Integer.toHexString(this.codeSize), this.codeSize);
-          // TODO say the format is correct to differentiate from the errors above.
-          return true;
+          // Probably due to processing data, and not code.
+          LOG.trace("Processing continues past end of code. Next: 0x{}, EndOfCode: 0x{}, CodeLength: 0x{}",
+              Integer.toHexString(next), Integer.toHexString(endOfCodeOffset), Integer.toHexString(this.codeSize));
+          return;
         }
       }
       else {
-        LOG.trace("Code segment at offset: 0x{} ({}) used by functions: {}", Integer.toHexString(pc), pc, functionsUsingSegment);
+        if (isCode) {
+          LOG.trace("Code segment at offset: 0x{} ({}) used by functions: {}", Integer.toHexString(pc), pc, functionsUsingSegment);
+        }
+        else {
+          LOG.trace("Data segment at offset: 0x{} ({}) used by functions: {}", Integer.toHexString(pc), pc, functionsUsingSegment);
+        }
         firstOpCodeNotInSegment = true;
       }
       pc = next;
 
       if (pc > endOfCodeOffset+1) {
-        LOG.error("Gone past end of code: pc: {}, end of code: {}", pc, endOfCodeOffset);
-        throw new RuntimeException("Gone past end of code");
+        LOG.error("Code or data segment indicated a length past end of code: pc: {}, end of code: {}", pc, endOfCodeOffset);
+        throw new RuntimeException("Code or data segment ends past end of code");
       }
       if (pc == endOfCodeOffset || pc == endOfCodeOffset+1) {
         done = true;
       }
     }
-    return true;
   }
 
 
@@ -232,6 +274,8 @@ public class CodePaths {
       Map<Integer, CodeSegment> allCodeSegments = this.allCodePaths.get(functionId);
       Map<Integer, Integer> combinedCodeSegments = new TreeMap<>();
 
+      // Combine code segments
+      // Use an ordered set.
       TreeSet<Integer> pathSet = new TreeSet<>(allCodeSegments.keySet());
       Iterator<Integer> iter = pathSet.iterator();
 
@@ -256,6 +300,33 @@ public class CodePaths {
       } while (next != CodeSegment.INVALID);
       // Don't forget to do the final segment!
       combinedCodeSegments.put(startOfs, len);
+
+      // Combine in data blocks
+      Map<Integer, BasicBlockWithCode> blocks = this.allCodePathsAssociatedData.get(functionId);
+      if (blocks.size() != 0) {
+        pathSet = new TreeSet<>(blocks.keySet());
+        iter = pathSet.iterator();
+        startOfs = CodeSegment.INVALID;
+        len = 0;
+        while (iter.hasNext()) {
+          next = iter.next();
+          int length = blocks.get(next).getLength();
+          if (startOfs == CodeSegment.INVALID) {
+            startOfs = next;
+            len = length;
+          }
+          else {
+            if (next - maxNumBytesBetweenCodeSegments <= startOfs + len) {
+              // Combine segments
+              len = next - startOfs + length;
+            } else {
+              combinedCodeSegments.put(startOfs, len);
+              startOfs = next;
+              len = length;
+            }
+          }
+        }
+      }
 
       this.allCombinedCodeBlocks.put(functionId, combinedCodeSegments);
 
