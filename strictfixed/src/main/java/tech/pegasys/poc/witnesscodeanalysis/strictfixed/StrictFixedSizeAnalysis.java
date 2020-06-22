@@ -86,6 +86,10 @@ public class StrictFixedSizeAnalysis extends CodeAnalysisBase {
       }
     }
 
+    LOG.trace(" StrictFixed Analysis found operation start offsets: ");
+    for(Integer e : chunkStartOffsets) {
+      LOG.trace(PcUtils.pcStr(e));
+    }
     return chunkStartOffsets;
   }
 }

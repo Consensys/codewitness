@@ -14,6 +14,7 @@
  */
 package tech.pegasys.poc.witnesscodeanalysis.common;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
@@ -113,24 +114,26 @@ public class ContractData {
 
     // Print out information about the contract to get a feel for how important the results are.
     LOG.info("Processing contract {} deployed at address: {} and {} other times", contractNumber, contractAddress, numDeployments - 1);
-    LOG.info(" Code Size: " + this.code.length() / 2);
-    int firstDeployment = 100000000;
-    int[] deployments = getDeployed_at_block();
-    for (int j = 0; j < numDeployments; j++) {
-      if (deployments[j] < firstDeployment) {
-        firstDeployment = deployments[j];
-      }
-    }
-    LOG.info(" First Deployed at block: " + firstDeployment);
-    int lastTransaction = 0;
-    int[] lastTransactions = getRecent_accessed_at_block();
-    if (lastTransactions != null) {
+    if (LOG.getLevel() == Level.TRACE) {
+      LOG.trace(" Code Size: " + this.code.length() / 2);
+      int firstDeployment = 100000000;
+      int[] deployments = getDeployed_at_block();
       for (int j = 0; j < numDeployments; j++) {
-        if (lastTransactions[j] > lastTransaction) {
-          lastTransaction = lastTransactions[j];
+        if (deployments[j] < firstDeployment) {
+          firstDeployment = deployments[j];
         }
       }
-      LOG.info(" Last transaction for all deployments: {}", lastTransaction);
+      LOG.trace(" First Deployed at block: " + firstDeployment);
+      int lastTransaction = 0;
+      int[] lastTransactions = getRecent_accessed_at_block();
+      if (lastTransactions != null) {
+        for (int j = 0; j < numDeployments; j++) {
+          if (lastTransactions[j] > lastTransaction) {
+            lastTransaction = lastTransactions[j];
+          }
+        }
+        LOG.trace(" Last transaction for all deployments: {}", lastTransaction);
+      }
     }
   }
 }

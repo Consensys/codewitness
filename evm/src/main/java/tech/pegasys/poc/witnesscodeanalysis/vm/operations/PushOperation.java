@@ -28,6 +28,7 @@ import org.apache.tuweni.bytes.MutableBytes32;
 public class PushOperation extends AbstractOperation {
   public static final int PUSH1_OPCODE = 0x60;
   public static final int PUSH2_OPCODE = 0x61;
+  public static final int PUSH3_OPCODE = 0x62;
   public static final int PUSH4_OPCODE = 0x63;
 
   private final int length;

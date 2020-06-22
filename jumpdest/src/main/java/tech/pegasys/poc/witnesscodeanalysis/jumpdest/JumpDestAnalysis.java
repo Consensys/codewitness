@@ -49,44 +49,49 @@ public class JumpDestAnalysis extends CodeAnalysisBase {
     int currentChunkSize = 0;
     ArrayList<Integer> chunkStartAddresses = new ArrayList<>();
     chunkStartAddresses.add(0);
-    while (pc != this.possibleEndOfCode) {
-      final Operation curOp = registry.get(code.get(pc), 0);
-      if (curOp == null) {
-        LOG.error("Unknown opcode 0x{} at PC {}", Integer.toHexString(code.get(pc)), PcUtils.pcStr(pc));
-        throw new Error("Unknown opcode");
-      }
-      int opSize = curOp.getOpSize();
-      int opCode = curOp.getOpcode();
 
-      if(isInvalidSeen && curOp.getOpcode() == JumpOperation.OPCODE) {
-        LOG.info("JUMP after Invalid is seen. Ending.");
-        break;
-      }
+    int codeLength = this.code.size();
 
-      if (opCode == InvalidOperation.OPCODE) {
-        LOG.info("Invalid OPCODE is hit.");
-        isInvalidSeen = true;
-      }
+    // True when the part of the contract being processed is definitely code.
+    boolean executableCodeSection = true;
 
-      if (opCode == JumpDestOperation.OPCODE) {
-        //LOG.info("****Found JumpDest at {}", pc);
-
-        if(currentChunkSize + opSize >= threshold) {
-          currentChunkSize = 0;
-          pc += opSize;
-          chunkStartAddresses.add(pc);
+    while (pc < codeLength) {
+      if (executableCodeSection) {
+        final Operation curOp = registry.get(code.get(pc), 0);
+        if (curOp == null) {
+          LOG.trace("  Found unknown opcode at PC: {}", PcUtils.pcStr(pc));
+          executableCodeSection = false;
+          // Move the PC to the end of the chunk.
+          pc += this.threshold - pc % this.threshold;
           continue;
         }
-      }
+        int opSize = curOp.getOpSize();
+        int opCode = curOp.getOpcode();
 
-      currentChunkSize += opSize;
-      pc += opSize;
+        if (opCode == JumpDestOperation.OPCODE) {
+          LOG.trace("  Found JumpDest at {}", PcUtils.pcStr(pc));
+
+          if(currentChunkSize + opSize >= this.threshold) {
+            currentChunkSize = 0;
+            pc += opSize;
+            chunkStartAddresses.add(pc);
+            continue;
+          }
+        }
+        currentChunkSize += opSize;
+        pc += opSize;
+      }
+      else {
+        // processing non-executable code
+        chunkStartAddresses.add(pc);
+        pc += this.threshold;
+      }
+    }
+    LOG.trace(" JumpDest Analysis found chunk starting addresses: ");
+    for(Integer e : chunkStartAddresses) {
+      LOG.trace(PcUtils.pcStr(e));
     }
 
     return chunkStartAddresses;
-    /*LOG.info("There are {} chunks with starting addresses : ", chunkStartAddresses.size());
-    for(Integer e : chunkStartAddresses) {
-      LOG.info(e);
-    }*/
   }
 }

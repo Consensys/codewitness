@@ -52,12 +52,12 @@ public class FixedSizeProcessing extends AbstractProcessing {
     fixedSizeAnalysis.merkelize();
     fixedSizeAnalysis.computeMultiproofTest();
 
-    /*if (this.json) {
-      gson.toJson(chunkData, this.writer);
-    }
-    else {
-      throw new Error("NOT IMPLEMENTED YET");
-    }*/
+//    if (this.json) {
+//      gson.toJson(chunkData, this.writer);
+//    }
+//    else {
+//      throw new Error("NOT IMPLEMENTED YET");
+//    }
   }
 
 
