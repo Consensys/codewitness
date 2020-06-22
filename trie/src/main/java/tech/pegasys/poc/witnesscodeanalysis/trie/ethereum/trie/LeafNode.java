@@ -57,9 +57,13 @@ class LeafNode<V> implements Node<V> {
   }
 
   @Override
-  public Node<V> constructMultiproof(List<Bytes> keys, NodeFactory<V> nodeFactory) {
+  public Node<V> constructMultiproof(final List<Bytes> keys, final NodeFactory<V> nodeFactory) {
     if(keys.size() != 1) {
-      LOG.error("Construct LeafNode should be called with only one key. It is called with {} keys", keys.size());
+      LOG.error("Construct LeafNode should be called with only one key. It is called with {} keys:", keys.size());
+      for(int i =0; i < keys.size(); i++)
+      {
+        LOG.info(keys.get(i).toHexString());
+      }
       return NullNode.instance();
     }
 

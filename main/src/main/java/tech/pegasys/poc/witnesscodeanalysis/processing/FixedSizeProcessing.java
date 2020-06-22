@@ -16,11 +16,13 @@ package tech.pegasys.poc.witnesscodeanalysis.processing;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import tech.pegasys.poc.witnesscodeanalysis.common.ChunkData;
 import tech.pegasys.poc.witnesscodeanalysis.fixed.FixedSizeAnalysis;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
@@ -46,8 +48,10 @@ public class FixedSizeProcessing extends AbstractProcessing {
     FixedSizeAnalysis fixedSizeAnalysis = new FixedSizeAnalysis(code, this.threshold);
     fixedSizeAnalysis.createChunks();
     fixedSizeAnalysis.merkelize();
-    fixedSizeAnalysis.proof(0);
-    fixedSizeAnalysis.proof(1);
+    List<Bytes> testKeys = new ArrayList<>();
+    testKeys.add(Bytes.wrap(Bytes32.leftPad(Bytes.of(0))));
+    testKeys.add(Bytes.wrap(Bytes32.leftPad(Bytes.of(1))));
+    fixedSizeAnalysis.computeMultiproof(testKeys);
 
     /*if (this.json) {
       gson.toJson(chunkData, this.writer);

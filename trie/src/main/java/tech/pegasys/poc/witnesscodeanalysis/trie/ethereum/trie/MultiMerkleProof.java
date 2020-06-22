@@ -35,10 +35,11 @@ import org.apache.tuweni.bytes.Bytes32;
 public class MultiMerkleProof<V>  {
   private static final Logger LOG = getLogger();
   private final PathNodeVisitor<V> getVisitor = new GetVisitor<>();
+  private final MultiproofStatsVisitor<V> statsVisitor = new MultiproofStatsVisitor<>();
 
   private Node<V> root;
 
-  public MultiMerkleProof(Node<V> root) {
+  public MultiMerkleProof(final Node<V> root) {
     this.root = root;
   }
 
@@ -53,5 +54,13 @@ public class MultiMerkleProof<V>  {
 
   public Bytes32 computeRootHash() {
     return root.getHash();
+  }
+
+  public void printStats(){
+    if(statsVisitor.getNumHashes() == 0) {
+      root.accept(statsVisitor);
+    }
+    LOG.info("#Hashes = {}, #Extension nodes = {}, #Branch nodes = {}",
+      statsVisitor.getNumHashes(), statsVisitor.getNumExtensions(), statsVisitor.getNumBranches());
   }
 }

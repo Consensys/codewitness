@@ -27,7 +27,7 @@ public interface Node<V> {
 
   Node<V> accept(PathNodeVisitor<V> visitor, Bytes path);
 
-  default Node<V> constructMultiproof(List<Bytes> keys, NodeFactory<V> nodeFactory) { return NullNode.instance(); }
+  default Node<V> constructMultiproof(final List<Bytes> keys, final NodeFactory<V> nodeFactory) { return NullNode.instance(); }
 
   void accept(NodeVisitor<V> visitor);
 

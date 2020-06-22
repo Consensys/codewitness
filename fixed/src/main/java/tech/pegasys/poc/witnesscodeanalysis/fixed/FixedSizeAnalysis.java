@@ -30,6 +30,7 @@ import tech.pegasys.poc.witnesscodeanalysis.trie.ethereum.trie.MerklePatriciaTri
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.List;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
@@ -115,14 +116,14 @@ public class FixedSizeAnalysis extends CodeAnalysisBase {
   /*
    * This method constructs proof and prints some statistics
    */
-  public void proof(int index) {
-    ArrayList<Bytes> keys = new ArrayList<>();
-    keys.add(Bytes.wrap(Bytes32.leftPad(Bytes.of(index))));
-    MultiMerkleProof multiMerkleProof = codeTrie.getValuesWithMultiMerkleProof(keys);
+  public void computeMultiproof(List<Bytes> testKeys) {
+    LOG.info("Multiproof construction begins...");
+    MultiMerkleProof multiMerkleProof = codeTrie.getValuesWithMultiMerkleProof(testKeys);
     Bytes32 codeTrieRootHash = codeTrie.getRootHash();
-    Bytes32 computedRootHash2 = multiMerkleProof.computeRootHash();
+    Bytes32 computedRootHash = multiMerkleProof.computeRootHash();
+    multiMerkleProof.printStats();
     LOG.info("Multiproof constructed. Trie Root Hash = {}, Computed Root hash = {}, Verified = {}",
-      codeTrieRootHash.toHexString(), computedRootHash2.toHexString(),
-      codeTrieRootHash.equals(computedRootHash2));
+      codeTrieRootHash.toHexString(), computedRootHash.toHexString(),
+      codeTrieRootHash.equals(computedRootHash));
   }
 }

@@ -77,7 +77,7 @@ public class SimpleMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
     return new Proof<>(value, proof);
   }
 
-  public MultiMerkleProof<V> getValuesWithMultiMerkleProof(List<Bytes> keys) {
+  public MultiMerkleProof<V> getValuesWithMultiMerkleProof(final List<Bytes> keys) {
     ArrayList<Bytes> keyPaths = new ArrayList<>();
     for(Bytes key: keys) {
       keyPaths.add(CompactEncoding.bytesToPath(key));

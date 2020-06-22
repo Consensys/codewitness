@@ -67,7 +67,7 @@ class BranchNode<V> implements Node<V> {
     return visitor.visit(this, path);
   }
 
-  public Node<V> constructMultiproof(List<Bytes> keys, NodeFactory<V> nodeFactory) {
+  public Node<V> constructMultiproof(final List<Bytes> keys, final NodeFactory<V> nodeFactory) {
     ArrayList<Node<V>> proofChildren = new ArrayList<>();
 
     for(byte i = 0; i < RADIX; i ++) {
@@ -81,7 +81,7 @@ class BranchNode<V> implements Node<V> {
       for(Bytes key : keys) {
         // Matching the first nibble of the key with the branch label
         if(key.get(0) == i) {
-          newkeys.add(key.shiftRight(1));
+          newkeys.add(key.slice(1, key.size()-1));
           match = true;
         }
       }

@@ -53,13 +53,16 @@ class ExtensionNode<V> implements Node<V> {
     return visitor.visit(this, path);
   }
 
-  public Node<V> constructMultiproof(List<Bytes> keyPaths, NodeFactory<V> nodeFactory) {
+  public Node<V> constructMultiproof(final List<Bytes> keyPaths, final NodeFactory<V> nodeFactory) {
+
     // The prefixes of all the keyPaths should exactly match the path of this extension node
     List<Bytes> newkeys = new ArrayList<>();
     for(Bytes key : keyPaths) {
       if(!path.slice(0, path.size()-1).equals(key.slice(0, path.size()-1))) {
         return NullNode.instance();
       }
+      // Because path inside extension node does not end with the terminator, we should use
+      // path.size() rather than path.size()-1
       newkeys.add(key.slice(path.size()));
     }
 
