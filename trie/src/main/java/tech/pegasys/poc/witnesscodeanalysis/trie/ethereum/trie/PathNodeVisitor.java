@@ -25,4 +25,6 @@ interface PathNodeVisitor<V> {
   Node<V> visit(LeafNode<V> leafNode, Bytes path);
 
   Node<V> visit(NullNode<V> nullNode, Bytes path);
+
+  default Node<V> visit(MerkleProofHashNode<V> proofNode, Bytes path) { return proofNode; }
 }

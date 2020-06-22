@@ -22,17 +22,12 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import tech.pegasys.poc.witnesscodeanalysis.trie.ethereum.rlp.RLP;
 
-import static tech.pegasys.poc.witnesscodeanalysis.trie.crypto.Hash.keccak256;
+class MerkleProofHashNode<V> implements Node<V> {
+  // Actual Merkle Proof component
+  private Bytes32 hash;
 
-class NullNode<V> implements Node<V> {
-  @SuppressWarnings("rawtypes")
-  private static final NullNode instance = new NullNode();
-
-  private NullNode() {}
-
-  @SuppressWarnings("unchecked")
-  static <V> NullNode<V> instance() {
-    return instance;
+  MerkleProofHashNode(Bytes32 hash) {
+    this.hash = hash;
   }
 
   @Override
@@ -67,12 +62,12 @@ class NullNode<V> implements Node<V> {
 
   @Override
   public Bytes getRlpRef() {
-    return MerklePatriciaTrie.EMPTY_TRIE_NODE;
+    return RLP.encodeOne(hash);
   }
 
   @Override
   public Bytes32 getHash() {
-    return MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH;
+    return hash;
   }
 
   @Override
@@ -82,7 +77,7 @@ class NullNode<V> implements Node<V> {
 
   @Override
   public String print() {
-    return "[NULL]";
+    return "ProofNode with Hash: " + hash.toHexString();
   }
 
   @Override

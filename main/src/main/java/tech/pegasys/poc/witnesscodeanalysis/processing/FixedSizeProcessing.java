@@ -16,12 +16,14 @@ package tech.pegasys.poc.witnesscodeanalysis.processing;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import tech.pegasys.poc.witnesscodeanalysis.common.ChunkData;
 import tech.pegasys.poc.witnesscodeanalysis.fixed.FixedSizeAnalysis;
 import tech.pegasys.poc.witnesscodeanalysis.jumpdest.JumpDestAnalysis;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
@@ -43,20 +45,19 @@ public class FixedSizeProcessing extends AbstractProcessing {
 
   @Override
   protected void executeProcessing(int id, String[] deployedAddresses, Bytes code) throws Exception {
-    ArrayList<Integer> chunkStartAddresses;
-    ChunkData chunkData;
 
     LOG.trace(" FixedSize Analysis started");
-    chunkStartAddresses = new FixedSizeAnalysis(code, this.threshold).analyse();
-    LOG.trace("  Finished. {} chunks", chunkStartAddresses.size());
-    chunkData = new ChunkData(id, deployedAddresses, chunkStartAddresses, code, true, this.threshold);
+    FixedSizeAnalysis fixedSizeAnalysis = new FixedSizeAnalysis(code, this.threshold);
+    fixedSizeAnalysis.createChunks();
+    fixedSizeAnalysis.merkelize();
+    fixedSizeAnalysis.computeMultiproofTest();
 
-    if (this.json) {
+    /*if (this.json) {
       gson.toJson(chunkData, this.writer);
     }
     else {
       throw new Error("NOT IMPLEMENTED YET");
-    }
+    }*/
   }
 
 

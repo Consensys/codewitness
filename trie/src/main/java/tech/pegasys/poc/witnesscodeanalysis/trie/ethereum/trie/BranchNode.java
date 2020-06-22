@@ -25,16 +25,19 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
 import tech.pegasys.poc.witnesscodeanalysis.trie.ethereum.rlp.BytesValueRLPOutput;
 import tech.pegasys.poc.witnesscodeanalysis.trie.ethereum.rlp.RLP;
 
+import static org.apache.logging.log4j.LogManager.getLogger;
 import static tech.pegasys.poc.witnesscodeanalysis.trie.crypto.Hash.keccak256;
 
 class BranchNode<V> implements Node<V> {
   public static final byte RADIX = CompactEncoding.LEAF_TERMINATOR;
+  private static final Logger LOG = getLogger();
 
   @SuppressWarnings("rawtypes")
   private static final Node NULL_NODE = NullNode.instance();
@@ -62,6 +65,36 @@ class BranchNode<V> implements Node<V> {
   @Override
   public Node<V> accept(final PathNodeVisitor<V> visitor, final Bytes path) {
     return visitor.visit(this, path);
+  }
+
+  public Node<V> constructMultiproof(final List<Bytes> keys, final NodeFactory<V> nodeFactory) {
+    ArrayList<Node<V>> proofChildren = new ArrayList<>();
+
+    for(byte i = 0; i < RADIX; i ++) {
+      if (children.get(i) instanceof NullNode) {
+        proofChildren.add(i, NullNode.instance());
+        continue;
+      }
+
+      boolean match = false;
+      List<Bytes> newkeys = new ArrayList<>();
+      for(Bytes key : keys) {
+        // Matching the first nibble of the key with the branch label
+        if(key.get(0) == i) {
+          newkeys.add(key.slice(1, key.size()-1));
+          match = true;
+        }
+      }
+
+      if(match) {
+        Node<V> proofChild = children.get(i).constructMultiproof(newkeys, nodeFactory);
+        proofChildren.add(i, proofChild);
+      } else {
+        proofChildren.add(i, nodeFactory.createProofHash(children.get(i).getRlp()));
+      }
+    }
+
+    return nodeFactory.createBranch(proofChildren, Optional.empty());
   }
 
   @Override

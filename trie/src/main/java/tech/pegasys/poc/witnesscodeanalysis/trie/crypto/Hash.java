@@ -64,7 +64,7 @@ public abstract class Hash {
    * @return A digest.
    */
   public static Bytes32 keccak256(final Bytes input) {
-    return Bytes32.wrap(digestUsingAlgorithm(input, KECCAK256_ALG));
+    return Bytes32.wrap(digestUsingAlgorithm(input, SHA256_ALG));
   }
 
   /**
