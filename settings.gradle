@@ -10,4 +10,5 @@ include 'jumpdest'
 include 'functionid'
 include 'main'
 include 'visualisation'
+include 'deploymentAddress'
 
