@@ -40,8 +40,8 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 public class FixedSizeAnalysis extends CodeAnalysisBase {
   private static final Logger LOG = getLogger();
   private int threshold;
-  private ArrayList<Bytes32> chunkStartAddresses;
-  private MerklePatriciaTrie<Bytes32, Bytes> codeTrie;
+  private ArrayList<Bytes> chunkStartAddresses;
+  private MerklePatriciaTrie<Bytes, Bytes> codeTrie;
 
   public static OperationRegistry registry = MainnetEvmRegistries.berlin(BigInteger.ONE);
 
@@ -56,10 +56,10 @@ public class FixedSizeAnalysis extends CodeAnalysisBase {
    * start addresses of the chunks.
    */
   public void createChunks() {
-    int pc = 0;
+    short pc = 0;
     int currentChunkSize = 0;
     chunkStartAddresses = new ArrayList<>();
-    chunkStartAddresses.add(Bytes32.ZERO);
+    chunkStartAddresses.add(Bytes.of(ByteBuffer.allocate(2).putShort(pc).array()));
 
     int codeLength = this.code.size();
 
@@ -82,7 +82,7 @@ public class FixedSizeAnalysis extends CodeAnalysisBase {
         if(currentChunkSize + opSize >= this.threshold) {
           currentChunkSize = 0;
           pc += opSize;
-          chunkStartAddresses.add(Bytes32.leftPad(Bytes.of(ByteBuffer.allocate(4).putInt(pc).array())));
+          chunkStartAddresses.add(Bytes.of(ByteBuffer.allocate(2).putShort(pc).array()));
         }
         else {
           currentChunkSize += opSize;
@@ -91,13 +91,13 @@ public class FixedSizeAnalysis extends CodeAnalysisBase {
       }
       else {
         // processing non-executable code
-        chunkStartAddresses.add(Bytes32.leftPad(Bytes.of(ByteBuffer.allocate(4).putInt(pc).array())));
+        chunkStartAddresses.add(Bytes.of(ByteBuffer.allocate(2).putShort(pc).array()));
         pc += this.threshold;
       }
     }
 
     LOG.trace(" Fixed Analysis found chunk starting addresses: ");
-    for(Bytes32 e : chunkStartAddresses) {
+    for(Bytes e : chunkStartAddresses) {
       LOG.trace(PcUtils.pcStr(e.toInt()));
     }
     LOG.trace("  Finished. {} chunks", chunkStartAddresses.size());
@@ -112,13 +112,12 @@ public class FixedSizeAnalysis extends CodeAnalysisBase {
     int numChunks = chunkStartAddresses.size();
     // The keys are chunk start addresses
     for (int i=0; i < numChunks; i++) {
-      BigInteger thisChunkStart = chunkStartAddresses.get(i).toBigInteger();
+      int thisChunkStart = chunkStartAddresses.get(i).toInt();
 
-      BigInteger length = (i == numChunks - 1) ?
-        BigInteger.valueOf(code.size()).subtract(thisChunkStart) :
-        chunkStartAddresses.get(i+1).toBigInteger().subtract(thisChunkStart);
+      int length = (i == numChunks - 1) ? code.size() - thisChunkStart :
+        chunkStartAddresses.get(i+1).toInt() - thisChunkStart;
 
-      Bytes chunk = this.code.slice(thisChunkStart.intValue(), length.intValue());
+      Bytes chunk = this.code.slice(thisChunkStart, length);
       codeTrie.put(chunkStartAddresses.get(i), chunk);
     }
     LOG.trace("Merkelization finished.");
