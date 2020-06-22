@@ -30,6 +30,9 @@ import java.util.ArrayList;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
+/**
+ * Split the code at the next operation boundary after a certain threshold.
+ */
 public class FixedSizeAnalysis extends CodeAnalysisBase {
   private static final Logger LOG = getLogger();
   private int threshold;
@@ -49,37 +52,46 @@ public class FixedSizeAnalysis extends CodeAnalysisBase {
     ArrayList<Integer> chunkStartAddresses = new ArrayList<>();
     chunkStartAddresses.add(0);
 
-    while (pc != this.possibleEndOfCode) {
+    int codeLength = this.code.size();
 
-      final Operation curOp = registry.get(code.get(pc), 0);
-      if (curOp == null) {
-        LOG.error("Unknown opcode 0x{} at PC {}", Integer.toHexString(code.get(pc)), PcUtils.pcStr(pc));
-        throw new Error("Unknown opcode");
+    // True when the part of the contract being processed is definitely code.
+    boolean executableCodeSection = true;
+
+    LOG.trace(" Contract size: {}", codeLength);
+    while (pc < codeLength) {
+      if (executableCodeSection) {
+        final Operation curOp = registry.get(code.get(pc), 0);
+        if (curOp == null) {
+          LOG.trace(" Found unknown opcode at PC: {}", PcUtils.pcStr(pc));
+          executableCodeSection = false;
+          // Move the PC to the end of the chunk.
+          pc += this.threshold - pc % this.threshold;
+          continue;
+        }
+        int opSize = curOp.getOpSize();
+
+        if(currentChunkSize + opSize >= this.threshold) {
+          currentChunkSize = 0;
+          pc += opSize;
+          chunkStartAddresses.add(pc);
+        }
+        else {
+          currentChunkSize += opSize;
+          pc += opSize;
+        }
       }
-      int opSize = curOp.getOpSize();
-
-      if(isInvalidSeen && curOp.getOpcode() == JumpOperation.OPCODE) {
-        LOG.info("JUMP after Invalid is seen. Ending.");
-        break;
-      }
-
-      if (curOp.getOpcode() == InvalidOperation.OPCODE) {
-        LOG.info("Invalid OPCODE is hit.");
-        isInvalidSeen = true;
-      }
-
-      if(currentChunkSize + opSize >= threshold) {
-        currentChunkSize = 0;
-        pc += opSize;
+      else {
+        // processing non-executable code
         chunkStartAddresses.add(pc);
-        continue;
+        pc += this.threshold;
       }
+    }
 
-      currentChunkSize += opSize;
-      pc += opSize;
+    LOG.trace(" Fixed Analysis found chunk starting addresses: ");
+    for(Integer e : chunkStartAddresses) {
+      LOG.trace(PcUtils.pcStr(e));
     }
 
     return chunkStartAddresses;
-
   }
 }

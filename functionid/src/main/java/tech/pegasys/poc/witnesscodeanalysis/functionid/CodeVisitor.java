@@ -23,13 +23,16 @@ import tech.pegasys.poc.witnesscodeanalysis.vm.MainnetEvmRegistries;
 import tech.pegasys.poc.witnesscodeanalysis.vm.MessageFrame;
 import tech.pegasys.poc.witnesscodeanalysis.vm.OperandStack;
 import tech.pegasys.poc.witnesscodeanalysis.vm.Operation;
+import tech.pegasys.poc.witnesscodeanalysis.vm.operations.CallDataSizeOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.DupOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.EqOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.InvalidOperation;
+import tech.pegasys.poc.witnesscodeanalysis.vm.operations.IsZeroOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.JumpDestOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.JumpOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.JumpSubOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.JumpiOperation;
+import tech.pegasys.poc.witnesscodeanalysis.vm.operations.LtOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.PushOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.ReturnOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.operations.ReturnSubOperation;
@@ -54,6 +57,9 @@ import static tech.pegasys.poc.witnesscodeanalysis.vm.AbstractOperation.DYNAMIC_
  */
 public class CodeVisitor {
   private static final Logger LOG = getLogger();
+
+  public static final Bytes ALL_CODE_FUNCTIONID = Bytes.wrap(new byte[]{0x01, 0x00, 0x00, 0x00, 0x00});
+  public static final Bytes FALLBACK_FUNCTION_FUNCTIONID = Bytes.wrap(new byte[]{0x01, 0x00, 0x00, 0x00, 0x01});
 
   private Bytes code;
   public Map<Integer, CodeSegment> codeSegments;
@@ -108,6 +114,8 @@ public class CodeVisitor {
       int jumpDest = curOp.execute(frame).intValue();
 
       if (this.findFunctionsMode) {
+        fallBackFunctionFinder1(frame, startingPc, opCode);
+        fallBackFunctionFinder2(frame, startingPc, opCode);
         findFunctionStateMachine(frame, startingPc, opCode);
       }
 
@@ -253,6 +261,113 @@ public class CodeVisitor {
       this.foundPush4OpCode = true;
     }
   }
+
+
+  boolean notFoundFallBackFunction = true;
+  boolean fallBackPushConstant4 = false;
+  boolean fallBackCallDataSizeFound = false;
+  boolean fallBackLtFound = false;
+  boolean fallBackPushDestAddressFound = false;
+
+  /**
+   * Code to detect:
+   *
+   *  PUSH1 0x04
+   *  CALLDATASIZE
+   *  LT
+   *  PUSH3 0x000239   (where this could be PUSH1, PUSH2, or PUSH3)
+   *  JUMPI
+   *
+   */
+  public void fallBackFunctionFinder1(MessageFrame frame, int startingPc, int opCode) {
+    if (this.notFoundFallBackFunction) {
+      if (this.fallBackPushDestAddressFound) {
+        this.fallBackPushDestAddressFound = false;
+        if (opCode == JumpiOperation.OPCODE) {
+          LOG.trace("****Found fall back function1 in code segment {}", startingPc);
+          this.foundFunctions.put(FALLBACK_FUNCTION_FUNCTIONID, startingPc);
+          this.notFoundFallBackFunction = false;
+        }
+      }
+
+      if (this.fallBackLtFound) {
+        this.fallBackLtFound = false;
+        if (opCode == PushOperation.PUSH1_OPCODE || opCode == PushOperation.PUSH2_OPCODE || opCode == PushOperation.PUSH3_OPCODE) {
+          this.fallBackPushDestAddressFound = true;
+        }
+      }
+
+      if (this.fallBackCallDataSizeFound) {
+        this.fallBackCallDataSizeFound = false;
+        if (opCode == LtOperation.OPCODE) {
+          this.fallBackLtFound = true;
+        }
+      }
+
+      if (this.fallBackPushConstant4) {
+        this.fallBackPushConstant4 = false;
+        if (opCode == CallDataSizeOperation.OPCODE) {
+          this.fallBackCallDataSizeFound = true;
+        }
+      }
+
+      if (opCode ==  PushOperation.PUSH1_OPCODE) {
+        // Detect PUSH1 0x04
+        Bytes bytes = frame.getStackItem(0).slice(31, 1);
+        if (bytes.get(0) == 4) {
+          this.fallBackPushConstant4 = true;
+        }
+      }
+    }
+  }
+
+
+  boolean fallback2CallDataSizeFound = false;
+  boolean fallback2IsZeroFound = false;
+  boolean fallback2PushFound = false;
+
+
+  /**
+   * Code to detect:
+   *
+   *  CALLDATASIZE
+   *  ISZERO
+   *  PUSH2 0x02a3  (where this could be PUSH1, PUSH2, or PUSH3)
+   *  JUMPI
+   *
+   */
+  public void fallBackFunctionFinder2(MessageFrame frame, int startingPc, int opCode) {
+    if (this.notFoundFallBackFunction) {
+      if (this.fallback2PushFound) {
+        this.fallback2PushFound = false;
+        if (opCode == JumpiOperation.OPCODE) {
+          LOG.trace("****Found fall back function2 in code segment {}", startingPc);
+          this.foundFunctions.put(FALLBACK_FUNCTION_FUNCTIONID, startingPc);
+          this.notFoundFallBackFunction = false;
+        }
+      }
+
+      if (this.fallback2IsZeroFound) {
+        this.fallback2IsZeroFound = false;
+        if (opCode == PushOperation.PUSH1_OPCODE || opCode == PushOperation.PUSH2_OPCODE || opCode == PushOperation.PUSH3_OPCODE) {
+          this.fallback2PushFound = true;
+        }
+      }
+
+      if (this.fallback2CallDataSizeFound) {
+        this.fallback2CallDataSizeFound = false;
+        if (opCode == IsZeroOperation.OPCODE) {
+          this.fallback2IsZeroFound = true;
+        }
+      }
+
+      if (opCode ==  CallDataSizeOperation.OPCODE) {
+        this.fallback2CallDataSizeFound = true;
+      }
+    }
+  }
+
+
 
 
   private void addCodeSegment(int startingPc, int callingSegmentPc, MessageFrame frame) {

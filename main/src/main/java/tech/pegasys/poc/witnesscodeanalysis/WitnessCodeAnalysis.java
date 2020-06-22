@@ -129,7 +129,11 @@ public class WitnessCodeAnalysis {
         contractData.showInfo(count);
         Bytes code = Bytes.fromHexString(contractData.getCode());
         ByteCodeDump dump = new ByteCodeDump(code);
-        dump.showBasicInfo();
+        try {
+          dump.showBasicInfo();
+        } catch (Throwable ex) {
+          System.out.println(ex);
+        }
         dump.dumpContract();
         break;
       }
@@ -207,13 +211,13 @@ public class WitnessCodeAnalysis {
     WitnessCodeAnalysis witnessCodeAnalysis = new WitnessCodeAnalysis();
 
     // NOTE: Can only choose one of these.
-    witnessCodeAnalysis.analyseUpTo(100);
-    //witnessCodeAnalysis.dumpOne(541);
-//    witnessCodeAnalysis.analyseOne(50);
+//    witnessCodeAnalysis.analyseUpTo(100);
+//    witnessCodeAnalysis.dumpOne(62);
+//    witnessCodeAnalysis.analyseOne(16);
 
 //    witnessCodeAnalysis.analyseDeployedBlockNumbers(9999990, 10000000);
 
-//    witnessCodeAnalysis.analyseAll();
+    witnessCodeAnalysis.analyseAll();
 
     witnessCodeAnalysis.showSummary();
   }

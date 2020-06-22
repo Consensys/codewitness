@@ -69,6 +69,12 @@ public class CodePaths {
     this.jumpDests = jumpDests;
   }
 
+  /**
+   * The first thing to do is work out which code segments / blocks the jump to the main
+   * function blocks are in.
+   *
+   * @param endOfFunctionIdBlock offset of the end of the function
+   */
   public void findFunctionBlockCodePaths(int endOfFunctionIdBlock) {
 
     final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
@@ -90,6 +96,10 @@ public class CodePaths {
 
     CodeVisitor visitor = new CodeVisitor(this.code, this.functionBlockCodeSegments, this.foundFunctions, endOfFunctionIdBlock, this.jumpDests);
     visitor.visit(frame, 0);
+
+    if (!this.foundFunctions.containsKey(CodeVisitor.FALLBACK_FUNCTION_FUNCTIONID)) {
+      LOG.info(" Fallback function not found");
+    }
   }
 
 
@@ -114,8 +124,10 @@ public class CodePaths {
         if (currentSegment.start == 0) {
           foundStart = true;
         }
-        currentSegment = this.functionBlockCodeSegments.get(currentSegment.previousSegments.iterator().next());
-        functionCodeSegments.put(currentSegment.start, currentSegment);
+        else {
+          currentSegment = this.functionBlockCodeSegments.get(currentSegment.previousSegments.iterator().next());
+          functionCodeSegments.put(currentSegment.start, currentSegment);
+        }
       } while (!foundStart);
 
       // Find all code segments that are reachable by the function.
