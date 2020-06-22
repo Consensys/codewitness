@@ -22,7 +22,7 @@ import org.apache.tuweni.bytes.Bytes;
 class ProofVisitor<V> extends GetVisitor<V> implements PathNodeVisitor<V> {
 
   private final Node<V> rootNode;
-  private final List<Node<V>> proof = new ArrayList<>();
+  public final List<Node<V>> proof = new ArrayList<>();
 
   ProofVisitor(final Node<V> rootNode) {
     this.rootNode = rootNode;

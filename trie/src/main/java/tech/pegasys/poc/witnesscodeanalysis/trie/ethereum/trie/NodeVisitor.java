@@ -23,4 +23,6 @@ interface NodeVisitor<V> {
   void visit(LeafNode<V> leafNode);
 
   void visit(NullNode<V> nullNode);
+
+  default void visit(MerkleProofHashNode<V> proofNode) {}
 }

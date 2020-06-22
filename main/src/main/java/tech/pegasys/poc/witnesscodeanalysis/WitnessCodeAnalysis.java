@@ -18,7 +18,6 @@ import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import tech.pegasys.poc.witnesscodeanalysis.bytecodedump.ByteCodeDump;
 import tech.pegasys.poc.witnesscodeanalysis.common.ContractData;
-import tech.pegasys.poc.witnesscodeanalysis.functionid.FunctionIdMerklePatriciaTrieLeafData;
 import tech.pegasys.poc.witnesscodeanalysis.processing.FixedSizeProcessing;
 import tech.pegasys.poc.witnesscodeanalysis.processing.FunctionIdProcessing;
 import tech.pegasys.poc.witnesscodeanalysis.processing.JumpDestProcessing;
@@ -32,11 +31,11 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 public class WitnessCodeAnalysis {
   private static final Logger LOG = getLogger();
 
-  public static boolean SIMPLE = true;
-  public static boolean JUMPDEST = true;
+  public static boolean SIMPLE = false;
+  public static boolean JUMPDEST = false;
   public static boolean FIXEDSIZE = true;
-  public static boolean STRICTFIXEDSIZE = true;
-  public static boolean FUNCTIONID = true;
+  public static boolean STRICTFIXEDSIZE = false;
+  public static boolean FUNCTIONID = false;
 
   private MainNetContractDataSet dataSet;
   private SimpleProcessing simpleProcessing;
@@ -146,7 +145,6 @@ public class WitnessCodeAnalysis {
   public void process(int id, ContractData contractData) {
     Bytes code = Bytes.fromHexString(contractData.getCode());
 
-
     if (SIMPLE) {
       this.simpleProcessing.process(id, contractData.getContract_address(), code);
     }
@@ -206,8 +204,6 @@ public class WitnessCodeAnalysis {
 
 
   public static void main(String[] args) throws Exception {
-    FunctionIdMerklePatriciaTrieLeafData.INCLUDECODE = false;
-
     WitnessCodeAnalysis witnessCodeAnalysis = new WitnessCodeAnalysis();
 
     // NOTE: Can only choose one of these.

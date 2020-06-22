@@ -16,18 +16,22 @@ package tech.pegasys.poc.witnesscodeanalysis.trie.ethereum.trie;
 
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import tech.pegasys.poc.witnesscodeanalysis.trie.ethereum.rlp.BytesValueRLPOutput;
 import tech.pegasys.poc.witnesscodeanalysis.trie.ethereum.rlp.RLP;
 
+import static org.apache.logging.log4j.LogManager.getLogger;
 import static tech.pegasys.poc.witnesscodeanalysis.trie.crypto.Hash.keccak256;
 
 class ExtensionNode<V> implements Node<V> {
+  private static final Logger LOG = getLogger();
   private final Bytes path;
   private final Node<V> child;
   private final NodeFactory<V> nodeFactory;
@@ -47,6 +51,22 @@ class ExtensionNode<V> implements Node<V> {
   @Override
   public Node<V> accept(final PathNodeVisitor<V> visitor, final Bytes path) {
     return visitor.visit(this, path);
+  }
+
+  public Node<V> constructMultiproof(final List<Bytes> keyPaths, final NodeFactory<V> nodeFactory) {
+
+    // The prefixes of all the keyPaths should exactly match the path of this extension node
+    List<Bytes> newkeys = new ArrayList<>();
+    for(Bytes key : keyPaths) {
+      if(!path.slice(0, path.size()-1).equals(key.slice(0, path.size()-1))) {
+        return NullNode.instance();
+      }
+      // Because path inside extension node does not end with the terminator, we should use
+      // path.size() rather than path.size()-1
+      newkeys.add(key.slice(path.size()));
+    }
+
+    return nodeFactory.createExtension(path, child.constructMultiproof(newkeys, nodeFactory));
   }
 
   @Override

@@ -28,4 +28,6 @@ interface NodeFactory<V> {
   Node<V> createBranch(ArrayList<Node<V>> newChildren, Optional<V> value);
 
   Node<V> createLeaf(Bytes path, V value);
+
+  default Node<V> createProofHash(final Bytes toHash) { return NullNode.instance(); }
 }
