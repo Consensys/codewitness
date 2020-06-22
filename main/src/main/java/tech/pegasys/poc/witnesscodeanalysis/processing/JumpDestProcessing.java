@@ -14,32 +14,14 @@
  */
 package tech.pegasys.poc.witnesscodeanalysis.processing;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
-import tech.pegasys.poc.witnesscodeanalysis.common.AuxData;
 import tech.pegasys.poc.witnesscodeanalysis.common.ChunkData;
-import tech.pegasys.poc.witnesscodeanalysis.common.ContractData;
-import tech.pegasys.poc.witnesscodeanalysis.common.SimpleAnalysis;
-import tech.pegasys.poc.witnesscodeanalysis.fixed.FixedSizeAnalysis;
-import tech.pegasys.poc.witnesscodeanalysis.functionid.FunctionIdAllLeaves;
-import tech.pegasys.poc.witnesscodeanalysis.functionid.FunctionIdProcess;
 import tech.pegasys.poc.witnesscodeanalysis.jumpdest.JumpDestAnalysis;
 
-import java.io.BufferedReader;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.io.Writer;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 
-import static java.lang.System.exit;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
 public class JumpDestProcessing extends AbstractProcessing {
@@ -59,14 +41,14 @@ public class JumpDestProcessing extends AbstractProcessing {
   }
 
   @Override
-  protected void executeProcessing(Bytes code) throws Exception {
+  protected void executeProcessing(int id, String[] deployedAddresses, Bytes code) throws Exception {
     ArrayList<Integer> chunkStartAddresses;
     ChunkData chunkData;
 
     LOG.trace(" JumpDest Analysis started");
     chunkStartAddresses = new JumpDestAnalysis(code, this.threshold).analyse();
     LOG.trace("  Finished. {} chunks", chunkStartAddresses.size());
-    chunkData = new ChunkData(chunkStartAddresses, code, true, this.threshold);
+    chunkData = new ChunkData(id, deployedAddresses, chunkStartAddresses, code, true, this.threshold);
 
     if (this.json) {
       gson.toJson(chunkData, this.writer);

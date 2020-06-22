@@ -12,11 +12,10 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package tech.pegasys.poc.witnesscodeanalysis;
+package tech.pegasys.poc.witnesscodeanalysis.functionid;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import tech.pegasys.poc.witnesscodeanalysis.common.ContractData;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -25,21 +24,19 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
-
-public class MainNetContractDataSet {
+public class FunctionIdDataSetReader {
 //  private static final Logger LOG = getLogger();
 
-  public static final String DEFAULT_FILE_IN =  "contract_data.json";
+  public static final String DEFAULT_FILE_IN =  "analysis_functionid.json";
   private BufferedReader reader;
   private Gson gson;
 
 
-  public MainNetContractDataSet() throws IOException {
+  public FunctionIdDataSetReader() throws IOException {
     this(DEFAULT_FILE_IN);
   }
 
-  public MainNetContractDataSet(String fileIn) throws IOException {
+  public FunctionIdDataSetReader(String fileIn) throws IOException {
     Path pathToFileIn = Paths.get(fileIn);
     BufferedReader reader = Files.newBufferedReader(pathToFileIn, StandardCharsets.US_ASCII);
     this.reader = reader;
@@ -49,13 +46,13 @@ public class MainNetContractDataSet {
   }
 
 
-  public ContractData next() throws Exception {
+  public FunctionIdAllResult next() throws Exception {
     try {
       String line = reader.readLine();
       if (line == null) {
         return null;
       }
-      return gson.fromJson(line, ContractData.class);
+      return gson.fromJson(line, FunctionIdAllResult.class);
     } catch (IOException ioe) {
       return null;
     }

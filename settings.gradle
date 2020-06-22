@@ -9,5 +9,5 @@ include 'strictfixed'
 include 'jumpdest'
 include 'functionid'
 include 'main'
-
+include 'visualisation'
 

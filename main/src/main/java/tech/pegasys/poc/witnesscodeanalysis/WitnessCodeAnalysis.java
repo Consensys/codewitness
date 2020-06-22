@@ -59,7 +59,7 @@ public class WitnessCodeAnalysis {
     ContractData contractData;
     while ((contractData = this.dataSet.next()) != null) {
       contractData.showInfo(count);
-      process(contractData);
+      process(count, contractData);
       count++;
 
       if (count % 1000 == 0) {
@@ -74,7 +74,7 @@ public class WitnessCodeAnalysis {
     ContractData contractData;
     while ((contractData = this.dataSet.next()) != null) {
       contractData.showInfo(count);
-      process(contractData);
+      process(count, contractData);
       count++;
       if (count == limit) {
         break;
@@ -89,7 +89,7 @@ public class WitnessCodeAnalysis {
     while ((contractData = this.dataSet.next()) != null) {
       if (count == theOne) {
         contractData.showInfo(count);
-        process(contractData);
+        process(count, contractData);
         break;
       }
       count++;
@@ -112,7 +112,7 @@ public class WitnessCodeAnalysis {
 
       if (analyse) {
         contractData.showInfo(count);
-        process(contractData);
+        process(count, contractData);
       }
       count++;
     }
@@ -138,27 +138,27 @@ public class WitnessCodeAnalysis {
   }
 
 
-  public void process(ContractData contractData) {
+  public void process(int id, ContractData contractData) {
     Bytes code = Bytes.fromHexString(contractData.getCode());
 
     if (SIMPLE) {
-      this.simpleProcessing.process(code);
+      this.simpleProcessing.process(id, contractData.getContract_address(), code);
     }
 
     if (JUMPDEST) {
-      this.jumpDestProcessing.process(code);
+      this.jumpDestProcessing.process(id, contractData.getContract_address(), code);
     }
 
     if (FIXEDSIZE) {
-      this.fixedSizeProcessing.process(code);
+      this.fixedSizeProcessing.process(id, contractData.getContract_address(), code);
     }
 
     if (STRICTFIXEDSIZE) {
-      this.strictFixedSizeProcessing.process(code);
+      this.strictFixedSizeProcessing.process(id, contractData.getContract_address(), code);
     }
 
     if (FUNCTIONID) {
-      this.functionIdProcessing.process(code);
+      this.functionIdProcessing.process(id, contractData.getContract_address(), code);
     }
   }
 
@@ -193,6 +193,7 @@ public class WitnessCodeAnalysis {
     this.jumpDestProcessing.close();
     this.fixedSizeProcessing.close();
     this.strictFixedSizeProcessing.close();
+    this.functionIdProcessing.close();
   }
 
 
@@ -204,10 +205,10 @@ public class WitnessCodeAnalysis {
     // NOTE: Can only choose one of these.
     //witnessCodeAnalysis.analyseUpTo(541);
     //witnessCodeAnalysis.dumpOne(541);
-    witnessCodeAnalysis.analyseOne(0);
+//    witnessCodeAnalysis.analyseOne(541);
 
 //    witnessCodeAnalysis.analyseDeployedBlockNumbers(9999990, 10000000);
-//
+
     witnessCodeAnalysis.analyseAll();
 
     witnessCodeAnalysis.showSummary();

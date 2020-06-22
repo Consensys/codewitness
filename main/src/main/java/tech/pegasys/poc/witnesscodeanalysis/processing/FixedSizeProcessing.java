@@ -19,6 +19,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import tech.pegasys.poc.witnesscodeanalysis.common.ChunkData;
 import tech.pegasys.poc.witnesscodeanalysis.fixed.FixedSizeAnalysis;
+import tech.pegasys.poc.witnesscodeanalysis.jumpdest.JumpDestAnalysis;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -43,7 +44,8 @@ public class FixedSizeProcessing extends AbstractProcessing {
   }
 
   @Override
-  protected void executeProcessing(Bytes code) throws Exception {
+  protected void executeProcessing(int id, String[] deployedAddresses, Bytes code) throws Exception {
+
     LOG.trace(" FixedSize Analysis started");
     FixedSizeAnalysis fixedSizeAnalysis = new FixedSizeAnalysis(code, this.threshold);
     fixedSizeAnalysis.createChunks();

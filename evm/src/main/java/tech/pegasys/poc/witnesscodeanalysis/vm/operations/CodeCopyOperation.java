@@ -15,9 +15,12 @@
 package tech.pegasys.poc.witnesscodeanalysis.vm.operations;
 
 
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import tech.pegasys.poc.witnesscodeanalysis.BasicBlockWithCode;
+import tech.pegasys.poc.witnesscodeanalysis.common.UnableToProcess;
+import tech.pegasys.poc.witnesscodeanalysis.common.UnableToProcessReason;
 import tech.pegasys.poc.witnesscodeanalysis.vm.AbstractOperation;
 import tech.pegasys.poc.witnesscodeanalysis.vm.Code;
 
@@ -27,7 +30,11 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 import java.util.ArrayList;
 
+import static org.apache.logging.log4j.LogManager.getLogger;
+
 public class CodeCopyOperation extends AbstractOperation {
+  private static final Logger LOG = getLogger();
+
   public static int OPCODE = 0x39;
 
   private static BasicBlockConsumer consumer = null;
@@ -47,11 +54,26 @@ public class CodeCopyOperation extends AbstractOperation {
     int start = sourceOffset.intValue();
     int len = numBytes.intValue();
 
-    Bytes codeFragment = code.getBytes().slice(start, len);
-    BasicBlockWithCode block = new BasicBlockWithCode(start, len, codeFragment);
 
-    if (consumer != null) {
-      consumer.addNewBlock(block);
+    // If either of the inputs are dynamic then the output is dynamic.
+    boolean isConstantInput = true;
+    if ((start & DYNAMIC_MARKER_MASK) == DYNAMIC_MARKER) {
+      isConstantInput = false;
+    }
+    if ((len & DYNAMIC_MARKER_MASK) == DYNAMIC_MARKER) {
+      isConstantInput = false;
+    }
+    if (isConstantInput) {
+      Bytes codeFragment = code.getBytes().slice(start, len);
+      BasicBlockWithCode block = new BasicBlockWithCode(start, len, codeFragment);
+
+      if (consumer != null) {
+        consumer.addNewBlock(block);
+      }
+    }
+    else {
+      String message = "Start: 0x" + Integer.toHexString(start) + " Length: 0x" + Integer.toHexString(len);
+      UnableToProcess.getInstance().unableToProcess(UnableToProcessReason.CODECOPY_WITH_DYNAMIC_PARAMETERS, message);
     }
 
     return UInt256.ZERO;

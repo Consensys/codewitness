@@ -38,4 +38,9 @@ public class BasicBlockWithCode {
   public Bytes getCodeFragment() {
     return codeFragment;
   }
+
+  @Override
+  public String toString() {
+    return "Data: Start 0x" + Integer.toHexString(this.start) + ", Length 0x" + Integer.toHexString(this.length);
+  }
 }

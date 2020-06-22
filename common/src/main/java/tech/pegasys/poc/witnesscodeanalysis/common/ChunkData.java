@@ -26,13 +26,17 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 public class ChunkData {
   private static final Logger LOG = getLogger();
 
+  int id;
+  String[] deployedAddresses;
   private ArrayList<Integer> chunkStartAddresses;
   private byte[] code;
   private int threshold;
   private boolean startAddressesAsKeys; // Indicates whether start addresses to be used as keys or not.
   private Map<Integer, Bytes> keyValueMap;
 
-  public ChunkData(ArrayList<Integer> chunkStartAddresses, Bytes code, boolean startAddressesAsKeys, int threshold) {
+  public ChunkData(int id, String[] deployedAddresses, ArrayList<Integer> chunkStartAddresses, Bytes code, boolean startAddressesAsKeys, int threshold) {
+    this.id = id;
+    this.deployedAddresses = deployedAddresses;
     this.chunkStartAddresses = chunkStartAddresses;
     this.code = code.toArray();
     this.startAddressesAsKeys = startAddressesAsKeys;

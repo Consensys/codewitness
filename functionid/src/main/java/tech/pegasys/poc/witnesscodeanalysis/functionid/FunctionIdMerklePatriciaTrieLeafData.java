@@ -30,11 +30,13 @@ import java.util.Map;
  *
  */
 public class FunctionIdMerklePatriciaTrieLeafData {
-  private Bytes functionId;
+  public static boolean INCLUDECODE = false;
+
+  private byte[] functionId;
   private byte[] encodedLeaf;
 
   public FunctionIdMerklePatriciaTrieLeafData(Bytes functionId, Bytes code, Map<Integer, Integer> blocks) {
-    this.functionId = functionId;
+    this.functionId = functionId.toArray();
     int numBlocks = blocks.size();
 
     byte[] codeBytes = code.toArray();
@@ -45,15 +47,17 @@ public class FunctionIdMerklePatriciaTrieLeafData {
       buf.putShort((short) start);
       int length = blocks.get(start);
       buf.putShort((short) length);
-      byte[] codeFragment = new byte[length];
-      System.arraycopy(codeBytes, start, codeFragment, 0, length);
-      buf.put(codeFragment);
+      if (INCLUDECODE) {
+        byte[] codeFragment = new byte[length];
+        System.arraycopy(codeBytes, start, codeFragment, 0, length);
+        buf.put(codeFragment);
+      }
     }
     this.encodedLeaf = Arrays.copyOf(buf.array(), buf.position());
   }
 
   public Bytes getFunctionId() {
-    return functionId;
+    return Bytes.wrap(functionId);
   }
 
   public byte[] getEncodedLeaf() {
@@ -69,9 +73,14 @@ public class FunctionIdMerklePatriciaTrieLeafData {
     for (int i=0; i<numBlocks; i++) {
       int start = ((int) buf.getShort() & 0xffff);
       int length = ((int) buf.getShort() & 0xffff);
-      byte[] codeFragment = new byte[length];
-      buf.get(codeFragment);
-      blocks[i] = new BasicBlockWithCode(start, length, Bytes.wrap(codeFragment));
+      if (INCLUDECODE) {
+        byte[] codeFragment = new byte[length];
+        buf.get(codeFragment);
+        blocks[i] = new BasicBlockWithCode(start, length, Bytes.wrap(codeFragment));
+      }
+      else {
+        blocks[i] = new BasicBlockWithCode(start, length, null);
+      }
     }
     return blocks;
   }
