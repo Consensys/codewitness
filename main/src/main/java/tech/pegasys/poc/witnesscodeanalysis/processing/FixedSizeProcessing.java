@@ -50,10 +50,7 @@ public class FixedSizeProcessing extends AbstractProcessing {
     FixedSizeAnalysis fixedSizeAnalysis = new FixedSizeAnalysis(code, this.threshold);
     fixedSizeAnalysis.createChunks();
     fixedSizeAnalysis.merkelize();
-    List<Bytes> testKeys = new ArrayList<>();
-    testKeys.add(Bytes.wrap(Bytes32.leftPad(Bytes.of(0))));
-    testKeys.add(Bytes.wrap(Bytes32.leftPad(Bytes.of(1))));
-    fixedSizeAnalysis.computeMultiproof(testKeys);
+    fixedSizeAnalysis.computeMultiproofTest();
 
     /*if (this.json) {
       gson.toJson(chunkData, this.writer);
