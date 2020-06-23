@@ -16,6 +16,7 @@ package tech.pegasys.poc.witnesscodeanalysis.processing;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import tech.pegasys.poc.witnesscodeanalysis.FunctionIdAnalysis;
 import tech.pegasys.poc.witnesscodeanalysis.common.SimpleAnalysis;
 import tech.pegasys.poc.witnesscodeanalysis.common.UnableToProcess;
 import tech.pegasys.poc.witnesscodeanalysis.common.UnableToProcessException;
@@ -55,7 +56,7 @@ public class FunctionIdProcessing extends AbstractProcessing {
 
     UnableToProcessReason overallResult = null;
     FunctionIdAllResult result =  new FunctionIdAllResult();
-    result.setContractInfo(id, deployedAddresses);
+    result.setContractInfo(id);
 
     try {
 //    AuxData auxData = new AuxData(code);
@@ -77,6 +78,7 @@ public class FunctionIdProcessing extends AbstractProcessing {
       }
     } catch (UnableToProcessException ex) {
       LOG.info(" Unable to Process: {}: {}", unableToProcessInstance.getReason(), unableToProcessInstance.getMessage());
+      FunctionIdProcess.addAllCodeLeaf(result, code);
 
       switch (ex.getReason()) {
         case END_OF_FUNCTION_ID_BLOCK_NOT_FOUND:
@@ -115,6 +117,7 @@ public class FunctionIdProcessing extends AbstractProcessing {
 
     if (this.json) {
       gson.toJson(result, this.writer);
+      this.writer.append('\n');
     }
     else {
       throw new Error("NOT IMPLEMENTED YET");

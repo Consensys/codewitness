@@ -46,7 +46,7 @@ public class FunctionIdDataSetReader {
   }
 
 
-  public FunctionIdAllResult next() throws Exception {
+  public FunctionIdAllResult next() {
     try {
       String line = reader.readLine();
       if (line == null) {

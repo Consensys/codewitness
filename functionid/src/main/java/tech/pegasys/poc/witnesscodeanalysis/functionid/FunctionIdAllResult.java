@@ -1,21 +1,20 @@
 package tech.pegasys.poc.witnesscodeanalysis.functionid;
 
+import org.apache.tuweni.bytes.Bytes;
 import tech.pegasys.poc.witnesscodeanalysis.common.UnableToProcessReason;
 
 import java.util.ArrayList;
 
 public class FunctionIdAllResult {
   private int id;
-  private String[] deployedAddresses;
   private UnableToProcessReason result;
   private boolean isProbablySolidity;
   private boolean isNewSolidity;
 
   private ArrayList<FunctionIdMerklePatriciaTrieLeafData> leaves = new ArrayList<>();
 
-  public void setContractInfo(int id, String[] deployedAddresses) {
+  public void setContractInfo(int id) {
     this.id = id;
-    this.deployedAddresses = deployedAddresses;
   }
 
   public void addLeaf(FunctionIdMerklePatriciaTrieLeafData leaf) {
@@ -33,5 +32,31 @@ public class FunctionIdAllResult {
 
   public ArrayList<FunctionIdMerklePatriciaTrieLeafData> getLeaves() {
     return leaves;
+  }
+
+  // TODO leaves need to be in a map!
+  public FunctionIdMerklePatriciaTrieLeafData getLeaf(Bytes functionId) {
+    for (FunctionIdMerklePatriciaTrieLeafData leaf: this.leaves) {
+      if (functionId.compareTo(leaf.getFunctionId()) == 0) {
+        return leaf;
+      }
+    }
+    return null;
+  }
+
+  public int getId() {
+    return id;
+  }
+
+  public UnableToProcessReason getResult() {
+    return result;
+  }
+
+  public boolean isProbablySolidity() {
+    return isProbablySolidity;
+  }
+
+  public boolean isNewSolidity() {
+    return isNewSolidity;
   }
 }

@@ -28,8 +28,8 @@ public class CombinedAnalysis {
     contractsAddresToId = DeployDataSetReader.getContractsToId();
     LOG.info("Loaded {} contract to id mappings", contractsAddresToId.size());
 
-//    processBlock(8200000); //, 8203459
-    processBlocks(8200000, 8203459);
+    processBlock(8200000); //, 8203459
+//    processBlocks(8200000, 8203459);
 
     LOG.info("Unknwon Contracts");
     for (String unkownContract: this.unknownContracts) {
@@ -47,6 +47,7 @@ public class CombinedAnalysis {
 
   public void processBlock(int blockNumber) throws IOException {
     LOG.info("Processing block number: {}", blockNumber);
+    BlockAnalysis blockAnalysis = new BlockAnalysis();
 
     TraceDataSetReader dataSet = new TraceDataSetReader(blockNumber);
     // There is exactly one block per data set.
@@ -57,9 +58,9 @@ public class CombinedAnalysis {
     LOG.info(" Block contains: {} transactions", transactionsData.length);
 
     for (TraceTransactionData transactionData: transactionsData) {
-      LOG.info(" Processing transaction");
+      LOG.trace(" Processing transaction");
       TraceTransactionInfo[] infos = transactionData.getTrace();
-      LOG.info("  Transaction contains: {} calls", infos.length);
+      LOG.trace("  Transaction contains: {} calls", infos.length);
       for (TraceTransactionInfo info: infos) {
           TraceTransactionCall call = info.getAction();
           String toAddress = call.getTo();
@@ -68,7 +69,7 @@ public class CombinedAnalysis {
           Integer id = contractsAddresToId.get(toAddress);
           if (id == null) {
             if (functionSelector.isEmpty()) {
-              LOG.info("   Value Transfer transaction");
+              LOG.trace("   Value Transfer transaction");
             }
             else {
               LOG.error("   Unknown contract {}. Function call: {}", toAddress, functionSelector);
@@ -77,10 +78,14 @@ public class CombinedAnalysis {
           }
           else {
             LOG.info("   Call to contract({}): {}, function {}", id, toAddress, functionSelector);
+            blockAnalysis.processTransactionCall(id, functionSelector);
           }
         }
     }
     dataSet.close();
+
+    blockAnalysis.calculateLeafPlusCodeSizes();
+    blockAnalysis.showStats();
   }
 
   public static void main(String[] args) throws Exception {

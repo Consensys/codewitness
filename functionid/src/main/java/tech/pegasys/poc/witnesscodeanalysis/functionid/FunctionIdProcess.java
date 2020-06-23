@@ -64,17 +64,20 @@ public class FunctionIdProcess {
     createMerklePatriciaTrieLeaves(result);
   }
 
+  public static void addAllCodeLeaf(FunctionIdAllResult result, Bytes code1) {
+    // Add in a leaf with all code. It has an invalid function id that is 5 bytes long.
+    Map<Integer, Integer> allCode = new TreeMap<>();
+    allCode.put(0, code1.size());
+    FunctionIdMerklePatriciaTrieLeafData allCodeLeaf = new FunctionIdMerklePatriciaTrieLeafData(CodeVisitor.ALL_CODE_FUNCTIONID, code1, allCode);
+    result.addLeaf(allCodeLeaf);
+  }
 
   private void createMerklePatriciaTrieLeaves(FunctionIdAllResult result) {
     // Map of function id to Map of start to length.
     Map<Bytes, Map<Integer, Integer>> allCombinedCodeBlocks = this.codePaths.getAllCombinedCodeBlocks();
 
     // Add in a leaf with all code. It has an invalid function id that is 5 bytes long.
-    Bytes allCodeFunctionId = Bytes.wrap(new byte[]{1, 0, 0, 0, 0});
-    Map<Integer, Integer> allCode = new TreeMap<>();
-    allCode.put(0, this.code.size());
-    FunctionIdMerklePatriciaTrieLeafData allCodeLeaf = new FunctionIdMerklePatriciaTrieLeafData(allCodeFunctionId, code, allCode);
-    result.addLeaf(allCodeLeaf);
+    addAllCodeLeaf(result, this.code);
 
     for (Bytes functionId: allCombinedCodeBlocks.keySet()) {
       Map<Integer, Integer> startLen = allCombinedCodeBlocks.get(functionId);
