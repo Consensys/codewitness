@@ -1,8 +1,11 @@
 package tech.pegasys.poc.witnesscodeanalysis.combined;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import tech.pegasys.poc.witnesscodeanalysis.BasicBlockWithCode;
+import tech.pegasys.poc.witnesscodeanalysis.MainNetContractDataSet;
 import tech.pegasys.poc.witnesscodeanalysis.common.ChunkData;
 import tech.pegasys.poc.witnesscodeanalysis.common.ChunkDataReader;
 import tech.pegasys.poc.witnesscodeanalysis.common.UnableToProcessReason;
@@ -11,7 +14,9 @@ import tech.pegasys.poc.witnesscodeanalysis.functionid.FunctionIdAllResult;
 import tech.pegasys.poc.witnesscodeanalysis.functionid.FunctionIdDataSetReader;
 import tech.pegasys.poc.witnesscodeanalysis.functionid.FunctionIdMerklePatriciaTrieLeafData;
 
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -44,6 +49,7 @@ public class BlockAnalysis {
 
   private int failContractIdNotFoundInStrictDataSet = 0;
   private int strictWitnessSize = 0;
+
 
   public void processTransactionCall(int id, Bytes functionSelector) throws IOException {
     FunctionIdDataSetReader functionIdDataSetReader = new FunctionIdDataSetReader();
@@ -114,28 +120,7 @@ public class BlockAnalysis {
       Map<Integer, Integer> codeBlocks = this.contractCodeExecuted.get(id);
       ChunkData chunkData = getJumpDestLeaves(id);
       Map<Integer, Integer> startOffsetsAndLengths = chunkData.getChunks();
-
-      Set<Integer> chunksUsed = new TreeSet<>();
-      for (Integer start: codeBlocks.keySet()) {
-        int length = codeBlocks.get(start);
-        // Determine the chunks needed for this code block.
-        int lastChunkStart = 0;
-        int chunkStart = 0;
-        Iterator<Integer> chunkStartIter = startOffsetsAndLengths.keySet().iterator();
-        while (chunkStartIter.hasNext()) {
-          lastChunkStart = chunkStart;
-          chunkStart = chunkStartIter.next();
-          if (chunkStart > start) {
-            chunksUsed.add(lastChunkStart);
-          }
-          while (chunkStart < start+length) {
-            lastChunkStart = chunkStart;
-            chunkStart = chunkStartIter.next();
-            chunksUsed.add(chunkStart);
-          }
-        }
-      }
-
+      Set<Integer> chunksUsed = determineChunksUsed(codeBlocks, startOffsetsAndLengths );
       for (Integer startUsed: chunksUsed) {
         jumpDestDataUsed += startOffsetsAndLengths.get(startUsed);
       }
@@ -150,28 +135,7 @@ public class BlockAnalysis {
       Map<Integer, Integer> codeBlocks = this.contractCodeExecuted.get(id);
       ChunkData chunkData = getFixedLeaves(id);
       Map<Integer, Integer> startOffsetsAndLengths = chunkData.getChunks();
-
-      Set<Integer> chunksUsed = new TreeSet<>();
-      for (Integer start: codeBlocks.keySet()) {
-        int length = codeBlocks.get(start);
-        // Determine the chunks needed for this code block.
-        int lastChunkStart = 0;
-        int chunkStart = 0;
-        Iterator<Integer> chunkStartIter = startOffsetsAndLengths.keySet().iterator();
-        while (chunkStartIter.hasNext()) {
-          lastChunkStart = chunkStart;
-          chunkStart = chunkStartIter.next();
-          if (chunkStart > start) {
-            chunksUsed.add(lastChunkStart);
-          }
-          while (chunkStart < start+length) {
-            lastChunkStart = chunkStart;
-            chunkStart = chunkStartIter.next();
-            chunksUsed.add(chunkStart);
-          }
-        }
-      }
-
+      Set<Integer> chunksUsed = determineChunksUsed(codeBlocks, startOffsetsAndLengths );
       for (Integer startUsed: chunksUsed) {
         fixedDataUsed += startOffsetsAndLengths.get(startUsed);
       }
@@ -183,34 +147,12 @@ public class BlockAnalysis {
       Map<Integer, Integer> codeBlocks = this.contractCodeExecuted.get(id);
       ChunkData chunkData = getStrictLeaves(id);
       Map<Integer, Integer> startOffsetsAndLengths = chunkData.getChunks();
-
-      Set<Integer> chunksUsed = new TreeSet<>();
-      for (Integer start: codeBlocks.keySet()) {
-        int length = codeBlocks.get(start);
-        // Determine the chunks needed for this code block.
-        int lastChunkStart = 0;
-        int chunkStart = 0;
-        Iterator<Integer> chunkStartIter = startOffsetsAndLengths.keySet().iterator();
-        while (chunkStartIter.hasNext()) {
-          lastChunkStart = chunkStart;
-          chunkStart = chunkStartIter.next();
-          if (chunkStart > start) {
-            chunksUsed.add(lastChunkStart);
-          }
-          while (chunkStart < start+length) {
-            lastChunkStart = chunkStart;
-            chunkStart = chunkStartIter.next();
-            chunksUsed.add(chunkStart);
-          }
-        }
-      }
-
+      Set<Integer> chunksUsed = determineChunksUsed(codeBlocks, startOffsetsAndLengths );
       for (Integer startUsed: chunksUsed) {
         strictDataUsed += startOffsetsAndLengths.get(startUsed);
       }
     }
     this.strictWitnessSize = strictDataUsed;
-
   }
 
 
@@ -260,7 +202,7 @@ public class BlockAnalysis {
         }
 
         ChunkData chunkData = new ChunkData(result.getId(), chunkStartOffsets,
-            Bytes.wrap(result.getCode()), result.isStartAddressesAsKeys(), result.getThreshold());
+            Bytes.wrap(new byte[codeLen]), result.isStartAddressesAsKeys(), result.getThreshold());
         return chunkData;
       }
     }
@@ -272,16 +214,64 @@ public class BlockAnalysis {
   }
 
 
+  private Set<Integer> determineChunksUsed(Map<Integer, Integer> codeBlocks, Map<Integer, Integer> startOffsetsAndLengths) {
+    Set<Integer> chunksUsed = new TreeSet<>();
+    for (Integer start: codeBlocks.keySet()) {
+      int length = codeBlocks.get(start);
+      // Determine the chunks needed for this code block.
+      int lastChunkStart = 0;
+      int chunkStart = 0;
+      Iterator<Integer> chunkStartIter = startOffsetsAndLengths.keySet().iterator();
+
+      // Iterate to the start of the chunk.
+      while (chunkStartIter.hasNext() && chunkStart < start) {
+        lastChunkStart = chunkStart;
+        chunkStart = chunkStartIter.next();
+      }
+
+      // If the function id chunk is after the start of the last chunk
+      if (!chunkStartIter.hasNext()) {
+        chunksUsed.add(chunkStart);
+      }
+      else {
+        if (chunkStart == start) {
+          chunksUsed.add(chunkStart);
+        }
+        else {
+          // Chunk start must be greater than
+          chunksUsed.add(lastChunkStart);
+        }
+
+        // Add all the chunks that are within the function id chunk
+        while (chunkStartIter.hasNext() && chunkStart < start+length) {
+          chunksUsed.add(chunkStart);
+          chunkStart = chunkStartIter.next();
+        }
+      }
+    }
+
+    return chunksUsed;
+  }
+
   public void showStats() {
     LOG.info("  functionIdWitnessSize: {} ", this.functionIdWitnessSize);
     LOG.info("  jumpDestWitnessSize: {} ", this.jumpDestWitnessSize);
     LOG.info("  fixedWitnessSize: {} ", this.fixedWitnessSize);
+    LOG.info("  strictWitnessSize: {} ", this.strictWitnessSize);
 
     LOG.info("  failContractIdNotFoundInFunctionIdDataSet: {} ", this.failContractIdNotFoundInFunctionIdDataSet);
     LOG.info("  failContractNotProcessedCorrectlyByFunctionIdAnalysis: {} ", this.failContractNotProcessedCorrectlyByFunctionIdAnalysis);
     LOG.info("  failAllCodeLeafNotFound: {} ", this.failAllCodeLeafNotFound);
     LOG.info("  failContractIdNotFoundInJumpDestDataSet: {} ", this.failContractIdNotFoundInJumpDestDataSet);
     LOG.info("  failContractIdNotFoundInFixedDataSet: {} ", this.failContractIdNotFoundInFixedDataSet);
+    LOG.info("  failContractIdNotFoundInStrictDataSet: {} ", this.failContractIdNotFoundInStrictDataSet);
+  }
+
+  public void setResultInformation(WitnessResult result) {
+    result.functionIdWitnessSize = this.functionIdWitnessSize;
+    result.jumpDestWitnessSize = this.jumpDestWitnessSize;
+    result.fixedWitnessSize = fixedWitnessSize;
+    result.strictWitnessSize = strictWitnessSize;
   }
 
 }

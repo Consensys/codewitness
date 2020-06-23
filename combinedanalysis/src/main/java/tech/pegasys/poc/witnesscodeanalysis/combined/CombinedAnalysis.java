@@ -22,20 +22,28 @@ public class CombinedAnalysis {
 
   private Set<String> unknownContracts = new TreeSet<>();
 
+  private WitnessResultWriter writer;
+
+
+  public CombinedAnalysis() throws IOException {
+    this.writer = new WitnessResultWriter();
+  }
 
   public void go() throws IOException {
     LOG.info("Loading contract to id mappings");
     contractsAddresToId = DeployDataSetReader.getContractsToId();
     LOG.info("Loaded {} contract to id mappings", contractsAddresToId.size());
 
-    processBlock(8200000); //, 8203459
-//    processBlocks(8200000, 8203459);
+    //processBlock(8200000); //, 8203459
+//    processBlocks(8200000, 8200002);
+ processBlocks(8200000, 8203459);
 
     LOG.info("Unknwon Contracts");
     for (String unkownContract: this.unknownContracts) {
       LOG.info(" {}", unkownContract);
     }
 
+    this.writer.close();
   }
 
   public void processBlocks(int from, int to) throws IOException {
@@ -57,10 +65,13 @@ public class CombinedAnalysis {
     TraceTransactionData[] transactionsData = blockData.getBlock();
     LOG.info(" Block contains: {} transactions", transactionsData.length);
 
+    int zz = 0;
     for (TraceTransactionData transactionData: transactionsData) {
       LOG.trace(" Processing transaction");
       TraceTransactionInfo[] infos = transactionData.getTrace();
       LOG.trace("  Transaction contains: {} calls", infos.length);
+
+      boolean stop = false;
       for (TraceTransactionInfo info: infos) {
           TraceTransactionCall call = info.getAction();
           String toAddress = call.getTo();
@@ -79,13 +90,26 @@ public class CombinedAnalysis {
           else {
             LOG.info("   Call to contract({}): {}, function {}", id, toAddress, functionSelector);
             blockAnalysis.processTransactionCall(id, functionSelector);
+            // TODO
+            zz++;
+            if (zz > 1) {
+              stop = true;
+              break;
+            }
           }
-        }
+      }
+      if (stop)
+      {
+        break;
+      }
     }
     dataSet.close();
 
     blockAnalysis.calculateLeafPlusCodeSizes();
     blockAnalysis.showStats();
+    WitnessResult result = new WitnessResult(blockNumber);
+    blockAnalysis.setResultInformation(result);
+    this.writer.writeResult(result);
   }
 
   public static void main(String[] args) throws Exception {
