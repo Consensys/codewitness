@@ -65,13 +65,13 @@ public class CombinedAnalysis {
     TraceTransactionData[] transactionsData = blockData.getBlock();
     LOG.info(" Block contains: {} transactions", transactionsData.length);
 
-    int zz = 0;
+//    int zz = 0;
     for (TraceTransactionData transactionData: transactionsData) {
       LOG.trace(" Processing transaction");
       TraceTransactionInfo[] infos = transactionData.getTrace();
       LOG.trace("  Transaction contains: {} calls", infos.length);
 
-      boolean stop = false;
+//      boolean stop = false;
       for (TraceTransactionInfo info: infos) {
           TraceTransactionCall call = info.getAction();
           String toAddress = call.getTo();
@@ -90,18 +90,18 @@ public class CombinedAnalysis {
           else {
             LOG.info("   Call to contract({}): {}, function {}", id, toAddress, functionSelector);
             blockAnalysis.processTransactionCall(id, functionSelector);
-            // TODO
-            zz++;
-            if (zz > 1) {
-              stop = true;
-              break;
-            }
+//            // TODO
+//            zz++;
+//            if (zz > 1) {
+//              stop = true;
+//              break;
+//            }
           }
       }
-      if (stop)
-      {
-        break;
-      }
+//      if (stop)
+//      {
+//        break;
+//      }
     }
     dataSet.close();
 
@@ -110,6 +110,7 @@ public class CombinedAnalysis {
     WitnessResult result = new WitnessResult(blockNumber);
     blockAnalysis.setResultInformation(result);
     this.writer.writeResult(result);
+    this.writer.flush();
   }
 
   public static void main(String[] args) throws Exception {

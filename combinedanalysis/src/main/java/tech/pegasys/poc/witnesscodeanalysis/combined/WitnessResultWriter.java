@@ -46,6 +46,9 @@ public class WitnessResultWriter {
     this.writer.append('\n');
   }
 
+  public void flush() throws IOException {
+    this.writer.flush();
+  }
   public void close() throws IOException {
     this.writer.close();
   }
