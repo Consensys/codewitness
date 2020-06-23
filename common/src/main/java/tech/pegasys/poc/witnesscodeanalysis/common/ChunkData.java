@@ -93,6 +93,9 @@ public class ChunkData {
   public Map<Integer, Integer> getChunks() {
     Map<Integer, Integer> map = new TreeMap<>();
     int size = this.chunkStartAddresses.size();
+    if (size == 0) {
+      return map;
+    }
     int previousStart = 0;
     for (int i=1; i < size; i++) {
       previousStart = this.chunkStartAddresses.get(i-1);

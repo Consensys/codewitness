@@ -52,17 +52,8 @@ public class BlockAnalysis {
 
 
   public void processTransactionCall(int id, Bytes functionSelector) throws IOException {
-    FunctionIdDataSetReader functionIdDataSetReader = new FunctionIdDataSetReader();
-
-    FunctionIdAllResult result;
-    boolean found = false;
-    while ((result = functionIdDataSetReader.next()) != null) {
-      if (result.getId() == id) {
-        found = true;
-        break;
-      }
-    }
-    if (!found) {
+    FunctionIdAllResult result = functionIdResult(id);
+    if (result == null) {
       LOG.error("Contract id {} not found in FunctionId dataset!", id);
       this.failContractIdNotFoundInFunctionIdDataSet++;
       return;
@@ -104,6 +95,7 @@ public class BlockAnalysis {
   }
 
   public void calculateLeafPlusCodeSizes() throws IOException {
+    LOG.info("calculateLeafPlusCodeSizes");
 
     // Find the amount of code sent.
     int functionIdCodeUsed = 0;
@@ -146,54 +138,76 @@ public class BlockAnalysis {
     for (Integer id : this.contractCodeExecuted.keySet()) {
       Map<Integer, Integer> codeBlocks = this.contractCodeExecuted.get(id);
       ChunkData chunkData = getStrictLeaves(id);
-      Map<Integer, Integer> startOffsetsAndLengths = chunkData.getChunks();
-      Set<Integer> chunksUsed = determineChunksUsed(codeBlocks, startOffsetsAndLengths );
-      for (Integer startUsed: chunksUsed) {
-        strictDataUsed += startOffsetsAndLengths.get(startUsed);
+      if (chunkData != null) {
+        Map<Integer, Integer> startOffsetsAndLengths = chunkData.getChunks();
+        Set<Integer> chunksUsed = determineChunksUsed(codeBlocks, startOffsetsAndLengths );
+        for (Integer startUsed: chunksUsed) {
+          if (startUsed == null) {
+            LOG.error("WHY IS STARTUSED NULL? Id: {}", id);
+          }
+          else {
+            try {
+              strictDataUsed += startOffsetsAndLengths.get(startUsed);
+            } catch (NullPointerException ex) {
+              LOG.error("WHERE IS NULL POINTER EXCEPTION id: {}", id);
+            }
+          }
+        }
       }
     }
     this.strictWitnessSize = strictDataUsed;
   }
 
 
+  private static Map<Integer, ChunkData> jumpDestEverything = new HashMap<>();
   private ChunkData getJumpDestLeaves(int id) throws IOException {
-    ChunkDataReader dataSetReader = new ChunkDataReader("analysis_jumpdest.json");
-
-    ChunkData result;
-    while ((result = dataSetReader.next()) != null) {
-      if (result.getId() == id) {
-        return result;
+    if (jumpDestEverything.isEmpty()) {
+      LOG.info("Loading analysis_jumpdest.json");
+      ChunkDataReader dataSetReader = new ChunkDataReader("analysis_jumpdest.json");
+      ChunkData result;
+      while ((result = dataSetReader.next()) != null) {
+        jumpDestEverything.put(result.getId(), result);
       }
     }
 
-    // TODO consider throwing an error. Arriving here would imply the contract is in the function id data set, but not his one.
-    LOG.error("Contract id {} not found in JumpDest dataset!", id);
-    this.failContractIdNotFoundInJumpDestDataSet++;
-    return null;
+    ChunkData chunkData = jumpDestEverything.get(id);
+    if (chunkData == null) {
+      // TODO consider throwing an error. Arriving here would imply the contract is in the function id data set, but not his one.
+      LOG.error("Contract id {} not found in JumpDest dataset!", id);
+      this.failContractIdNotFoundInJumpDestDataSet++;
+      return null;
+    }
+    return chunkData;
   }
 
+  private static Map<Integer, ChunkData> fixedEverything = new HashMap<>();
   private ChunkData getFixedLeaves(int id) throws IOException {
-    ChunkDataReader dataSetReader = new ChunkDataReader("analysis_fixed.json");
-
-    ChunkData result;
-    while ((result = dataSetReader.next()) != null) {
-      if (result.getId() == id) {
-        return result;
+    if (fixedEverything.isEmpty()) {
+      LOG.info("Loading analysis_fixed.json");
+      ChunkDataReader dataSetReader = new ChunkDataReader("analysis_fixed.json");
+      ChunkData result;
+      while ((result = dataSetReader.next()) != null) {
+        fixedEverything.put(result.getId(), result);
       }
     }
 
-    // TODO consider throwing an error. Arriving here would imply the contract is in the function id data set, but not his one.
-    LOG.error("Contract id {} not found in Fixed dataset!", id);
-    this.failContractIdNotFoundInFixedDataSet++;
-    return null;
+    ChunkData chunkData = fixedEverything.get(id);
+    if (chunkData == null) {
+      // TODO consider throwing an error. Arriving here would imply the contract is in the function id data set, but not his one.
+      LOG.error("Contract id {} not found in Fixed dataset!", id);
+      this.failContractIdNotFoundInFixedDataSet++;
+      return null;
+    }
+    return chunkData;
   }
 
+  private static Map<Integer, ChunkData> strictEverything = new HashMap<>();
   private ChunkData getStrictLeaves(int id) throws IOException {
-    ChunkDataReader dataSetReader = new ChunkDataReader("analysis_fixed.json");
-
-    ChunkData result;
-    while ((result = dataSetReader.next()) != null) {
-      if (result.getId() == id) {
+    if (strictEverything.isEmpty()) {
+      LOG.info("Loading analysis_strict.json");
+      ChunkDataReader dataSetReader = new ChunkDataReader("analysis_strictfixed.json");
+      ChunkData result;
+      while ((result = dataSetReader.next()) != null) {
         int codeLen = result.getCodeLength();
         int chunkSize = result.getThreshold();
         ArrayList<Integer> chunkStartOffsets = new ArrayList<>();
@@ -201,16 +215,20 @@ public class BlockAnalysis {
           chunkStartOffsets.add(ofs);
         }
 
-        ChunkData chunkData = new ChunkData(result.getId(), chunkStartOffsets,
+        ChunkData chunkData1 = new ChunkData(result.getId(), chunkStartOffsets,
             Bytes.wrap(new byte[codeLen]), result.isStartAddressesAsKeys(), result.getThreshold());
-        return chunkData;
+        strictEverything.put(result.getId(), chunkData1);
       }
     }
 
-    // TODO consider throwing an error. Arriving here would imply the contract is in the function id data set, but not his one.
-    LOG.error("Contract id {} not found in Fixed dataset!", id);
-    this.failContractIdNotFoundInStrictDataSet++;
-    return null;
+    ChunkData chunkData = strictEverything.get(id);
+    if (chunkData == null) {
+      // TODO consider throwing an error. Arriving here would imply the contract is in the function id data set, but not his one.
+      LOG.error("Contract id {} not found in Fixed dataset!", id);
+      this.failContractIdNotFoundInStrictDataSet++;
+      return null;
+    }
+    return chunkData;
   }
 
 
@@ -251,6 +269,20 @@ public class BlockAnalysis {
     }
 
     return chunksUsed;
+  }
+
+  private static Map<Integer, FunctionIdAllResult> functionIdEverything = new HashMap<>();
+  public FunctionIdAllResult functionIdResult(int id) throws IOException {
+    if (functionIdEverything.isEmpty()) {
+      LOG.info("Loading analysis_functionid.json");
+      FunctionIdDataSetReader functionIdDataSetReader = new FunctionIdDataSetReader();
+      FunctionIdAllResult result;
+      while ((result = functionIdDataSetReader.next()) != null) {
+        functionIdEverything.put(result.getId(), result);
+      }
+    }
+
+    return functionIdEverything.get(id);
   }
 
   public void showStats() {
