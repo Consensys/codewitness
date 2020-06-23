@@ -40,3 +40,5 @@ package-lock.json
 contract_data.json
 codemerk.csv
 analysis_*.*
+
+traces/

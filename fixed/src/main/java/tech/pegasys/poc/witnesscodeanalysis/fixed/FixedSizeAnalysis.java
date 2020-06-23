@@ -40,7 +40,8 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 public class FixedSizeAnalysis extends CodeAnalysisBase {
   private static final Logger LOG = getLogger();
   private int threshold;
-  private ArrayList<Bytes> chunkStartAddresses;
+  private ArrayList<Integer> chunkStartAddresses;
+  private ArrayList<Bytes> chunkStartAddressesBytes;
   private MerklePatriciaTrie<Bytes, Bytes> codeTrie;
 
   public static OperationRegistry registry = MainnetEvmRegistries.berlin(BigInteger.ONE);
@@ -49,6 +50,7 @@ public class FixedSizeAnalysis extends CodeAnalysisBase {
     super(code);
     this.threshold = threshold;
     chunkStartAddresses = null;
+    chunkStartAddressesBytes = null;
   }
 
   /*
@@ -56,10 +58,12 @@ public class FixedSizeAnalysis extends CodeAnalysisBase {
    * start addresses of the chunks.
    */
   public void createChunks() {
-    short pc = 0;
+    int pc = 0;
     int currentChunkSize = 0;
     chunkStartAddresses = new ArrayList<>();
-    chunkStartAddresses.add(Bytes.of(ByteBuffer.allocate(2).putShort(pc).array()));
+    chunkStartAddresses.add(0);
+    chunkStartAddressesBytes = new ArrayList<>();
+    chunkStartAddressesBytes.add(Bytes.of(ByteBuffer.allocate(2).putShort((short) pc).array()));
 
     int codeLength = this.code.size();
 
@@ -82,7 +86,8 @@ public class FixedSizeAnalysis extends CodeAnalysisBase {
         if(currentChunkSize + opSize >= this.threshold) {
           currentChunkSize = 0;
           pc += opSize;
-          chunkStartAddresses.add(Bytes.of(ByteBuffer.allocate(2).putShort(pc).array()));
+          chunkStartAddresses.add(pc);
+          chunkStartAddressesBytes.add(Bytes.of(ByteBuffer.allocate(2).putShort((short) pc).array()));
         }
         else {
           currentChunkSize += opSize;
@@ -91,16 +96,17 @@ public class FixedSizeAnalysis extends CodeAnalysisBase {
       }
       else {
         // processing non-executable code
-        chunkStartAddresses.add(Bytes.of(ByteBuffer.allocate(2).putShort(pc).array()));
+        chunkStartAddresses.add(pc);
+        chunkStartAddressesBytes.add(Bytes.of(ByteBuffer.allocate(2).putShort((short) pc).array()));
         pc += this.threshold;
       }
     }
 
     LOG.trace(" Fixed Analysis found chunk starting addresses: ");
-    for(Bytes e : chunkStartAddresses) {
-      LOG.trace(PcUtils.pcStr(e.toInt()));
+    for(Integer e : chunkStartAddresses) {
+      LOG.trace(PcUtils.pcStr(e));
     }
-    LOG.trace("  Finished. {} chunks", chunkStartAddresses.size());
+    LOG.trace("  Finished. {} chunks", chunkStartAddressesBytes.size());
   }
 
   /*
@@ -109,16 +115,16 @@ public class FixedSizeAnalysis extends CodeAnalysisBase {
    */
   public void merkelize() {
     codeTrie = new SimpleMerklePatriciaTrie<>(v->v);
-    int numChunks = chunkStartAddresses.size();
+    int numChunks = chunkStartAddressesBytes.size();
     // The keys are chunk start addresses
     for (int i=0; i < numChunks; i++) {
-      int thisChunkStart = chunkStartAddresses.get(i).toInt();
+      int thisChunkStart = chunkStartAddressesBytes.get(i).toInt();
 
       int length = (i == numChunks - 1) ? code.size() - thisChunkStart :
-        chunkStartAddresses.get(i+1).toInt() - thisChunkStart;
+        chunkStartAddressesBytes.get(i+1).toInt() - thisChunkStart;
 
       Bytes chunk = this.code.slice(thisChunkStart, length);
-      codeTrie.put(chunkStartAddresses.get(i), chunk);
+      codeTrie.put(chunkStartAddressesBytes.get(i), chunk);
     }
     LOG.trace("Merkelization finished.");
   }
@@ -129,9 +135,9 @@ public class FixedSizeAnalysis extends CodeAnalysisBase {
   public void computeMultiproofTest() {
     List<Bytes> testKeys = new ArrayList<>();
     Random rand = new Random();
-    testKeys.add(chunkStartAddresses.get(rand.nextInt(chunkStartAddresses.size())));
-    testKeys.add(chunkStartAddresses.get(rand.nextInt(chunkStartAddresses.size())));
-    testKeys.add(chunkStartAddresses.get(rand.nextInt(chunkStartAddresses.size())));
+    testKeys.add(chunkStartAddressesBytes.get(rand.nextInt(chunkStartAddressesBytes.size())));
+    testKeys.add(chunkStartAddressesBytes.get(rand.nextInt(chunkStartAddressesBytes.size())));
+    testKeys.add(chunkStartAddressesBytes.get(rand.nextInt(chunkStartAddressesBytes.size())));
     LOG.info("Multiproof construction begins...");
     MultiMerkleProof multiMerkleProof = codeTrie.getValuesWithMultiMerkleProof(testKeys);
     Bytes32 codeTrieRootHash = codeTrie.getRootHash();
@@ -140,5 +146,13 @@ public class FixedSizeAnalysis extends CodeAnalysisBase {
     LOG.info("Multiproof constructed. Trie Root Hash = {}, Computed Root hash = {}, Verified = {}",
       codeTrieRootHash.toHexString(), computedRootHash.toHexString(),
       codeTrieRootHash.equals(computedRootHash));
+  }
+
+  public ArrayList<Bytes> getChunkStartAddressesBytes() {
+    return chunkStartAddressesBytes;
+  }
+
+  public ArrayList<Integer> getChunkStartAddresses() {
+    return chunkStartAddresses;
   }
 }

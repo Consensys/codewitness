@@ -31,11 +31,11 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 public class WitnessCodeAnalysis {
   private static final Logger LOG = getLogger();
 
-  public static boolean SIMPLE = false;
-  public static boolean JUMPDEST = false;
+  public static boolean SIMPLE = true;
+  public static boolean JUMPDEST = true;
   public static boolean FIXEDSIZE = true;
-  public static boolean STRICTFIXEDSIZE = false;
-  public static boolean FUNCTIONID = false;
+  public static boolean STRICTFIXEDSIZE = true;
+  public static boolean FUNCTIONID = true;
 
   private MainNetContractDataSet dataSet;
   private SimpleProcessing simpleProcessing;
