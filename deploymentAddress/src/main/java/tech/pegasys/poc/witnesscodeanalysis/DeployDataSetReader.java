@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class DeployDataSetReader {
-  public static Map<String, Integer> contractsToId = new HashMap<>();
+  private static Map<String, Integer> contractsToId = null;
 
   //  private static final Logger LOG = getLogger();
 
@@ -43,6 +43,7 @@ public class DeployDataSetReader {
       }
       return gson.fromJson(line, DeployAddressAndId.class);
     } catch (IOException ioe) {
+//      throw ioe;
       return null;
     }
   }
@@ -53,10 +54,15 @@ public class DeployDataSetReader {
 
   public static Map<String, Integer> getContractsToId() throws IOException {
     if (contractsToId == null) {
+      contractsToId = new HashMap<>();
       DeployDataSetReader dataSetReader = new DeployDataSetReader();
-      DeployAddressAndId info = null;
-      while ((info = dataSetReader.next()) != null) {
-        contractsToId.put(info.getContract_address(), info.getId());
+      DeployAddressAndId info;
+      try {
+        while ((info = dataSetReader.next()) != null) {
+          contractsToId.put(info.getContract_address(), info.getId());
+        }
+      } catch (Exception ex) {
+        System.out.println(ex.getMessage());
       }
     }
     return contractsToId;

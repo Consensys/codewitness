@@ -32,7 +32,7 @@ public class TraceDataSetReader {
   }
 
 
-  public TraceBlockData next() throws Exception {
+  public TraceBlockData next() {
     try {
       String line = reader.readLine();
       if (line == null) {

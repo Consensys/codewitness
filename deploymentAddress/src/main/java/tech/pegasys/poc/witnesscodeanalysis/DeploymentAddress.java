@@ -23,6 +23,7 @@ public class DeploymentAddress {
 
   Writer writer;
   Gson gson;
+  int numDeployedContracts = 0;
 
 
   public DeploymentAddress() throws IOException {
@@ -42,19 +43,18 @@ public class DeploymentAddress {
       contractData.showInfo(count);
       process(count, contractData);
       count++;
-
-      if (count % 1000 == 0) {
-        LOG.info(count);
-      }
     }
     closeAll();
+    LOG.info("Number of deployed contracts: {}", this.numDeployedContracts);
   }
 
-  public void process(int id, ContractData contractData) {
+  public void process(int id, ContractData contractData) throws IOException {
     String[] addresses = contractData.getContract_address();
     for (String address: addresses) {
       DeployAddressAndId data = new DeployAddressAndId(id, address);
       gson.toJson(data, this.writer);
+      this.writer.append('\n');
+      this.numDeployedContracts++;
     }
   }
 

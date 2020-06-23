@@ -11,5 +11,8 @@ repositories {
 }
 
 dependencies {
+    compile project (':deploymentAddress')
+    compile project (':tracereader')
+
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
