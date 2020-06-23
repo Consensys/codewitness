@@ -12,4 +12,5 @@ include 'main'
 include 'visualisation'
 include 'deploymentAddress'
 include 'tracereader'
+include 'combinedanalysis'
 

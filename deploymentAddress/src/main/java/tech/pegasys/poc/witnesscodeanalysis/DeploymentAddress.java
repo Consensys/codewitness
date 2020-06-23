@@ -17,8 +17,7 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 public class DeploymentAddress {
   private static final Logger LOG = getLogger();
 
-  public static final String DEFAULT_BASE_FILE_NAME =  "analysis_";
-  public static final String JSON =  ".json";
+  public static final String FILE_NAME =  "analysis_deployaddress.json";
 
   private MainNetContractDataSet dataSet;
 
@@ -29,9 +28,7 @@ public class DeploymentAddress {
   public DeploymentAddress() throws IOException {
     this.dataSet = new MainNetContractDataSet();
 
-    String outputFileNameBase = DEFAULT_BASE_FILE_NAME + "deployaddress";
-    String outputFileName = outputFileNameBase + JSON;
-    this.writer = new FileWriter(outputFileName);
+    this.writer = new FileWriter(FILE_NAME);
 
     //  Parsing the JSON file for contract code
     this.gson = new GsonBuilder().setLenient().create();
