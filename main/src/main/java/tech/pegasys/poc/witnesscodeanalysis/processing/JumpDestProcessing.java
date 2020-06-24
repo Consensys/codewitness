@@ -48,10 +48,11 @@ public class JumpDestProcessing extends AbstractProcessing {
     LOG.trace(" JumpDest Analysis started");
     chunkStartAddresses = new JumpDestAnalysis(code, this.threshold).analyse();
     LOG.trace("  Finished. {} chunks", chunkStartAddresses.size());
-    chunkData = new ChunkData(id, deployedAddresses, chunkStartAddresses, code, true, this.threshold);
+    chunkData = new ChunkData(id, chunkStartAddresses, code, true, this.threshold);
 
     if (this.json) {
       gson.toJson(chunkData, this.writer);
+      this.writer.append('\n');
     }
     else {
       throw new Error("NOT IMPLEMENTED YET");

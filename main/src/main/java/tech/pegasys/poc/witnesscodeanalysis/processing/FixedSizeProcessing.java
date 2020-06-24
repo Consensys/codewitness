@@ -51,10 +51,11 @@ public class FixedSizeProcessing extends AbstractProcessing {
 //    fixedSizeAnalysis.computeMultiproofTest();
 
     ArrayList<Integer> chunkStartOffsets = fixedSizeAnalysis.getChunkStartAddresses();
-    ChunkData chunkData = new ChunkData(id, deployedAddresses, chunkStartOffsets, code, true, this.threshold);
+    ChunkData chunkData = new ChunkData(id, chunkStartOffsets, code, true, this.threshold);
 
     if (this.json) {
       gson.toJson(chunkData, this.writer);
+      this.writer.append('\n');
     }
     else {
       throw new Error("NOT IMPLEMENTED YET");

@@ -1,4 +1,4 @@
-package tech.pegasys.poc.witnesscodeanalysis.trace;
+package tech.pegasys.poc.witnesscodeanalysis.common;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -10,20 +10,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public class TraceDataSetReader {
-
-  //  private static final Logger LOG = getLogger();
-
+public class ChunkDataReader {
   private BufferedReader reader;
   private Gson gson;
 
-
-  public TraceDataSetReader(final int blockNumber) throws IOException {
-    this("trace" + blockNumber + ".json");
-  }
-
-  public TraceDataSetReader(String fileIn) throws IOException {
-    Path pathToFileIn = Paths.get("traces/", fileIn);
+  public ChunkDataReader(String fileIn) throws IOException {
+    Path pathToFileIn = Paths.get(fileIn);
     BufferedReader reader = Files.newBufferedReader(pathToFileIn, StandardCharsets.US_ASCII);
     this.reader = reader;
 
@@ -32,13 +24,13 @@ public class TraceDataSetReader {
   }
 
 
-  public TraceBlockData next() {
+  public ChunkData next() {
     try {
       String line = reader.readLine();
       if (line == null) {
         return null;
       }
-      return gson.fromJson(line, TraceBlockData.class);
+      return gson.fromJson(line, ChunkData.class);
     } catch (IOException ioe) {
       return null;
     }
@@ -47,5 +39,4 @@ public class TraceDataSetReader {
   public void close() throws IOException {
     reader.close();
   }
-
 }

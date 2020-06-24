@@ -20,25 +20,29 @@ import org.apache.tuweni.bytes.Bytes;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
 public class ChunkData {
   private static final Logger LOG = getLogger();
+  public static boolean INCLUDECODE = false;
 
   int id;
-  String[] deployedAddresses;
   private ArrayList<Integer> chunkStartAddresses;
   private byte[] code;
+  private int codeLength;
   private int threshold;
   private boolean startAddressesAsKeys; // Indicates whether start addresses to be used as keys or not.
   private Map<Integer, Bytes> keyValueMap;
 
-  public ChunkData(int id, String[] deployedAddresses, ArrayList<Integer> chunkStartAddresses, Bytes code, boolean startAddressesAsKeys, int threshold) {
+  public ChunkData(int id, ArrayList<Integer> chunkStartAddresses, Bytes code, boolean startAddressesAsKeys, int threshold) {
     this.id = id;
-    this.deployedAddresses = deployedAddresses;
     this.chunkStartAddresses = chunkStartAddresses;
-    this.code = code.toArray();
+    if (INCLUDECODE) {
+      this.code = code.toArray();
+    }
+    this.codeLength = code.size();
     this.startAddressesAsKeys = startAddressesAsKeys;
     this.threshold = threshold;
     keyValueMap = new HashMap<> ();
@@ -75,6 +79,51 @@ public class ChunkData {
         keyValueMap.put(i, chunk);
       }
     }
+    return keyValueMap;
+  }
+
+  public int getId() {
+    return id;
+  }
+
+  public ArrayList<Integer> getChunkStartAddresses() {
+    return chunkStartAddresses;
+  }
+
+  public Map<Integer, Integer> getChunks() {
+    Map<Integer, Integer> map = new TreeMap<>();
+    int size = this.chunkStartAddresses.size();
+    if (size == 0) {
+      return map;
+    }
+    int previousStart = 0;
+    for (int i=1; i < size; i++) {
+      previousStart = this.chunkStartAddresses.get(i-1);
+      int length = this.chunkStartAddresses.get(i) - previousStart;
+      map.put(previousStart, length);
+    }
+    previousStart = this.chunkStartAddresses.get(size-1);
+    map.put(previousStart, this.codeLength - previousStart);
+    return map;
+  }
+
+  public byte[] getCode() {
+    return code;
+  }
+
+  public int getCodeLength() {
+    return codeLength;
+  }
+
+  public int getThreshold() {
+    return threshold;
+  }
+
+  public boolean isStartAddressesAsKeys() {
+    return startAddressesAsKeys;
+  }
+
+  public Map<Integer, Bytes> getKeyValueMap() {
     return keyValueMap;
   }
 }

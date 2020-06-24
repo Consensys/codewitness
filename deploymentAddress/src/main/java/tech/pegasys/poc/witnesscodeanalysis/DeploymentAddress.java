@@ -17,21 +17,19 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 public class DeploymentAddress {
   private static final Logger LOG = getLogger();
 
-  public static final String DEFAULT_BASE_FILE_NAME =  "analysis_";
-  public static final String JSON =  ".json";
+  public static final String FILE_NAME =  "analysis_deployaddress.json";
 
   private MainNetContractDataSet dataSet;
 
   Writer writer;
   Gson gson;
+  int numDeployedContracts = 0;
 
 
   public DeploymentAddress() throws IOException {
     this.dataSet = new MainNetContractDataSet();
 
-    String outputFileNameBase = DEFAULT_BASE_FILE_NAME + "deployaddress";
-    String outputFileName = outputFileNameBase + JSON;
-    this.writer = new FileWriter(outputFileName);
+    this.writer = new FileWriter(FILE_NAME);
 
     //  Parsing the JSON file for contract code
     this.gson = new GsonBuilder().setLenient().create();
@@ -45,19 +43,18 @@ public class DeploymentAddress {
       contractData.showInfo(count);
       process(count, contractData);
       count++;
-
-      if (count % 1000 == 0) {
-        LOG.info(count);
-      }
     }
     closeAll();
+    LOG.info("Number of deployed contracts: {}", this.numDeployedContracts);
   }
 
-  public void process(int id, ContractData contractData) {
+  public void process(int id, ContractData contractData) throws IOException {
     String[] addresses = contractData.getContract_address();
     for (String address: addresses) {
       DeployAddressAndId data = new DeployAddressAndId(id, address);
       gson.toJson(data, this.writer);
+      this.writer.append('\n');
+      this.numDeployedContracts++;
     }
   }
 

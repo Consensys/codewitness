@@ -48,10 +48,11 @@ public class StrictFixedSizeProcessing extends AbstractProcessing {
     LOG.trace(" StrictFixedSize Analysis started");
     chunkStartOffsets = new StrictFixedSizeAnalysis(code, this.threshold).analyse();
     LOG.trace("  Finished. {} chunks", chunkStartOffsets.size());
-    chunkData = new ChunkData(id, deployedAddresses, chunkStartOffsets, code, true, this.threshold);
+    chunkData = new ChunkData(id, chunkStartOffsets, code, true, this.threshold);
 
     if (this.json) {
       gson.toJson(chunkData, this.writer);
+      this.writer.append('\n');
     }
     else {
       throw new Error("NOT IMPLEMENTED YET");
