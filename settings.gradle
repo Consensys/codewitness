@@ -13,4 +13,5 @@ include 'visualisation'
 include 'deploymentAddress'
 include 'tracereader'
 include 'combinedanalysis'
+include 'tracecombiner'
 

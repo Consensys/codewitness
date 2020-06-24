@@ -34,9 +34,8 @@ public class CombinedAnalysis {
     contractsAddresToId = DeployDataSetReader.getContractsToId();
     LOG.info("Loaded {} contract to id mappings", contractsAddresToId.size());
 
-    //processBlock(8200000); //, 8203459
-//    processBlocks(8200000, 8200002);
- processBlocks(8200000, 8203459);
+// processBlocks(8200000, 8203459);
+    processBlocks(9013000, 9422000);
 
     LOG.info("Unknwon Contracts");
     for (String unkownContract: this.unknownContracts) {
@@ -57,22 +56,23 @@ public class CombinedAnalysis {
     LOG.info("Processing block number: {}", blockNumber);
     BlockAnalysis blockAnalysis = new BlockAnalysis();
 
-    TraceDataSetReader dataSet = new TraceDataSetReader(blockNumber);
-    // There is exactly one block per data set.
-    TraceBlockData blockData = dataSet.next();
+    try {
+      TraceDataSetReader dataSet = new TraceDataSetReader(blockNumber);
+      // There is exactly one block per data set.
+      TraceBlockData blockData = dataSet.next();
 
 
-    TraceTransactionData[] transactionsData = blockData.getBlock();
-    LOG.info(" Block contains: {} transactions", transactionsData.length);
+      TraceTransactionData[] transactionsData = blockData.getBlock();
+      LOG.info(" Block contains: {} transactions", transactionsData.length);
 
-//    int zz = 0;
-    for (TraceTransactionData transactionData: transactionsData) {
-      LOG.trace(" Processing transaction");
-      TraceTransactionInfo[] infos = transactionData.getTrace();
-      LOG.trace("  Transaction contains: {} calls", infos.length);
+      //    int zz = 0;
+      for (TraceTransactionData transactionData : transactionsData) {
+        LOG.trace(" Processing transaction");
+        TraceTransactionInfo[] infos = transactionData.getTrace();
+        LOG.trace("  Transaction contains: {} calls", infos.length);
 
-//      boolean stop = false;
-      for (TraceTransactionInfo info: infos) {
+        //      boolean stop = false;
+        for (TraceTransactionInfo info : infos) {
           TraceTransactionCall call = info.getAction();
           String toAddress = call.getTo();
           Bytes functionSelector = call.getFunctionSelector();
@@ -81,36 +81,37 @@ public class CombinedAnalysis {
           if (id == null) {
             if (functionSelector.isEmpty()) {
               LOG.trace("   Value Transfer transaction");
-            }
-            else {
+            } else {
               LOG.error("   Unknown contract {}. Function call: {}", toAddress, functionSelector);
               this.unknownContracts.add(toAddress);
             }
-          }
-          else {
+          } else {
             LOG.info("   Call to contract({}): {}, function {}", id, toAddress, functionSelector);
             blockAnalysis.processTransactionCall(id, functionSelector);
-//            // TODO
-//            zz++;
-//            if (zz > 1) {
-//              stop = true;
-//              break;
-//            }
+            //            // TODO
+            //            zz++;
+            //            if (zz > 1) {
+            //              stop = true;
+            //              break;
+            //            }
           }
+        }
+        //      if (stop)
+        //      {
+        //        break;
+        //      }
       }
-//      if (stop)
-//      {
-//        break;
-//      }
-    }
-    dataSet.close();
+      dataSet.close();
 
-    blockAnalysis.calculateLeafPlusCodeSizes();
-    blockAnalysis.showStats();
-    WitnessResult result = new WitnessResult(blockNumber);
-    blockAnalysis.setResultInformation(result);
-    this.writer.writeResult(result);
-    this.writer.flush();
+      blockAnalysis.calculateLeafPlusCodeSizes();
+      blockAnalysis.showStats();
+      WitnessResult result = new WitnessResult(blockNumber);
+      blockAnalysis.setResultInformation(result);
+      this.writer.writeResult(result);
+      this.writer.flush();
+    } catch (Exception ex) {
+      LOG.error("  Exception while processing block {}: {}", blockNumber, ex.getMessage());
+    }
   }
 
   public static void main(String[] args) throws Exception {
