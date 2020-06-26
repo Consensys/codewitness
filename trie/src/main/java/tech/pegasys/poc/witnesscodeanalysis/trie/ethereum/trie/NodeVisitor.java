@@ -20,6 +20,8 @@ interface NodeVisitor<V> {
 
   void visit(BranchNode<V> branchNode);
 
+  void visit(BinaryBranchNode<V> branchNode);
+
   void visit(LeafNode<V> leafNode);
 
   void visit(NullNode<V> nullNode);

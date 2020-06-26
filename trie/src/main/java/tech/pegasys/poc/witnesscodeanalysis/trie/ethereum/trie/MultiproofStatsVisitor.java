@@ -33,6 +33,13 @@ public class MultiproofStatsVisitor<V> implements NodeVisitor<V> {
     }
   }
 
+  public void visit(final BinaryBranchNode<V> branchNode) {
+    numBranches ++;
+    for(Node<V> child: branchNode.getChildren()) {
+      child.accept(this);
+    }
+  }
+
   public void visit(final LeafNode<V> leafNode) {
 
   }

@@ -55,6 +55,22 @@ class CommitVisitor<V> implements NodeVisitor<V> {
   }
 
   @Override
+  public void visit(final BinaryBranchNode<V> branchNode) {
+    if (!branchNode.isDirty()) {
+      return;
+    }
+
+    for (byte i = 0; i < 2; ++i) {
+      final Node<V> child = branchNode.child(i);
+      if (child.isDirty()) {
+        child.accept(this);
+      }
+    }
+
+    maybeStoreNode(branchNode);
+  }
+
+  @Override
   public void visit(final LeafNode<V> leafNode) {
     if (!leafNode.isDirty()) {
       return;

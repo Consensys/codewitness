@@ -47,8 +47,8 @@ public class FixedSizeProcessing extends AbstractProcessing {
     LOG.trace(" FixedSize Analysis started");
     FixedSizeAnalysis fixedSizeAnalysis = new FixedSizeAnalysis(code, this.threshold);
     fixedSizeAnalysis.createChunks();
-//    fixedSizeAnalysis.merkelize();
-//    fixedSizeAnalysis.computeMultiproofTest();
+    fixedSizeAnalysis.merkelize();
+    fixedSizeAnalysis.computeMultiproofTest();
 
     ArrayList<Integer> chunkStartOffsets = fixedSizeAnalysis.getChunkStartAddresses();
     ChunkData chunkData = new ChunkData(id, chunkStartOffsets, code, true, this.threshold);

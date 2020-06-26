@@ -19,6 +19,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import tech.pegasys.poc.witnesscodeanalysis.CodeAnalysisBase;
 import tech.pegasys.poc.witnesscodeanalysis.common.PcUtils;
+import tech.pegasys.poc.witnesscodeanalysis.trie.ethereum.trie.BinaryMerklePatriciaTrie;
 import tech.pegasys.poc.witnesscodeanalysis.trie.ethereum.trie.MultiMerkleProof;
 import tech.pegasys.poc.witnesscodeanalysis.trie.ethereum.trie.SimpleMerklePatriciaTrie;
 import tech.pegasys.poc.witnesscodeanalysis.vm.MainnetEvmRegistries;
@@ -42,7 +43,7 @@ public class FixedSizeAnalysis extends CodeAnalysisBase {
   private int threshold;
   private ArrayList<Integer> chunkStartAddresses;
   private ArrayList<Bytes> chunkStartAddressesBytes;
-  private MerklePatriciaTrie<Bytes, Bytes> codeTrie;
+  private MerklePatriciaTrie<Bytes, Bytes> codeTrie, binaryCodeTrie;
 
   public static OperationRegistry registry = MainnetEvmRegistries.berlin(BigInteger.ONE);
 
@@ -126,7 +127,22 @@ public class FixedSizeAnalysis extends CodeAnalysisBase {
       Bytes chunk = this.code.slice(thisChunkStart, length);
       codeTrie.put(chunkStartAddressesBytes.get(i), chunk);
     }
-    LOG.trace("Merkelization finished.");
+    LOG.trace("Merkelization finished. Binary Merkelization begins...");
+
+    binaryCodeTrie = new BinaryMerklePatriciaTrie<>(v->v);
+    numChunks = chunkStartAddressesBytes.size();
+    // The keys are chunk start addresses
+    for (int i=0; i < numChunks; i++) {
+      int thisChunkStart = chunkStartAddressesBytes.get(i).toInt();
+
+      int length = (i == numChunks - 1) ? code.size() - thisChunkStart :
+        chunkStartAddressesBytes.get(i+1).toInt() - thisChunkStart;
+
+      Bytes chunk = this.code.slice(thisChunkStart, length);
+      binaryCodeTrie.put(chunkStartAddressesBytes.get(i), chunk);
+    }
+    LOG.trace("Binary Merkelization finished.");
+
   }
 
   /*
@@ -144,6 +160,15 @@ public class FixedSizeAnalysis extends CodeAnalysisBase {
     Bytes32 computedRootHash = multiMerkleProof.computeRootHash();
     multiMerkleProof.printStats();
     LOG.info("Multiproof constructed. Trie Root Hash = {}, Computed Root hash = {}, Verified = {}",
+      codeTrieRootHash.toHexString(), computedRootHash.toHexString(),
+      codeTrieRootHash.equals(computedRootHash));
+
+    LOG.info("Multiproof construction for binary code trie begins...");
+    multiMerkleProof = binaryCodeTrie.getValuesWithMultiMerkleProof(testKeys);
+    codeTrieRootHash = binaryCodeTrie.getRootHash();
+    computedRootHash = multiMerkleProof.computeRootHash();
+    multiMerkleProof.printStats();
+    LOG.info("Multiproof for binary trie constructed. Trie Root Hash = {}, Computed Root hash = {}, Verified = {}",
       codeTrieRootHash.toHexString(), computedRootHash.toHexString(),
       codeTrieRootHash.equals(computedRootHash));
   }

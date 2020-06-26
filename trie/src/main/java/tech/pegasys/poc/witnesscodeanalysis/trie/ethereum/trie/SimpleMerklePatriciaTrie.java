@@ -66,14 +66,6 @@ public class SimpleMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
     final Optional<V> value = root.accept(proofVisitor, bytesToPath(key)).getValue();
     final List<Bytes> proof =
         proofVisitor.getProof().stream().map(Node::getRlp).collect(Collectors.toList());
-    LOG.trace("Proof nodes");
-    for(Node<V> node : proofVisitor.proof) {
-      LOG.trace(node.toString());
-    }
-    LOG.trace("Actual Proofs:");
-    for(Bytes p : proof) {
-      LOG.trace(p.toHexString());
-    }
     return new Proof<>(value, proof);
   }
 
