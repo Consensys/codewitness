@@ -47,6 +47,17 @@ class GetVisitor<V> implements PathNodeVisitor<V> {
   }
 
   @Override
+  public Node<V> visit(final BinaryBranchNode<V> branchNode, final Bytes path) {
+    assert path.size() > 0 : "Visiting path doesn't end with a non-matching terminator";
+
+    final byte childIndex = path.get(0);
+    if (childIndex == CompactEncoding.LEAF_TERMINATOR) {
+      return branchNode;
+    }
+
+    return branchNode.child(childIndex).accept(this, path.slice(1));
+  }
+  @Override
   public Node<V> visit(final LeafNode<V> leafNode, final Bytes path) {
     final Bytes leafPath = leafNode.getPath();
     if (leafPath.commonPrefixLength(path) != leafPath.size()) {

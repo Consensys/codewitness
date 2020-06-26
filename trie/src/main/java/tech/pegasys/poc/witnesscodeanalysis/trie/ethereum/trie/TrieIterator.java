@@ -67,6 +67,27 @@ public class TrieIterator<V> implements PathNodeVisitor<V> {
     return node;
   }
 
+
+  @Override
+  public Node<V> visit(final BinaryBranchNode<V> node, final Bytes searchPath) {
+    byte iterateFrom = 0;
+    Bytes remainingPath = searchPath;
+    if (state == State.SEARCHING) {
+      iterateFrom = searchPath.get(0);
+      if (iterateFrom == CompactEncoding.LEAF_TERMINATOR) {
+        return node;
+      }
+      remainingPath = searchPath.slice(1);
+    }
+    paths.push(node.getPath());
+    for (byte i = iterateFrom; i < 2 && state.continueIterating(); i++) {
+      paths.push(Bytes.of(i));
+      node.child(i).accept(this, remainingPath);
+      paths.pop();
+    }
+    paths.pop();
+    return node;
+  }
   @Override
   public Node<V> visit(final LeafNode<V> node, final Bytes path) {
     paths.push(node.getPath());

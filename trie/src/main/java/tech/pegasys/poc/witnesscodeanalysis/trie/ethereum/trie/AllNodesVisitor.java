@@ -37,6 +37,12 @@ public class AllNodesVisitor<V> implements NodeVisitor<V> {
   }
 
   @Override
+  public void visit(final BinaryBranchNode<V> branchNode) {
+    handler.accept(branchNode);
+    branchNode.getChildren().forEach(this::acceptAndUnload);
+  }
+
+  @Override
   public void visit(final LeafNode<V> leafNode) {
     handler.accept(leafNode);
   }
