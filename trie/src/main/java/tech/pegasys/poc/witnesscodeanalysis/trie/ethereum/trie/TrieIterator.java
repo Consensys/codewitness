@@ -20,6 +20,7 @@ import java.util.Iterator;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.MutableBytes;
 
 public class TrieIterator<V> implements PathNodeVisitor<V> {
 
@@ -109,9 +110,13 @@ public class TrieIterator<V> implements PathNodeVisitor<V> {
     while (iterator.hasNext()) {
       fullPath = Bytes.wrap(fullPath, iterator.next());
     }
-    return fullPath.isZero()
-        ? Bytes32.ZERO
-        : Bytes32.wrap(CompactEncoding.pathToBytes(fullPath), 0);
+
+    MutableBytes b = MutableBytes.create(65); // 64 bytes (1 nibble/byte) + terminator
+    fullPath.shiftRight(0, b);
+
+    return b.isZero()
+            ? Bytes32.ZERO
+            : Bytes32.wrap(CompactEncoding.pathToBytes(b), 0);
   }
 
   public interface LeafHandler<V> {
