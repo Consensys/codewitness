@@ -1,4 +1,4 @@
-package tech.pegasys.poc.witnesscodeanalysis.trace;
+package tech.pegasys.poc.witnesscodeanalysis.trace.dataset8m;
 
 import org.apache.tuweni.bytes.Bytes;
 

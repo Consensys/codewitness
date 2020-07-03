@@ -3,11 +3,11 @@ package tech.pegasys.poc.witnesscodeanalysis.combined;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import tech.pegasys.poc.witnesscodeanalysis.DeployDataSetReader;
-import tech.pegasys.poc.witnesscodeanalysis.trace.TraceBlockData;
-import tech.pegasys.poc.witnesscodeanalysis.trace.TraceDataSetReader;
-import tech.pegasys.poc.witnesscodeanalysis.trace.TraceTransactionCall;
-import tech.pegasys.poc.witnesscodeanalysis.trace.TraceTransactionData;
-import tech.pegasys.poc.witnesscodeanalysis.trace.TraceTransactionInfo;
+import tech.pegasys.poc.witnesscodeanalysis.trace.dataset8m.TraceBlockData;
+import tech.pegasys.poc.witnesscodeanalysis.trace.dataset8m.TraceDataSetReader;
+import tech.pegasys.poc.witnesscodeanalysis.trace.dataset8m.TraceTransactionCall;
+import tech.pegasys.poc.witnesscodeanalysis.trace.dataset8m.TraceTransactionData;
+import tech.pegasys.poc.witnesscodeanalysis.trace.dataset8m.TraceTransactionInfo;
 
 import java.io.IOException;
 import java.util.Map;
