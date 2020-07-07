@@ -52,7 +52,7 @@ public class BlockDuplicateAnalysis {
     }
     UnableToProcessReason processingResult = result.getResult();
     if (processingResult != UnableToProcessReason.SUCCESS) {
-      LOG.error(" Contract {} was not processed correctly by function id analysis: {}", id, processingResult);
+      LOG.trace(" Contract {} was not processed correctly by function id analysis: {}", id, processingResult);
       this.failContractNotProcessedCorrectlyByFunctionIdAnalysis++;
       // Skip processing
       return;
@@ -93,8 +93,6 @@ public class BlockDuplicateAnalysis {
   }
 
   public void calculateLeafPlusCodeSizes() throws IOException {
-    LOG.info("calculateLeafPlusCodeSizes");
-
     // Find the amount of code sent.
     int functionIdCodeUsed = 0;
     for (Map<Integer, Integer> codeBlocks : this.contractCodeExecutedUniqueCode.values()) {
@@ -148,8 +146,9 @@ public class BlockDuplicateAnalysis {
   }
 
   public void setResultInformation(WitnessResultDuplicate result) {
-    result.functionIdWitnessSizeUniqueCode = this.functionIdWitnessSizeUniqueCode;
-    result.functionIdWitnessSizePerAddress = this.functionIdWitnessSizePerAddress;
+    result.unique = this.functionIdWitnessSizeUniqueCode;
+    result.peraddr = this.functionIdWitnessSizePerAddress;
+    result.fail = this.failContractNotProcessedCorrectlyByFunctionIdAnalysis;
   }
 
 }

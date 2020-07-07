@@ -20,11 +20,14 @@ public class FunctionSelectorDataSetReader {
 
 
   public FunctionSelectorDataSetReader(final int blockNumber) throws IOException {
-    this("trace" + blockNumber + ".json");
+    this(blockNumberToFileLocation(blockNumber));
   }
 
-  public FunctionSelectorDataSetReader(String fileIn) throws IOException {
-    this(Paths.get("traces/", fileIn));
+  public static Path blockNumberToFileLocation(final long blockNumber) {
+    final int FILES_PER_DIR = 1000;
+    long blockGroup = (blockNumber / FILES_PER_DIR) * FILES_PER_DIR;
+    String path = "traces/block" + blockGroup + "/trace" + blockNumber + ".json";
+    return Paths.get(path);
   }
 
   public FunctionSelectorDataSetReader(Path pathToFileIn) throws IOException {

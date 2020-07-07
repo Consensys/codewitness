@@ -25,8 +25,15 @@ public class DuplicateAnalysis {
   private WitnessResultDuplicateWriter writer;
 
 
+  public int totalNumTransactions = 0;
+  public int totalNumTransactionsToUnknownContracts = 0;
+  public int totalNumTransactionsToContractsThatFailedToAnalyse = 0;
+  public long totalSizeUnique = 0;
+  public long totalSizePerAddress = 0;
+
+
   public DuplicateAnalysis() throws IOException {
-    this.writer = new WitnessResultDuplicateWriter();
+    this.writer = new WitnessResultDuplicateWriter(false);
   }
 
   public void go() throws IOException {
@@ -35,20 +42,38 @@ public class DuplicateAnalysis {
     LOG.info("Loaded {} contract to id mappings", contractsAddresToId.size());
 
 // processBlocks(8200000, 8203459);
-    processBlocks(9000000, 9000100);
+    processBlocks(9000000, 10000000);
 
-    LOG.info("Unknwon Contracts");
-    for (String unkownContract: this.unknownContracts) {
-      LOG.info(" {}", unkownContract);
-    }
+//    LOG.info("Unknown Contracts");
+//    for (String unkownContract: this.unknownContracts) {
+//      LOG.info(" {}", unkownContract);
+//    }
 
     this.writer.close();
+
+    LOG.info("totalNumTransactions: {}", this.totalNumTransactions);
+    LOG.info("totalNumTransactionsToUnknownContracts: {}", this.totalNumTransactionsToUnknownContracts);
+    LOG.info("totalNumTransactionsToContractsThatFailedToAnalyse: {}", this.totalNumTransactionsToContractsThatFailedToAnalyse);
+    LOG.info("totalSizeUnique: {}", this.totalSizeUnique);
+    LOG.info("totalSizePerAddress: {}", this.totalSizePerAddress);
+
+    double percentageUnknown = (double) this.totalNumTransactionsToUnknownContracts / (double) this.totalNumTransactions * 100.0;
+    LOG.info("Percentage of transactions to unknown contracts: {}%", percentageUnknown);
+
+    double percentageFailed = (double) this.totalNumTransactionsToContractsThatFailedToAnalyse / (double) this.totalNumTransactions * 100.0;
+    LOG.info("Percentage of transactions to contracts failed to analyse: {}%", percentageFailed);
+
+    double percentageDeDup = ((double) this.totalSizePerAddress - this.totalSizeUnique) / (double) this.totalSizePerAddress * 100.0;
+    LOG.info("Percentage reduction due code deduplication: {}%", percentageDeDup);
+
+
   }
 
   public void processBlocks(int from, int to) throws IOException {
     for (int i = from; i <= to; i++) {
       processBlock(i);
     }
+    LOG.info("Number of blocks Processed: {}", (to-from));
   }
 
 
@@ -63,9 +88,9 @@ public class DuplicateAnalysis {
 
 
       FsTransaction[] transactionsData = blockData.getTransactions();
-      LOG.info(" Block {} contains: {} transactions", blockData.getBlockNumber(), transactionsData.length);
+      LOG.trace(" Block {} contains: {} transactions", blockData.getBlockNumber(), transactionsData.length);
 
-      //    int zz = 0;
+      int unknownContractCount = 0;
       for (FsTransaction transactionData : transactionsData) {
         String toAddress = transactionData.getTo();
         Bytes functionSelector = transactionData.getFunctionSelector();
@@ -75,32 +100,29 @@ public class DuplicateAnalysis {
           if (functionSelector.isEmpty()) {
             LOG.trace("   Value Transfer transaction");
           } else {
-            LOG.error("   Unknown contract {}. Function call: {}", toAddress, functionSelector);
+            LOG.trace("   Unknown contract {}. Function call: {}", toAddress, functionSelector);
             this.unknownContracts.add(toAddress);
+            unknownContractCount++;
           }
         } else {
-          LOG.info("   Call to contract({}): {}, function {}", id, toAddress, functionSelector);
+          LOG.trace("   Call to contract({}): {}, function {}", id, toAddress, functionSelector);
           blockAnalysis.processTransactionCall(id, toAddress, functionSelector);
-          //            // TODO
-          //            zz++;
-          //            if (zz > 1) {
-          //              stop = true;
-          //              break;
-          //            }
         }
-        //      if (stop)
-        //      {
-        //        break;
-        //      }
       }
       dataSet.close();
 
       blockAnalysis.calculateLeafPlusCodeSizes();
-      blockAnalysis.showStats();
-      WitnessResultDuplicate result = new WitnessResultDuplicate(blockNumber);
+      //blockAnalysis.showStats();
+      WitnessResultDuplicate result = new WitnessResultDuplicate(blockNumber, transactionsData.length, unknownContractCount);
       blockAnalysis.setResultInformation(result);
       this.writer.writeResult(result);
       this.writer.flush();
+
+      this.totalNumTransactions += transactionsData.length;
+      this.totalNumTransactionsToUnknownContracts += unknownContractCount;
+      this.totalNumTransactionsToContractsThatFailedToAnalyse += result.fail;
+      this.totalSizeUnique += result.unique;
+      this.totalSizePerAddress += result.peraddr;
     } catch (Exception ex) {
       LOG.error("  Exception while processing block {}: {}", blockNumber, ex.getMessage());
     }
