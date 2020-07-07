@@ -89,6 +89,7 @@ public class BlockAnalysis {
       contractCodeBlocks.put(codeBlock.getStart(), codeBlock.getLength());
     }
 
+    // TODO this is a bug - will count multiple times, for each time the same leaf is used.
     // Do part of the function id analysis here.
     this.functionIdRawLeafSizeWithoutCode += codeBlocks.length * 4 + 4;
     this.functionIdNumberOfLeaves++;

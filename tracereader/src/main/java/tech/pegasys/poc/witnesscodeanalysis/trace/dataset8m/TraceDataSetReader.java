@@ -1,4 +1,4 @@
-package tech.pegasys.poc.witnesscodeanalysis.trace;
+package tech.pegasys.poc.witnesscodeanalysis.trace.dataset8m;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
