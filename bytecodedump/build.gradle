@@ -15,7 +15,7 @@ dependencies {
     compile project (':common')
 
     // https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-core
-    compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.13.2'
+    compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.16.0'
 }
 
 mainClassName = 'tech.pegasys.poc.witnesscodeanalysis.ByteCodeDump'
