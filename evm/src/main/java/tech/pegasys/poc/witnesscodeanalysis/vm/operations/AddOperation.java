@@ -30,9 +30,24 @@ public class AddOperation extends AbstractOperation {
 
   @Override
   public UInt256 execute(final MessageFrame frame) {
-    frame.popStackItem();
-    frame.popStackItem();
-    frame.pushStackItem(MARKER_AND_OPCODE);
+    final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
+
+    // If either of the inputs are dynamic then the output is dynamic.
+    boolean isConstantInput = true;
+    if (value0.fitsLong() && ((value0.toLong() & DYNAMIC_MARKER_MASK) == DYNAMIC_MARKER)) {
+      isConstantInput = false;
+    }
+    if (value1.fitsLong() && ((value1.toLong() & DYNAMIC_MARKER_MASK) == DYNAMIC_MARKER)) {
+      isConstantInput = false;
+    }
+    if (isConstantInput) {
+      final UInt256 result = value0.add(value1);
+      frame.pushStackItem(result.toBytes());
+    }
+    else {
+      frame.pushStackItem(MARKER_AND_OPCODE);
+    }
 
     return UInt256.ZERO;
   }
