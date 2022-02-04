@@ -1,5 +1,6 @@
-# Code Witness
-This repo contains various approaches to code merklization that are being analysed.
+# Code Analysis
+This repo started out as a set of analyses for various approaches to code
+merklization. This repo is being morphed into an EVM byte code analysis tool set.
 
 Directories:
 
@@ -9,15 +10,11 @@ Directories:
 * data: Contains test contracts and associated data and scripts to generate test data. This is not used directly by any of the other modules.
 * deploymentAddress: Create a file that maps deployment address to contract id (where contract id is the offset into the contract data file).
 * evm: Opcode processing.
-* fixed: Fixed size chunking with allowance for chunking only on valid opcode start offsets.
 * functionid: Split the code based on the function selector in a transaction.
 * gradle: build system related.
-* jumpdest: Chunk code based on jumpdest operations and a threshold number of bytes.
 * main: Runner for strict, fixed, jumpdest, and function id analyses.
-* strictfixed: Chunk code based on a fixed size.
 * tracereader: Reads blocks of transactions from trace files.
 * traces: Direcrtory containing trace files.
-* trie: Merkle Patricia Trie code.
 * visualisation: Creates a visual representation of the where functions are in contracts.
 
 

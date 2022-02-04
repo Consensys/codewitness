@@ -18,11 +18,8 @@ import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import tech.pegasys.poc.witnesscodeanalysis.bytecodedump.ByteCodeDump;
 import tech.pegasys.poc.witnesscodeanalysis.common.ContractData;
-import tech.pegasys.poc.witnesscodeanalysis.processing.FixedSizeProcessing;
 import tech.pegasys.poc.witnesscodeanalysis.processing.FunctionIdProcessing;
-import tech.pegasys.poc.witnesscodeanalysis.processing.JumpDestProcessing;
 import tech.pegasys.poc.witnesscodeanalysis.processing.SimpleProcessing;
-import tech.pegasys.poc.witnesscodeanalysis.processing.StrictFixedSizeProcessing;
 
 import java.io.IOException;
 
@@ -32,25 +29,16 @@ public class WitnessCodeAnalysis {
   private static final Logger LOG = getLogger();
 
   public static boolean SIMPLE = true;
-  public static boolean JUMPDEST = true;
-  public static boolean FIXEDSIZE = true;
-  public static boolean STRICTFIXEDSIZE = true;
   public static boolean FUNCTIONID = true;
 
-  private MainNetContractDataSet dataSet;
-  private SimpleProcessing simpleProcessing;
-  private JumpDestProcessing jumpDestProcessing;
-  private FixedSizeProcessing fixedSizeProcessing;
-  private StrictFixedSizeProcessing strictFixedSizeProcessing;
-  private FunctionIdProcessing functionIdProcessing;
+  private final MainNetContractDataSet dataSet;
+  private final SimpleProcessing simpleProcessing;
+  private final FunctionIdProcessing functionIdProcessing;
 
 
   public WitnessCodeAnalysis() throws IOException {
     this.dataSet = new MainNetContractDataSet();
     this.simpleProcessing = new SimpleProcessing(true);
-    this.jumpDestProcessing = new JumpDestProcessing(true);
-    this.fixedSizeProcessing = new FixedSizeProcessing(true);
-    this.strictFixedSizeProcessing = new StrictFixedSizeProcessing(true);
     this.functionIdProcessing = new FunctionIdProcessing(true);
   }
 
@@ -149,18 +137,6 @@ public class WitnessCodeAnalysis {
       this.simpleProcessing.process(id, contractData.getContract_address(), code);
     }
 
-    if (JUMPDEST) {
-      this.jumpDestProcessing.process(id, contractData.getContract_address(), code);
-    }
-
-    if (FIXEDSIZE) {
-      this.fixedSizeProcessing.process(id, contractData.getContract_address(), code);
-    }
-
-    if (STRICTFIXEDSIZE) {
-      this.strictFixedSizeProcessing.process(id, contractData.getContract_address(), code);
-    }
-
     if (FUNCTIONID) {
       this.functionIdProcessing.process(id, contractData.getContract_address(), code);
     }
@@ -170,18 +146,6 @@ public class WitnessCodeAnalysis {
     LOG.info("Summary");
     if (SIMPLE) {
       this.simpleProcessing.showSummary();
-    }
-
-    if (JUMPDEST) {
-      this.jumpDestProcessing.showSummary();
-    }
-
-    if (FIXEDSIZE) {
-      this.fixedSizeProcessing.showSummary();
-    }
-
-    if (STRICTFIXEDSIZE) {
-      this.strictFixedSizeProcessing.showSummary();
     }
 
     if (FUNCTIONID) {
@@ -194,9 +158,6 @@ public class WitnessCodeAnalysis {
   private void closeAll() throws IOException {
     this.dataSet.close();
     this.simpleProcessing.close();
-    this.jumpDestProcessing.close();
-    this.fixedSizeProcessing.close();
-    this.strictFixedSizeProcessing.close();
     this.functionIdProcessing.close();
   }
 
@@ -208,8 +169,8 @@ public class WitnessCodeAnalysis {
 
     // NOTE: Can only choose one of these.
 //    witnessCodeAnalysis.analyseUpTo(3);
-//    witnessCodeAnalysis.dumpOne(62);
-    witnessCodeAnalysis.analyseOne(1);
+//    witnessCodeAnalysis.dumpOne(271984);
+    witnessCodeAnalysis.analyseOne(266634);
 
 //    witnessCodeAnalysis.analyseDeployedBlockNumbers(9999990, 10000000);
 

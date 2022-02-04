@@ -394,51 +394,54 @@ public class CodeVisitor {
     if (existingCodeSegment == null) {
       return false;
     }
+    return true;
 
-    OperandStack stack = frame.getCopyOfStack();
+    //TODO there is a bug in the code below!
 
-    // Try to detect recursive functions and deal with them separately.
-    final int RECURSIVE_FUNCTION_THRESHOLD = 10;
-    if (stack.size() > RECURSIVE_FUNCTION_THRESHOLD) {
-      for (OperandStack existingStack: existingCodeSegment.previousSegmentStacks) {
-        int stackToCheck = RECURSIVE_FUNCTION_THRESHOLD;
-        if (existingStack.size() < stackToCheck) {
-          stackToCheck = existingStack.size();
-        }
+//    OperandStack stack = frame.getCopyOfStack();
+//
+//    // Try to detect recursive functions and deal with them separately.
+//    final int RECURSIVE_FUNCTION_THRESHOLD = 1;
+//    if (stack.size() > RECURSIVE_FUNCTION_THRESHOLD) {
+//      for (OperandStack existingStack: existingCodeSegment.previousSegmentStacks) {
+//        int stackToCheck = RECURSIVE_FUNCTION_THRESHOLD;
+//        if (existingStack.size() < stackToCheck) {
+//          stackToCheck = existingStack.size();
+//        }
+//
+//        boolean matchingStackFound = true;
+//        for (int i=0; i < stackToCheck; i++) {
+//          if (stack.get(i).compareTo(existingStack.get(i)) != 0) {
+//            matchingStackFound = false;
+//            break;
+//          }
+//        }
+//        if (matchingStackFound) {
+//          return true;
+//        }
+//      }
+//      return false;
+//
+//
+//    }
 
-        boolean matchingStackFound = true;
-        for (int i=0; i < stackToCheck; i++) {
-          if (stack.get(i).compareTo(existingStack.get(i)) != 0) {
-            matchingStackFound = false;
-            break;
-          }
-        }
-        if (matchingStackFound) {
-          return true;
-        }
-      }
-      return false;
-
-
-    }
-
-    // else non-recursive function
-    for (OperandStack existingStack: existingCodeSegment.previousSegmentStacks) {
-      if (stack.size() != existingStack.size()) {
-        continue;
-      }
-      boolean matchingStackFound = true;
-      for (int i=0; i < stack.size(); i++) {
-        if (stack.get(i).compareTo(existingStack.get(i)) != 0) {
-          matchingStackFound = false;
-          break;
-        }
-      }
-      if (matchingStackFound) {
-        return true;
-      }
-    }
-    return false;
+//    // else non-recursive function
+//    for (OperandStack existingStack: existingCodeSegment.previousSegmentStacks) {
+//      if (stack.size() != existingStack.size()) {
+//        continue;
+//      }
+//      boolean matchingStackFound = true;
+//      for (int i=0; i < stack.size(); i++) {
+//        if (stack.get(i).compareTo(existingStack.get(i)) != 0) {
+//          matchingStackFound = false;
+//          break;
+//        }
+//      }
+//      if (matchingStackFound) {
+//        return true;
+//      }
+//    }
+//    return false;
   }
 
   private void dumpStack(MessageFrame frame) {

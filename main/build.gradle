@@ -13,9 +13,6 @@ repositories {
 
 dependencies {
     compile project (':common')
-    compile project (':fixed')
-    compile project (':strictfixed')
-    compile project (':jumpdest')
     compile project (':functionid')
     compile project (':bytecodedump')
 
